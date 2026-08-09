@@ -117,20 +117,47 @@
   .maker-bar{flex:1;height:14px;background:#eef0f2;border-radius:var(--radius-sm);overflow:hidden;display:flex}
   .maker-bar span{height:100%}
 
-  .toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:var(--surface);border:1px solid var(--border);
-           border-radius:var(--radius);padding:11px 13px;margin:0 0 12px;box-shadow:var(--shadow-sm)}
-  input[type=search]{padding:7px 12px;font-size:13px;width:270px;border:1px solid var(--border-strong);
-                     border-radius:var(--pill);background:#fbfcfd;color:var(--text);outline:none;font-family:inherit}
-  input[type=search]:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.13)}
-  .chks{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  /* ── 검색: 이 사이트의 주 진입 동선이라 가장 크고 먼저 온다 ── */
+  .searchbar{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+             padding:13px 14px 11px;margin:0 0 11px;box-shadow:var(--shadow)}
+  .searchfield{position:relative;display:flex;align-items:center}
+  .s-icon{position:absolute;left:14px;width:18px;height:18px;fill:none;stroke:var(--muted-2);
+          stroke-width:2;stroke-linecap:round;pointer-events:none}
+  .searchfield:focus-within .s-icon{stroke:var(--accent)}
+  input[type=search]{width:100%;padding:13px 42px 13px 42px;font-size:16px;font-family:inherit;
+                     border:1.5px solid var(--border-strong);border-radius:var(--pill);
+                     background:#fbfcfd;color:var(--text);outline:none;
+                     -webkit-appearance:none;appearance:none}
+  input[type=search]::-webkit-search-cancel-button{display:none}
+  input[type=search]::placeholder{color:var(--muted-2)}
+  input[type=search]:focus{border-color:var(--accent);background:#fff;
+                           box-shadow:0 0 0 4px rgba(37,99,235,.13)}
+  .s-clear{position:absolute;right:8px;width:26px;height:26px;border:0;border-radius:50%;
+           background:#e8ebee;color:var(--muted);font-size:15px;line-height:1;cursor:pointer;
+           display:flex;align-items:center;justify-content:center}
+  .s-clear:hover{background:#dde1e5;color:var(--text)}
+  .s-clear[hidden]{display:none}
+  .searchmeta{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:9px 2px 0}
+  .count-pill{color:var(--muted);font-size:12.5px;white-space:nowrap}
+  .count-pill b{color:var(--accent);font-size:15px;font-variant-numeric:tabular-nums}
+  .hint{color:var(--muted-2);font-size:11.5px}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--surface);
+           border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;
+           margin:0 0 12px;box-shadow:var(--shadow-sm)}
+  .chks{display:flex;gap:7px;flex-wrap:wrap;align-items:center;min-width:0}
   .chk{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fbfcfd;
        border-radius:var(--pill);padding:5px 11px;font-size:12.5px;cursor:pointer;color:var(--muted);
        transition:background .12s,border-color .12s,color .12s}
   .chk:hover{border-color:var(--border-strong);color:var(--text)}
   .chk input{accent-color:var(--accent);margin:0;cursor:pointer}
   .chk:has(input:checked){background:var(--accent-soft);border-color:#bcd3fb;color:#12356e;font-weight:600}
-  .count-pill{margin-left:auto;color:var(--muted);font-size:12.5px;white-space:nowrap}
-  .count-pill b{color:var(--text);font-variant-numeric:tabular-nums}
+  /* 정렬 컨트롤 — 데스크톱은 표 헤더 클릭으로 하므로 좁은 화면에서만 노출 */
+  .sortsel{display:none;align-items:center;gap:6px;margin-left:auto;color:var(--muted);font-size:12px}
+  .sortsel select{font-family:inherit;font-size:12.5px;padding:5px 8px;border-radius:var(--radius-sm);
+                  border:1px solid var(--border-strong);background:#fbfcfd;color:var(--text)}
+  .sortsel button{width:30px;height:28px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+                  background:#fbfcfd;color:var(--text);cursor:pointer;font-size:11px}
 
   .tablecard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
   table{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
@@ -165,12 +192,55 @@
   footer{margin-top:18px;padding-top:13px;border-top:1px solid var(--border);font-size:11px;color:var(--muted-2);line-height:1.7}
   footer div+div{margin-top:3px}
 
-  @media (max-width:820px){
+  /* 긴 원재료 문자열이 칸 밖으로 새지 않도록 전역 가드 */
+  td,th,.detail-box,.tier-why,.maker-name{overflow-wrap:anywhere;word-break:break-word}
+
+  @media (max-width:860px){
     .tier-row{grid-template-columns:30px 1fr;gap:3px 10px}
     .tier-ing,.tier-why{grid-column:2}
-    .maker-name{width:150px}
-    input[type=search]{width:100%}
-    .count-pill{margin-left:0}
+    .maker-name{width:140px}
+  }
+
+  /* ── 좁은 화면: 9열 표를 카드로 전환한다 ──
+     가로 스크롤 컨테이너로 감싸면 th 의 sticky 기준이 뷰포트가 아니라 그 컨테이너가
+     되어 헤더 고정이 깨진다. 그래서 감싸지 않고 표 자체를 블록으로 편다. */
+  @media (max-width:640px){
+    body{padding:14px 12px 36px;font-size:13.5px}
+    h1{font-size:19px}
+    .meta{font-size:12px}
+    .searchbar{padding:11px 11px 9px;border-radius:12px}
+    .badges{gap:6px}
+    .badge{padding:5px 10px 5px 9px;font-size:12px}
+    .sortsel{display:flex;margin-left:0;width:100%}
+    .sortsel select{flex:1;min-width:0}
+    .maker-name{width:106px;font-size:12px}
+    .panel-body{padding:2px 11px 11px}
+
+    .tablecard{border-radius:12px;padding:2px 0}
+    table,tbody,tr,td{display:block;width:auto}
+    thead{display:none}                      /* 정렬은 .sortsel 로 대체 */
+    tbody tr.row{position:relative;padding:11px 13px 12px;border-bottom:1px solid var(--border)}
+    tbody tr.row:last-child{border-bottom:0}
+    tbody tr.row:hover td{background:transparent}
+    tbody tr.row td{border:0;padding:1px 0;display:flex;flex-wrap:wrap;gap:2px 8px;
+                    align-items:baseline;min-width:0}
+    tbody tr.row td>*{min-width:0;max-width:100%}
+    tbody tr.row td::before{content:attr(data-label);flex:0 0 62px;color:var(--muted-2);
+                            font-size:10.5px;font-weight:700;letter-spacing:.02em}
+    /* 제품명은 카드 제목, 티어칩은 우상단 배지 */
+    td.c-name{display:block;padding-right:46px;font-size:14.5px;margin-bottom:5px}
+    td.c-name::before{display:none}
+    td.c-tier{position:absolute;top:11px;right:13px;padding:0;display:block}
+    td.c-tier::before{display:none}
+    td.num{text-align:left}
+    td.c-sweet{max-width:none;font-size:11.5px}
+    tr.fake-zero{background:var(--danger-soft)}
+    tr.fake-zero td:first-child{box-shadow:none}
+    tr.fake-zero::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+                         background:var(--danger)}
+    tr.detail td{padding:0}
+    tr.detail td::before{display:none}
+    .detail-box{padding:10px 12px;font-size:11.5px}
   }
 </style>
 </head>
@@ -178,7 +248,19 @@
 <div class="page">
 <header>
   <h1>제로 탄산음료 티어 리포트</h1>
-  <div class="meta">생성 2026-08-10 01:41:08 · 대상 식품유형 탄산음료, 탄산수 · 총 1699개 제품</div>
+  <div class="meta">생성 2026-08-10 03:32:45 · 대상 식품유형 탄산음료, 탄산수 · 총 1699개 제품</div>
+  <section class="searchbar">
+    <div class="searchfield">
+      <svg class="s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" id="q" autocomplete="off" spellcheck="false"
+             placeholder="제품명·제조사 검색   예: 밀키스 제로">
+      <button type="button" class="s-clear" id="qClear" aria-label="검색어 지우기" hidden>&times;</button>
+    </div>
+    <div class="searchmeta">
+      <span class="count-pill"><b id="shownCount">0</b>개 표시</span>
+      <span class="hint">행을 누르면 원재료 전문이 열립니다</span>
+    </div>
+  </section>
   <div class="badges" id="badges"><button class="badge" data-tier="무감미료"><span class="dot"></span>무감미료<span class="cnt">420</span></button><button class="badge" data-tier="S"><span class="dot"></span>S<span class="cnt">3</span></button><button class="badge" data-tier="A"><span class="dot"></span>A<span class="cnt">25</span></button><button class="badge" data-tier="B"><span class="dot"></span>B<span class="cnt">288</span></button><button class="badge" data-tier="C"><span class="dot"></span>C<span class="cnt">257</span></button><button class="badge" data-tier="F"><span class="dot"></span>F<span class="cnt">706</span></button><button class="clear-tiers" id="clearTiers" disabled>전체 해제</button></div>
   <div class="warn" id="fakeZeroBanner">제로 표기 제품 325개 중 22개는 신고 원재료에 당류가 있습니다</div>
   <details class="panel tierlegend" open>
@@ -200,7 +282,6 @@
   </details>
 </header>
 <div class="toolbar">
-  <input type="search" id="q" placeholder="제품명·업소명 검색">
   <div class="chks">
     <label class="chk"><input type="checkbox" id="fFake"> 제로사칭만</label>
     <label class="chk"><input type="checkbox" id="fAllulose"> 알룰로스 함유</label>
@@ -209,7 +290,16 @@
     <label class="chk"><input type="checkbox" id="fNoAspartame"> 아스파탐 없음</label>
     <label class="chk"><input type="checkbox" id="fHasKcal"> 열량 데이터 있음</label>
   </div>
-  <span class="count-pill">표시 <b id="shownCount">0</b>개</span>
+  <label class="sortsel">정렬
+    <select id="sortSel">
+      <option value="티어">티어</option><option value="조합">조합</option>
+      <option value="제품명">제품명</option><option value="업소명">업소명</option>
+      <option value="보고일자">보고일자</option><option value="열량">열량</option>
+      <option value="당류">당류</option><option value="용량">용량</option>
+      <option value="감미료">감미료</option>
+    </select>
+    <button type="button" id="sortDir" aria-label="정렬 방향 전환">&#9650;</button>
+  </label>
 </div>
 <div class="tablecard">
 <table id="tbl">
@@ -283,7 +373,12 @@ function sortedRows(rows) {
 }
 
 function escapeHtml(s) {
-  return (s===undefined||s===null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // 따옴표까지 이스케이프해야 한다. 제품명에 " 가 들어간 제품이 실재하고
+  // (예: "A+Live" 홍삼에너지 드링크), 빠뜨리면 data-name 속성이 깨져
+  // 행 클릭 확장이 동작하지 않는다.
+  return (s===undefined||s===null?'':String(s))
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function tierChip(t) {
@@ -301,14 +396,14 @@ function rowHtml(r) {
   const na = function(v){ return v ? escapeHtml(v) : '<span class="na">\u2014</span>'; };
   return '<tr class="' + cls.join(' ') + '" data-name="' + escapeHtml(r['제품명']) + '">' +
     '<td class="c-tier">' + tierChip(r['티어']) + '</td>' +
-    '<td class="c-combo">' + comboChips(r['조합']) + '</td>' +
+    '<td class="c-combo" data-label="조합">' + comboChips(r['조합']) + '</td>' +
     '<td class="c-name"><span class="pname">' + escapeHtml(r['제품명']) + '</span>' + chips + '</td>' +
-    '<td class="c-maker">' + escapeHtml(r['업소명']) + '</td>' +
-    '<td class="c-date">' + na(r['보고일자']) + '</td>' +
-    '<td class="num">' + na(r['열량']) + '</td>' +
-    '<td class="num">' + na(r['당류']) + '</td>' +
-    '<td class="c-vol">' + na(r['용량']) + '</td>' +
-    '<td class="c-sweet">' + na(r['감미료']) + '</td></tr>';
+    '<td class="c-maker" data-label="업소명">' + escapeHtml(r['업소명']) + '</td>' +
+    '<td class="c-date" data-label="보고일자">' + na(r['보고일자']) + '</td>' +
+    '<td class="num" data-label="열량">' + na(r['열량']) + '</td>' +
+    '<td class="num" data-label="당류">' + na(r['당류']) + '</td>' +
+    '<td class="c-vol" data-label="용량">' + na(r['용량']) + '</td>' +
+    '<td class="c-sweet" data-label="감미료">' + na(r['감미료']) + '</td></tr>';
 }
 
 function detailHtml(r) {
@@ -345,6 +440,9 @@ function render() {
   });
   document.getElementById('clearTiers').disabled = state.tierFilters.size === 0;
   document.getElementById('shownCount').textContent = rows.length.toLocaleString();
+  document.getElementById('qClear').hidden = !document.getElementById('q').value;
+  document.getElementById('sortSel').value = state.sortKey;
+  document.getElementById('sortDir').textContent = state.sortDir === 1 ? '\u25b2' : '\u25bc';
   document.querySelectorAll('th[data-key]').forEach(function(th) {
     th.classList.toggle('sorted', th.dataset.key === state.sortKey);
     th.setAttribute('data-dir', state.sortDir === 1 ? '\u25b2' : '\u25bc');
@@ -352,6 +450,16 @@ function render() {
 }
 
 document.getElementById('q').addEventListener('input', function(e) { state.q = norm(e.target.value); render(); });
+document.getElementById('qClear').addEventListener('click', function() {
+  const q = document.getElementById('q');
+  q.value = ''; state.q = ''; q.focus(); render();
+});
+document.getElementById('sortSel').addEventListener('change', function(e) {
+  state.sortKey = e.target.value; state.sortDir = 1; render();
+});
+document.getElementById('sortDir').addEventListener('click', function() {
+  state.sortDir *= -1; render();
+});
 document.getElementById('fFake').addEventListener('change', function(e) { state.fFake = e.target.checked; render(); });
 document.getElementById('fAllulose').addEventListener('change', function(e) { state.fAllulose = e.target.checked; render(); });
 document.getElementById('fErythritol').addEventListener('change', function(e) { state.fErythritol = e.target.checked; render(); });
