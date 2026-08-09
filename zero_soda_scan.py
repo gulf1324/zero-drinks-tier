@@ -1305,6 +1305,7 @@ def sync(key, types, raw_path, cache_path, out_csv, out_html, docs_html, force=F
         os.makedirs(os.path.dirname(docs_html) or ".", exist_ok=True)
         shutil.copyfile(out_html, docs_html)
         print(f"[sync] {out_html} -> {docs_html}")
+        write_seo_files(os.path.dirname(docs_html) or ".", stats["generated_at"][:10])
 
     if update_readme(stats, fetched_at):
         print("[readme] 수집 현황 블록 갱신")
@@ -1314,7 +1315,43 @@ def sync(key, types, raw_path, cache_path, out_csv, out_html, docs_html, force=F
 
 
 # 커밋 대상. 재생성 산출물(CSV·로컬 HTML)은 .gitignore 대상이라 제외한다.
-PUSH_PATHS = [DEFAULT_RAW, DEFAULT_NUTRITION_CACHE, DEFAULT_DOCS_HTML, README_PATH]
+DEFAULT_DOCS_DIR = os.path.dirname(DEFAULT_DOCS_HTML) or "."
+PUSH_PATHS = [
+    DEFAULT_RAW, DEFAULT_NUTRITION_CACHE, DEFAULT_DOCS_HTML, README_PATH,
+    os.path.join(DEFAULT_DOCS_DIR, "sitemap.xml"),
+    os.path.join(DEFAULT_DOCS_DIR, "robots.txt"),
+]
+
+
+def write_seo_files(docs_dir, lastmod):
+    """sitemap.xml / robots.txt 생성. lastmod 는 리포트 산출일(YYYY-MM-DD).
+
+    robots.txt 는 원 단위(도메인 루트)로만 읽히므로 하위 경로인 현재 배포
+    주소에서는 크롤러가 참조하지 않는다. 커스텀 도메인으로 옮길 때를 대비해
+    같이 두되, 색인 유도는 sitemap 을 Search Console 에 직접 제출해서 한다.
+    """
+    sitemap = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        '  <url>\n'
+        f'    <loc>{PAGE_URL}</loc>\n'
+        f'    <lastmod>{lastmod}</lastmod>\n'
+        '    <changefreq>monthly</changefreq>\n'
+        '    <priority>1.0</priority>\n'
+        '  </url>\n'
+        '</urlset>\n'
+    )
+    robots = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "\n"
+        f"Sitemap: {PAGE_URL}sitemap.xml\n"
+    )
+    for name, body in (("sitemap.xml", sitemap), ("robots.txt", robots)):
+        path = os.path.join(docs_dir, name)
+        with open(path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(body)
+    print(f"[seo] sitemap.xml / robots.txt 갱신 (lastmod {lastmod})")
 
 
 def git_push(message=None):

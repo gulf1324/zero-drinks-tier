@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://gulf1324.github.io/zero-drinks-tier/sitemap.xml
