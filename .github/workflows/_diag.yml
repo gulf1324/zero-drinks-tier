@@ -5,38 +5,51 @@ on:
 jobs:
   diag:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
-      - name: 러너 위치
-        run: curl -s --max-time 20 https://ipinfo.io/json || echo "ipinfo 실패"
-
-      - name: 식약처 호스트 TCP 연결
-        run: |
-          for url in \
-            "http://openapi.foodsafetykorea.go.kr/" \
-            "https://openapi.foodsafetykorea.go.kr/" ; do
-            echo "--- $url"
-            curl -sS -o /dev/null --max-time 60 \
-              -w "code=%{http_code} dns=%{time_namelookup}s conn=%{time_connect}s total=%{time_total}s\n" \
-              "$url" || echo "실패(exit $?)"
-          done
-
-      - name: C002 실제 호출 (1건)
+      - name: 조건 검색 소요시간 측정
         env:
           K: ${{ secrets.FOOD_API_KEY }}
         run: |
-          for base in "http://openapi.foodsafetykorea.go.kr" "https://openapi.foodsafetykorea.go.kr"; do
-            echo "--- $base"
-            curl -sS -o /tmp/r.json --max-time 90 \
+          B=http://openapi.foodsafetykorea.go.kr/api
+          COND=$(python3 -c "import urllib.parse;print(urllib.parse.quote('PRDLST_DCNM=탄산음료', safe='='))")
+          echo "cond=$COND"
+          for rng in "1/1" "1/100" "101/200"; do
+            echo "--- $rng"
+            curl -sS -o /tmp/r.json --max-time 300 \
               -w "code=%{http_code} total=%{time_total}s size=%{size_download}\n" \
-              "$base/api/$K/C002/json/1/1" || echo "실패(exit $?)"
-            head -c 200 /tmp/r.json 2>/dev/null | sed "s/$K/KEY/g"; echo
+              "$B/$K/C002/json/$rng/$COND" || echo "실패(exit $?)"
+            head -c 120 /tmp/r.json | sed "s/$K/KEY/g"; echo
           done
 
-      - name: 공공데이터포털 도달성
+      - name: 동일 호출 3회 반복 (변동성 확인)
+        env:
+          K: ${{ secrets.FOOD_API_KEY }}
         run: |
-          curl -sS -o /dev/null --max-time 60 \
-            -w "code=%{http_code} total=%{time_total}s\n" \
-            -H "Referer: https://www.data.go.kr/data/15100066/standard.do" \
-            -H "X-Requested-With: XMLHttpRequest" \
-            "https://www.data.go.kr/data/15100066/standard.do" || echo "실패(exit $?)"
+          B=http://openapi.foodsafetykorea.go.kr/api
+          COND=$(python3 -c "import urllib.parse;print(urllib.parse.quote('PRDLST_DCNM=탄산음료', safe='='))")
+          for i in 1 2 3; do
+            curl -sS -o /dev/null --max-time 300 \
+              -w "try$i code=%{http_code} total=%{time_total}s\n" \
+              "$B/$K/C002/json/1/100/$COND" || echo "try$i 실패(exit $?)"
+          done
+
+      - name: 파이썬 urllib 로 동일 호출 (스크립트와 동일 경로)
+        env:
+          FOOD_API_KEY: ${{ secrets.FOOD_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import os, time, urllib.request, urllib.parse
+          key = os.environ["FOOD_API_KEY"]
+          cond = urllib.parse.quote("PRDLST_DCNM=탄산음료", safe="=")
+          url = f"http://openapi.foodsafetykorea.go.kr/api/{key}/C002/json/1/100/{cond}"
+          for attempt in range(3):
+              t = time.time()
+              try:
+                  req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                  with urllib.request.urlopen(req, timeout=120) as r:
+                      n = len(r.read())
+                  print(f"try{attempt}: ok {n} bytes in {time.time()-t:.1f}s")
+              except Exception as e:
+                  print(f"try{attempt}: FAIL {type(e).__name__} {e} after {time.time()-t:.1f}s")
+          PY
