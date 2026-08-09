@@ -647,6 +647,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   ],
   "creditText": "식품의약품안전처 식품(첨가물)품목제조보고(원재료), 공공데이터포털 전국통합식품영양성분정보",
   "sameAs": "https://github.com/gulf1324/zero-drinks-tier",
+  "license": "https://github.com/gulf1324/zero-drinks-tier/blob/main/NOTICE.md",
   "distribution": [
     {"@type": "DataDownload", "encodingFormat": "text/html", "contentUrl": "__PAGE_URL__"},
     {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": "https://raw.githubusercontent.com/gulf1324/zero-drinks-tier/main/zero_soda_raw.json"}
