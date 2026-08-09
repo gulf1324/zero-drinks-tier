@@ -2,12 +2,14 @@
 
 # 대체당 제로 음료 티어
 
+[![리포트 바로가기](https://img.shields.io/badge/%F0%9F%A5%A4%20%EB%A6%AC%ED%8F%AC%ED%8A%B8%20%EB%B0%94%EB%A1%9C%EA%B0%80%EA%B8%B0-gulf1324.github.io%2Fzero--drinks--tier-2563eb?style=for-the-badge&logoColor=white)](https://gulf1324.github.io/zero-drinks-tier/)
+
+### 🔗 https://gulf1324.github.io/zero-drinks-tier/
+
 **정부 공식 데이터 · 동료평가 논문 근거 · 오픈 데이터**
 
 국내 유통 탄산음료·탄산수 **1,704개**의 대체당 구성을 식약처 품목제조보고 원재료 전문으로 수집하고,
 피어리뷰 메타분석 근거에 따라 **S~F 티어**로 분류합니다.
-
-[![리포트 바로가기](https://img.shields.io/badge/%F0%9F%94%8D%20%EB%A6%AC%ED%8F%AC%ED%8A%B8-%EB%B0%94%EB%A1%9C%EA%B0%80%EA%B8%B0-2563eb?style=for-the-badge)](https://gulf1324.github.io/zero-drinks-tier/)
 
 [![데이터](https://img.shields.io/badge/data-%EC%8B%9D%ED%92%88%EC%95%88%EC%A0%84%EB%82%98%EB%9D%BC%20C002-005BAC)](https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002)
 [![영양](https://img.shields.io/badge/nutrition-%EA%B3%B5%EA%B3%B5%EB%8D%B0%EC%9D%B4%ED%84%B0%ED%8F%AC%ED%84%B8%2015100066-0B5FA5)](https://www.data.go.kr/data/15100066/standard.do)
