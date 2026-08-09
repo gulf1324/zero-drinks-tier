@@ -1,0 +1,273 @@
+<div align="center">
+
+# 제로 탄산음료 감미료 티어 리포트
+
+**마케팅 문구가 아니라, 식약처에 신고된 원재료 전문으로 판정합니다.**
+
+국내 유통 탄산음료·탄산수 **1,704개 제품**의 대체당 구성을 정부 공식 데이터로 수집하고,
+동료평가 논문 근거에 따라 **S~F 티어**로 분류한 오픈 데이터 프로젝트.
+
+[![리포트 바로가기](https://img.shields.io/badge/%F0%9F%94%8D%20%EB%A6%AC%ED%8F%AC%ED%8A%B8-%EB%B0%94%EB%A1%9C%EA%B0%80%EA%B8%B0-2563eb?style=for-the-badge)](https://gulf1324.github.io/zero-drinks-tier/)
+
+[![데이터](https://img.shields.io/badge/data-%EC%8B%9D%ED%92%88%EC%95%88%EC%A0%84%EB%82%98%EB%9D%BC%20C002-005BAC)](https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002)
+[![영양](https://img.shields.io/badge/nutrition-%EA%B3%B5%EA%B3%B5%EB%8D%B0%EC%9D%B4%ED%84%B0%ED%8F%AC%ED%84%B8%2015100066-0B5FA5)](https://www.data.go.kr/data/15100066/standard.do)
+[![python](https://img.shields.io/badge/python-3.8%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![dependencies](https://img.shields.io/badge/dependencies-0-success)](#설치--실행)
+[![tests](https://img.shields.io/badge/tests-25%20passing-brightgreen)](test_classify.py)
+[![last commit](https://img.shields.io/github/last-commit/gulf1324/zero-drinks-tier)](https://github.com/gulf1324/zero-drinks-tier/commits/main)
+
+</div>
+
+---
+
+## 왜 만들었나
+
+"제로"라고 적힌 음료가 전부 같지 않습니다. 어떤 건 알룰로스를, 어떤 건 아스파탐을,
+어떤 건 **제로라고 써놓고 농축과즙을** 넣습니다. 그런데 시중의 비교글은 대부분
+기준이 제각각이고 출처가 불명확합니다.
+
+이 프로젝트는 **추정을 전혀 하지 않습니다.** 제조사가 식약처에 법적으로 신고한
+품목제조보고 원재료 전문만 읽고, 거기 적힌 감미료 표기만으로 판정합니다.
+데이터에 없으면 **없다고 표시**합니다.
+
+---
+
+## 데이터 출처
+
+모든 수치는 아래 **정부 공식 API**에서 직접 수집하며, 중간 가공·수기 입력이 없습니다.
+
+<table>
+<thead>
+<tr><th width="52"></th><th>출처</th><th>사용 내용</th><th>인증키</th></tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><img src="https://www.google.com/s2/favicons?domain=foodsafetykorea.go.kr&sz=64" width="32" height="32" alt="식품안전나라"></td>
+<td>
+<b><a href="https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002">식품안전나라 OpenAPI <code>C002</code></a></b><br>
+<sub>식품의약품안전처 · 식품(첨가물)품목제조보고(원재료)</sub>
+</td>
+<td>제품명 · 업소명 · 식품유형 · <b>원재료 전문</b> · 보고일자 · 품목보고번호</td>
+<td align="center">필요</td>
+</tr>
+<tr>
+<td align="center"><img src="https://www.google.com/s2/favicons?domain=data.go.kr&sz=64" width="32" height="32" alt="공공데이터포털"></td>
+<td>
+<b><a href="https://www.data.go.kr/data/15100066/standard.do">공공데이터포털 표준데이터 <code>15100066</code></a></b><br>
+<sub>전국통합식품영양성분정보(가공식품)</sub>
+</td>
+<td>열량(kcal) · 당류(g) · 기준량 · 내용량</td>
+<td align="center">불필요</td>
+</tr>
+<tr>
+<td align="center"><img src="https://www.google.com/s2/favicons?domain=mfds.go.kr&sz=64" width="32" height="32" alt="식품의약품안전처"></td>
+<td>
+<b><a href="https://www.mfds.go.kr/">식품의약품안전처</a></b><br>
+<sub>소관 부처 · 제로칼로리 표시기준의 근거</sub>
+</td>
+<td>표시광고 기준 해석 (100mL당 4kcal 미만)</td>
+<td align="center">—</td>
+</tr>
+</tbody>
+</table>
+
+> **조인 키** — C002의 `PRDLST_REPORT_NO` ↔ 영양성분DB의 `ITEM_MNFTR_RPT_NO`
+> (품목제조보고번호). 제품명 문자열 매칭이 아니라 **법정 보고번호로 결합**하므로
+> 동명이인 제품이 섞이지 않습니다.
+
+<sub>이용 조건은 각 출처 페이지의 이용약관을 따릅니다. 원본 데이터의 저작권은 해당 기관에 있습니다.</sub>
+
+---
+
+## 수집 현황
+
+`2026-08-07` 수집 · `2026-08-09` 산출 기준
+
+| 항목 | 값 |
+|---|---:|
+| C002 원본 응답 행 | 2,416건 |
+| 주류·무알콜맥주 등 비대상 제외 | −108건 |
+| 제품 단위로 통합한 최종 레코드 | **1,704개** |
+| 열량·당류 조인 성공 | 901개 (52.9%) |
+| 제품명에 제로 표기 | 325개 |
+| └ 그중 **원재료에 당류가 있는 제품** | **22개** |
+| 배합 변경 이력이 확인된 제품 | 311개 |
+| 제로↔일반판 짝이 매칭된 제품 | 72개 |
+
+### 티어 분포
+
+| 무감미료 | S | A | B | C | D | F |
+|---:|---:|---:|---:|---:|---:|---:|
+| 420 | 3 | 25 | 288 | 255 | 0 | 713 |
+
+<sub>D 티어(당알코올 단독)는 탄산음료 카테고리에서 **실제로 0건**입니다. 판정 규칙은 유지하되 결과를 있는 그대로 표시합니다.</sub>
+
+**S 티어 전체 3개** — 알룰로스만 사용:
+
+| 제품명 | 업소명 | 보고일자 |
+|---|---|---|
+| 암바사 ZERO by 환타 | 코카콜라음료주식회사 외 1곳 | 2025-04-29 |
+| 테라 제로 | 하이트진로(주) 외 3곳 | 2026-06-03 |
+| 제로칼로리 포도(알룰로스 100%) CAN | (주)금강비앤에프 | 2023-06-08 |
+
+---
+
+## 티어 판정 규칙
+
+원재료 문자열에서 감미료를 탐지하고, **가장 나쁜 등급을 최종 티어로** 부여합니다.
+(알룰로스 + 수크랄로스 → `B`)
+
+| 티어 | 성분 | 근거 | 출처 |
+|:--:|---|---|---|
+| **S** | 알룰로스, 타가토스 | 0.2~0.4 kcal/g. 식후 혈당·인슐린을 오히려 **낮춤** (allulose 식후혈당 iAUC SMD −0.66) | [AJCN 2026](https://doi.org/10.1016/j.ajcnut.2026.101314) · [PMID 41985675](https://pubmed.ncbi.nlm.nih.gov/41985675/) |
+| **A** | 스테비올배당체, 나한과 | 0 kcal, 혈당 영향 없음, 장기 안전성 양호 | 아래 *한계* 참고 |
+| **B** | 수크랄로스, 아세설팜칼륨, 아스파탐, 사카린 | RCT 21건 메타분석에서 공복 인슐린·HbA1c **상승** | [Curr Atheroscler Rep 2026](https://doi.org/10.1007/s11883-026-01429-9) · [PMID 42347889](https://pubmed.ncbi.nlm.nih.gov/42347889/) · [Tufts](https://now.tufts.edu/2026/06/30/growing-evidence-sugar-substitutes-disrupt-gut-health-and-metabolism) |
+| **C** | 에리스리톨, 자일리톨 | 혈당은 무해하나 혈소판 반응성·심혈관 사건 신호 | [Nature Medicine 2023](https://www.nature.com/articles/s41591-023-02223-9) · [ATVB 2024](https://www.ahajournals.org/doi/10.1161/ATVBAHA.124.321019) |
+| **D** | 말티톨, 소르비톨, 락티톨 등 당알코올 | 실제 2~2.6 kcal/g, 말티톨은 GI 35~52로 혈당 상승 | 성분 규격 기준 |
+| **F** | 설탕, 액상과당, 농축과즙, 올리고당 등 | 제로가 아님 | — |
+| 무감미료 | 감미료 표기 없음 | 탄산수 등 | — |
+
+### 근거의 한계 (반드시 함께 읽어주세요)
+
+- **C 티어의 인과관계는 확정되지 않았습니다.** 에리스리톨 심혈관 신호는 관찰연구에서
+  제기되고 소규모 개입연구로 보강된 단계입니다. "에리스리톨을 먹으면 심장병에 걸린다"가
+  **아닙니다.**
+- **A 티어는 이 프로젝트에서 가장 약한 근거입니다.** B 티어 판정의 근거인 Tufts 리뷰는
+  검토 대상에 **스테비아도 포함**했습니다. 스테비아를 A로 둔 것은 현재까지 0 kcal·무혈당
+  영향과 장기 안전성 자료가 상대적으로 양호하다는 판단이며, 후속 연구로 바뀔 수 있습니다.
+- **티어는 건강 조언이 아닙니다.** 성분 구성의 상대 비교일 뿐이며, 섭취량·개인 질환·
+  전체 식단을 반영하지 않습니다.
+- **'제로 사칭'은 법 위반을 뜻하지 않습니다.** 제로칼로리 표시 기준은 100mL당 4kcal
+  미만이므로, 소량의 당류가 들어가도 적법하게 "제로"를 표기할 수 있습니다. 이 리포트는
+  *표기와 원재료의 불일치*를 보여줄 뿐입니다.
+
+---
+
+## 리포트 기능
+
+**[gulf1324.github.io/zero-drinks-tier](https://gulf1324.github.io/zero-drinks-tier/)** — 외부 리소스 0개의 단일 HTML 파일
+
+- 티어 배지 **다중 선택** 필터 (S + A 동시 선택 = 합집합)
+- 제품명·업소명 실시간 검색
+- 필터 6종 — 제로사칭만 / 알룰로스 함유 / 에리스리톨 함유 / 카페인 없음 / 아스파탐 없음 / 열량 데이터 있음
+- 9개 열 전체 정렬 (티어는 등급 순, 열량·당류는 수치 순)
+- 행 클릭 시 **원재료 전문 + 배합 변경 이력** 확장
+- 제조사별 티어 분포 막대
+- 데이터 없는 칸은 `—`로 표시 — **0과 명확히 구분**
+
+---
+
+## 설치 · 실행
+
+**Python 3.8+ · 외부 의존성 0개** (표준 라이브러리만 사용)
+
+```bash
+git clone https://github.com/gulf1324/zero-drinks-tier.git
+cd zero-drinks-tier
+```
+
+C002 API 키는 [식품안전나라](https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002)에서 발급받아
+`.env` 파일 또는 환경변수로 전달합니다. **소스에 하드코딩하지 마세요.**
+
+```bash
+echo "FOOD_API_KEY=발급받은키" > .env
+```
+
+```bash
+python zero_soda_scan.py --mode probe       # 응답 필드명 확인 (새 환경에선 항상 이것부터)
+python zero_soda_scan.py --mode collect     # C002 전수 수집       [키 필요]
+python zero_soda_scan.py --mode nutrition   # 열량·당류 조인       [키 불필요]
+python zero_soda_scan.py --mode build       # CSV + HTML 산출      [오프라인]
+python zero_soda_scan.py --mode run         # 위 3단계 일괄 실행
+```
+
+```bash
+# 특정 제품만 콘솔 조회
+python zero_soda_scan.py --mode build --find 밀키스제로
+
+# 이전 스냅샷과 비교 — 신제품 / 배합변경 / 단종 탐지
+python zero_soda_scan.py --mode diff --diff-against zero_soda_raw.20260101.json
+```
+
+### 재현성
+
+`build`는 **API를 전혀 호출하지 않습니다.** `zero_soda_raw.json`만 있으면
+누구나 같은 입력으로 같은 결과를 재현할 수 있습니다.
+
+```bash
+python -m unittest test_classify -v    # 25 tests — 분류 로직 회귀 검증
+```
+
+---
+
+## 파일 구성
+
+| 파일 | 역할 |
+|---|---|
+| `zero_soda_scan.py` | 수집 · 영양조인 · 산출 CLI. 표준 라이브러리만 사용 |
+| `test_classify.py` | 분류/알코올판정/파생플래그 테스트 25개 |
+| `docs/index.html` | GitHub Pages로 서빙되는 리포트 |
+| `zero_soda_report.html` | 로컬 산출 리포트 (단일 파일) |
+| `zero_soda_result.csv` | 결과 CSV (UTF-8 BOM, 엑셀 호환) |
+| `zero_soda_raw.json` | C002 원본 응답 보관 — 재분류 시 API 재호출 불필요 |
+| `zero_soda_nutrition.json` | 영양 조인 캐시 (1,211행) |
+
+<sub>CSV·JSON·로컬 HTML은 `.gitignore` 대상입니다. 각자 API 키로 재생성하세요.</sub>
+
+### 결과 CSV 열
+
+`티어` `조합` `제품명` `식품유형` `업소명` `보고일자` `감미료` `열량` `기준량` `당류` `용량`
+`이력행수` `배합변경` `티어불일치` `원재료전문` `제로표기` `제로사칭` `카페인` `아스파탐` `일반판` `일반판티어`
+
+---
+
+## 구현에서 신경 쓴 것
+
+정부 데이터는 생각보다 지저분합니다. 다음은 실제로 오판을 냈고, 고친 지점들입니다.
+
+**1. 한 제품에 여러 품목보고 행이 존재합니다.**
+용량별·공장별·리뉴얼별로 중복되고 과거 배합이 그대로 남아 있습니다.
+같은 제품명이면 **보고일자·변경일자 최신 행을 현행으로** 삼고, 나머지는 이력으로 접어둡니다.
+구버전 배합을 현행처럼 보여주지 않습니다.
+
+**2. 표기가 흔들립니다.**
+알룰로스/알룰로**오**스, 에리스리톨/에리스리**트리**톨/에리**트**리톨, 소르비톨/솔비톨이 혼재합니다.
+**46개 표기 토큰**을 사전에 등록하고, 비교 전 공백을 제거하며, **긴 표기를 우선 매칭**합니다.
+
+**3. 부분 문자열 함정.**
+`환원물엿`을 `물엿`으로, `진저에일`을 `에일`(주류)로, `플럼`을 `럼`으로 잡으면 안 됩니다.
+주류 판정은 **완전일치 집합 + 접두사 + 제한된 부분문자열**로 분리했고,
+`맥아추출물분말`·`맥아시럽`(착향 첨가물)과 `맥아`(맥주 원료)를 구분합니다.
+
+**4. 괄호 안의 쉼표.**
+`구연산(결정), 비타민C`를 단순 `split(',')`하면 원재료가 깨집니다.
+**괄호 depth 0의 쉼표로만** 분할합니다.
+
+**5. 스테비아 = A 라는 단순화 금지.**
+스테비아 제품은 대부분 **에리스리톨과 혼합**됩니다. 원재료 전문에서 동반 여부를 확인해
+실제로는 C로 떨어지는 제품이 다수입니다.
+
+**6. 부정 표현 처리.**
+`설탕무첨가`·`제로슈가`를 `설탕`으로 오탐하지 않습니다.
+
+---
+
+## 기여
+
+표기 흔들림(새로운 감미료 명칭)이나 오분류를 발견하면
+[이슈](https://github.com/gulf1324/zero-drinks-tier/issues)로 알려주세요.
+**해당 제품명과 원재료 전문**을 함께 적어주시면 바로 반영할 수 있습니다.
+
+새 표기는 `zero_soda_scan.py`의 `SWEETENERS` 딕셔너리에 추가하고,
+`test_classify.py`에 회귀 테스트를 함께 넣어주세요.
+
+---
+
+<div align="center">
+<sub>
+
+데이터 © 식품의약품안전처 · 공공데이터포털 — 각 기관 이용약관에 따름
+이 리포트는 의학적 조언이 아니며, 특정 제품의 구매·회피를 권유하지 않습니다.
+
+</sub>
+</div>
