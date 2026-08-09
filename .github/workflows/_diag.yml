@@ -1,0 +1,35 @@
+name: 임시 진단2
+on:
+  workflow_dispatch:
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: 조건 유형별 반응 (ASCII vs 한글)
+        env:
+          K: ${{ secrets.FOOD_API_KEY }}
+        run: |
+          B=http://openapi.foodsafetykorea.go.kr/api
+          run() {
+            label="$1"; path="$2"
+            printf '%-34s' "$label"
+            curl -sS -o /tmp/r.json --max-time 45 \
+              -w "code=%{http_code} total=%{time_total}s size=%{size_download}\n" \
+              "$B/$K/C002/json/$path" || echo " 실패(exit $?)"
+          }
+          run "조건없음"            "1/1"
+          run "ASCII 보고번호 조건"  "1/1/PRDLST_REPORT_NO=1997040105528"
+          run "ASCII 영문 제품명"    "1/1/PRDLST_NM=ZERO"
+          run "한글 제품명(제로)"     "1/1/$(python3 -c "import urllib.parse;print(urllib.parse.quote('PRDLST_NM=제로',safe='='))")"
+          run "한글 식품유형(탄산음료)" "1/1/$(python3 -c "import urllib.parse;print(urllib.parse.quote('PRDLST_DCNM=탄산음료',safe='='))")"
+
+      - name: 공공데이터포털에 동일 데이터가 있는지
+        run: |
+          curl -sS --max-time 60 -G \
+            -H "Accept: application/json" \
+            --data-urlencode "query=품목제조보고" \
+            "https://www.data.go.kr/tcs/dss/selectDataSetList.do" \
+            -o /tmp/s.html -w "search code=%{http_code} size=%{size_download}\n" || echo "실패"
+          grep -o "품목제조보고[^<]\{0,40\}" /tmp/s.html | head -20 || echo "매칭 없음"
