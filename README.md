@@ -244,7 +244,7 @@ python -m unittest test_classify -v    # 25 tests — 분류 로직 회귀 검�
 |---|---|
 | `zero_soda_scan.py` | 수집 · 영양조인 · 산출 CLI. 표준 라이브러리만 사용 |
 | `test_classify.py` | 분류/알코올판정/파생플래그 테스트 25개 |
-| `LICENSE` | 코드 MIT + 데이터 출처 고지 |
+| `LICENSE` · `NOTICE.md` | 코드 MIT / 데이터 출처·이용조건 |
 | `docs/index.html` | GitHub Pages로 서빙되는 리포트 |
 | `zero_soda_report.html` | 로컬 산출 리포트 (단일 파일) |
 | `zero_soda_result.csv` | 결과 CSV (UTF-8 BOM, 엑셀 호환) |
@@ -307,7 +307,7 @@ python -m unittest test_classify -v    # 25 tests — 분류 로직 회귀 검�
 | 대상 | 조건 |
 |---|---|
 | **소스 코드** (`zero_soda_scan.py`, `test_classify.py`, 템플릿) | [MIT](LICENSE) — 자유롭게 사용·수정·재배포 |
-| **데이터** (`zero_soda_raw.json`, `zero_soda_nutrition.json`, CSV, 리포트 수치) | 원 제공 기관 이용약관에 따름 |
+| **데이터** (`zero_soda_raw.json`, `zero_soda_nutrition.json`, CSV, 리포트 수치) | 원 제공 기관 이용약관에 따름 → [NOTICE.md](NOTICE.md) |
 
 데이터의 권리는 **식품의약품안전처**와 **공공데이터포털**에 있습니다.
 이 저장소의 스냅샷은 재현성을 위해 보관한 사본이므로, 재사용하실 때는
