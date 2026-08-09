@@ -44,6 +44,7 @@ import csv
 import json
 import os
 import re
+import shutil
 import sys
 import time
 import urllib.error
@@ -64,6 +65,7 @@ DEFAULT_RAW = "zero_soda_raw.json"
 DEFAULT_NUTRITION_CACHE = "zero_soda_nutrition.json"
 DEFAULT_OUT_CSV = "zero_soda_result.csv"
 DEFAULT_OUT_HTML = "zero_soda_report.html"
+DEFAULT_DOCS_HTML = os.path.join("docs", "index.html")
 PAGE_URL = "https://gulf1324.github.io/zero-drinks-tier/"   # GitHub Pages 배포 주소 (canonical/OG용)
 
 
@@ -283,7 +285,8 @@ def probe(key):
 
 
 # ── Step 1: collect ──────────────────────────────────────────
-def collect(key, types, out_raw):
+def fetch_all(key, types):
+    """식품유형별 전수 수집. (rows, counts) 반환. 파일에 쓰지 않는다."""
     rows = []
     counts = {}
     for t in types:
@@ -310,15 +313,27 @@ def collect(key, types, out_raw):
             time.sleep(SLEEP)
         rows.extend(type_rows)
         counts[t] = len(type_rows)
+    return rows, counts
 
+
+def sort_rows(rows):
+    """보고번호 기준 안정 정렬. API 응답 순서가 흔들려도 git diff가 최소가 된다."""
+    return sorted(rows, key=lambda r: (pick(r, FIELD_REPORT_NO), pick(r, FIELD_NAME)))
+
+
+def write_raw(rows, types, path, fetched_at=None):
     data = {
-        "fetched_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "fetched_at": fetched_at or time.strftime("%Y-%m-%dT%H:%M:%S"),
         "types": types,
-        "rows": rows,
+        "rows": sort_rows(rows),
     }
-    with open(out_raw, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=1)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=1, sort_keys=True)
 
+
+def collect(key, types, out_raw):
+    rows, counts = fetch_all(key, types)
+    write_raw(rows, types, out_raw)
     print(f"\n완료: 총 {len(rows):,}건 -> {out_raw}")
     for t, c in counts.items():
         print(f"  {t}: {c:,}건")
@@ -418,6 +433,65 @@ def fetch_nutrition(wanted_nos, cache_path, refresh):
     with open(cache_path, "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False, indent=1)
     return table
+
+
+def load_nutrition_cache(cache_path):
+    """(rows, checked) 반환.
+
+    checked = 표준데이터에서 '찾아본' 보고번호 전체. 영양DB에 없는 제품은
+    rows에 남지 않으므로, checked를 따로 기록하지 않으면 매달 다시 전수
+    조회하게 된다 (조회 대상 2,410건 중 매칭은 1,211건뿐).
+    """
+    if not os.path.exists(cache_path):
+        return {}, set()
+    with open(cache_path, encoding="utf-8") as f:
+        cache = json.load(f)
+    rows = cache.get("rows", {})
+    checked = set(cache.get("checked") or rows)
+    return rows, checked
+
+
+def write_nutrition_cache(table, checked, cache_path):
+    cache = {
+        "fetched_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "source": f"{NUTRI_URL}?publicDataPk={NUTRI_PK}",
+        "checked": sorted(checked),
+        "rows": dict(sorted(table.items())),
+    }
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(cache, f, ensure_ascii=False, indent=1, sort_keys=True)
+
+
+def sync_nutrition(wanted_nos, cache_path):
+    """증분 갱신. 아직 조회한 적 없는 보고번호가 있을 때만 표준데이터를 내려받는다.
+
+    표준데이터는 보고번호 조건 검색을 지원하지 않아 전체를 훑어야 하므로
+    (수십 페이지, 수 분 소요), 신규 제품이 없는 달에는 다운로드 자체를
+    건너뛰는 것이 유일하면서 가장 큰 최적화다.
+    반환: (table, downloaded)
+    """
+    rows, checked = load_nutrition_cache(cache_path)
+    unseen = wanted_nos - checked
+    stale = set(rows) - wanted_nos
+
+    if not unseen:
+        if stale:
+            rows = {no: v for no, v in rows.items() if no in wanted_nos}
+            write_nutrition_cache(rows, wanted_nos, cache_path)
+            print(f"[nutrition] 신규 보고번호 없음 — 다운로드 생략, 단종 {len(stale):,}건 정리")
+        else:
+            print("[nutrition] 신규 보고번호 없음 — 다운로드 생략")
+        return rows, False
+
+    print(f"[nutrition] 미조회 보고번호 {len(unseen):,}건 — 표준데이터 전수 조회")
+    fresh = fetch_nutrition(wanted_nos, cache_path, refresh=True)
+    if not fresh:
+        print("[nutrition] 조회 실패 — 기존 캐시를 유지합니다")
+        return rows, False
+    merged = {no: v for no, v in rows.items() if no in wanted_nos}
+    merged.update(fresh)
+    write_nutrition_cache(merged, wanted_nos, cache_path)
+    return merged, True
 
 
 def nutrition_mode(raw_path, cache_path, refresh):
@@ -954,12 +1028,14 @@ def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False
               "(--mode nutrition 을 먼저 실행하면 채울 수 있습니다)")
 
     records = canonicalize(rows, nutrition)
+    excluded = 0
     if not keep_alcohol:
         before = len(records)
         records = [r for r in records
                    if r["식품유형"] not in NON_BEVERAGE_TYPES
                    and not is_alcoholic(r["제품명"], r["원재료전문"])]
-        print(f"[build] 주류·비음료 {before - len(records)}건 제외 "
+        excluded = before - len(records)
+        print(f"[build] 주류·비음료 {excluded}건 제외 "
               f"(--keep-alcohol 로 유지 가능)")
     meta = annotate(records)
     records.sort(key=lambda r: (TIER_RANK.get(r["티어"], 99), r["제품명"]))
@@ -1005,6 +1081,23 @@ def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False
 
     if find_text:
         find_products(records, find_text)
+
+    tier_counts = {}
+    for r in records:
+        tier_counts[r["티어"]] = tier_counts.get(r["티어"], 0) + 1
+    return {
+        "records": records,
+        "raw_rows": len(rows),
+        "excluded": excluded,
+        "total": len(records),
+        "tier_counts": tier_counts,
+        "with_kcal": sum(1 for r in records if r["열량"]),
+        "zero_total": sum(1 for r in records if r["제로표기"] == "Y"),
+        "fake_zero": sum(1 for r in records if r["제로사칭"] == "Y"),
+        "recipe_changed": sum(1 for r in records if r["배합변경"] == "Y"),
+        "paired": sum(1 for r in records if r["일반판"]),
+        "generated_at": meta_info["generated_at"],
+    }
 
 
 # ── Step 7-a: --find ─────────────────────────────────────────
@@ -1083,10 +1176,148 @@ def diff_mode(raw_path, diff_against):
         print(f"  [{r['티어']}] {n} / {r['업소명']}")
 
 
+# ── Step 8: 월간 증분 동기화 ─────────────────────────────────
+README_PATH = "README.md"
+STATS_START = "<!-- STATS:START -->"
+STATS_END = "<!-- STATS:END -->"
+
+
+def diff_raw(old_rows, new_rows):
+    """보고번호 기준 added/changed/removed 판정. 보고번호는 행당 고유하다."""
+    def index(rows):
+        return {pick(r, FIELD_REPORT_NO): r for r in rows if pick(r, FIELD_REPORT_NO)}
+
+    old, new = index(old_rows), index(new_rows)
+    added = sorted(set(new) - set(old))
+    removed = sorted(set(old) - set(new))
+    changed = sorted(no for no in set(old) & set(new) if old[no] != new[no])
+    return added, changed, removed
+
+
+def render_stats_block(stats, fetched_at):
+    total = stats["total"]
+    tc = stats["tier_counts"]
+    order = ["무감미료", "S", "A", "B", "C", "D", "F"]
+    kcal_pct = stats["with_kcal"] / total * 100 if total else 0
+
+    s_rows = sorted((r for r in stats["records"] if r["티어"] == "S"),
+                    key=lambda r: r["보고일자"], reverse=True)
+
+    def d(s):
+        s = (s or "").strip()
+        return f"{s[:4]}-{s[4:6]}-{s[6:8]}" if len(s) == 8 else (s or "—")
+
+    lines = [
+        STATS_START,
+        f"`{d(fetched_at)}` 수집 · `{stats['generated_at'][:10]}` 산출 기준 "
+        f"— 매월 1일 자동 갱신",
+        "",
+        "| 항목 | 값 |",
+        "|---|---:|",
+        f"| C002 원본 응답 행 | {stats['raw_rows']:,}건 |",
+        f"| 주류·무알콜맥주 등 비대상 제외 | −{stats['excluded']:,}건 |",
+        f"| 제품 단위로 통합한 최종 레코드 | **{total:,}개** |",
+        f"| 열량·당류 조인 성공 | {stats['with_kcal']:,}개 ({kcal_pct:.1f}%) |",
+        f"| 제품명에 제로 표기 | {stats['zero_total']:,}개 |",
+        f"| └ 그중 **원재료에 당류가 있는 제품** | **{stats['fake_zero']:,}개** |",
+        f"| 배합 변경 이력이 확인된 제품 | {stats['recipe_changed']:,}개 |",
+        f"| 제로↔일반판 짝이 매칭된 제품 | {stats['paired']:,}개 |",
+        "",
+        "### 티어 분포",
+        "",
+        "| " + " | ".join(order) + " |",
+        "|" + "---:|" * len(order),
+        "| " + " | ".join(f"{tc.get(t, 0):,}" for t in order) + " |",
+        "",
+    ]
+
+    empty = [t for t in order if not tc.get(t)]
+    if empty:
+        lines += [
+            f"<sub>{', '.join(empty)} 티어는 이번 수집분에서 **실제로 0건**입니다. "
+            "판정 규칙은 유지하되 결과를 있는 그대로 표시합니다.</sub>",
+            "",
+        ]
+
+    if s_rows:
+        lines += [
+            f"**S 티어 전체 {len(s_rows)}개** — 알룰로스만 사용:",
+            "",
+            "| 제품명 | 업소명 | 보고일자 |",
+            "|---|---|---|",
+        ]
+        lines += [f"| {r['제품명']} | {r['업소명']} | {d(r['보고일자'])} |" for r in s_rows]
+        lines.append("")
+
+    lines.append(STATS_END)
+    return "\n".join(lines)
+
+
+def update_readme(stats, fetched_at, path=README_PATH):
+    """README의 STATS 마커 블록만 교체한다. 마커가 없으면 건드리지 않는다."""
+    if not os.path.exists(path):
+        return False
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    i, j = text.find(STATS_START), text.find(STATS_END)
+    if i == -1 or j == -1 or j < i:
+        print(f"[readme] {STATS_START} 마커가 없어 갱신을 건너뜁니다")
+        return False
+    updated = text[:i] + render_stats_block(stats, fetched_at) + text[j + len(STATS_END):]
+    if updated == text:
+        return False
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(updated)
+    return True
+
+
+def sync(key, types, raw_path, cache_path, out_csv, out_html, docs_html, force=False):
+    """월 1회 실행용. 변경이 없으면 다운로드·재빌드·커밋을 전부 건너뛴다."""
+    new_rows, counts = fetch_all(key, types)
+    if not new_rows:
+        raise ApiError("수집 결과가 0건입니다 — 기존 데이터를 덮어쓰지 않고 중단합니다")
+
+    old_rows = load_raw_full(raw_path)[0] if os.path.exists(raw_path) else []
+    added, changed, removed = diff_raw(old_rows, new_rows)
+    print(f"\n[sync] 신규 {len(added)}건 · 변경 {len(changed)}건 · 삭제 {len(removed)}건")
+
+    if not (added or changed or removed) and not force:
+        print("[sync] 변경 없음 — 영양 다운로드·재빌드·커밋을 모두 생략합니다")
+        return False
+
+    for no in added[:10]:
+        r = next(x for x in new_rows if pick(x, FIELD_REPORT_NO) == no)
+        print(f"  + {pick(r, FIELD_NAME)} / {pick(r, FIELD_MAKER)}")
+    for no in changed[:10]:
+        r = next(x for x in new_rows if pick(x, FIELD_REPORT_NO) == no)
+        print(f"  ~ {pick(r, FIELD_NAME)} / {pick(r, FIELD_MAKER)}")
+
+    write_raw(new_rows, types, raw_path)
+    fetched_at = time.strftime("%Y%m%d")
+
+    wanted = {pick(r, FIELD_REPORT_NO).strip() for r in new_rows}
+    wanted.discard("")
+    sync_nutrition(wanted, cache_path)
+
+    stats = build(raw_path, cache_path, out_csv, out_html, None)
+
+    if docs_html:
+        os.makedirs(os.path.dirname(docs_html) or ".", exist_ok=True)
+        shutil.copyfile(out_html, docs_html)
+        print(f"[sync] {out_html} -> {docs_html}")
+
+    if update_readme(stats, fetched_at):
+        print("[readme] 수집 현황 블록 갱신")
+
+    print(f"\n[sync] 갱신 완료 — 신규 {len(added)} / 변경 {len(changed)} / 삭제 {len(removed)}")
+    return True
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--key", help="식품안전나라 인증키 (probe/collect에만 필요)")
-    p.add_argument("--mode", choices=["probe", "collect", "nutrition", "build", "run", "diff"],
+    p.add_argument("--mode",
+                   choices=["probe", "collect", "nutrition", "build", "run", "diff", "sync"],
                    default="build")
     p.add_argument("--type", action="append", default=[],
                    help="수집할 식품유형(PRDLST_DCNM). 여러 번 지정 가능. 기본: 탄산음료, 탄산수")
@@ -1094,6 +1325,10 @@ def main():
     p.add_argument("--nutrition-cache", default=DEFAULT_NUTRITION_CACHE)
     p.add_argument("--out", default=DEFAULT_OUT_CSV)
     p.add_argument("--out-html", default=DEFAULT_OUT_HTML)
+    p.add_argument("--docs-html", default=DEFAULT_DOCS_HTML,
+                   help="sync 모드 전용: GitHub Pages가 서빙할 사본 경로")
+    p.add_argument("--force", action="store_true",
+                   help="sync 모드 전용: 변경이 없어도 재빌드")
     p.add_argument("--refresh-nutrition", action="store_true",
                    help="캐시가 있어도 영양 데이터를 재다운로드")
     p.add_argument("--find", help="build 모드 전용: 산출 후 매칭 제품 상세를 콘솔에 출력")
@@ -1123,6 +1358,13 @@ def main():
         build(args.raw, args.nutrition_cache, args.out, args.out_html, args.find, args.keep_alcohol)
     elif args.mode == "diff":
         diff_mode(args.raw, args.diff_against)
+    elif args.mode == "sync":
+        changed = sync(load_key(args.key), types, args.raw, args.nutrition_cache,
+                       args.out, args.out_html, args.docs_html, args.force)
+        gh_out = os.environ.get("GITHUB_OUTPUT")
+        if gh_out:
+            with open(gh_out, "a", encoding="utf-8") as f:
+                f.write(f"changed={'true' if changed else 'false'}\n")
     elif args.mode == "run":
         key = load_key(args.key)
         collect(key, types, args.raw)

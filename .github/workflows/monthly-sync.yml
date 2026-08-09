@@ -1,0 +1,67 @@
+name: 월간 데이터 동기화
+
+# 매월 1일 09:00 KST(00:00 UTC)에 실행.
+# C002는 날짜 조건 검색을 지원하지 않아 전수 조회가 불가피하지만,
+# 이전 스냅샷과 비교해 '변경이 없으면' 영양 다운로드·재빌드·커밋을 전부 건너뛴다.
+on:
+  schedule:
+    - cron: "0 0 1 * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "변경이 없어도 강제로 재빌드"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: monthly-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 외부 의존성이 0개라 pip install 도, 캐시 복원도 필요 없다.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 증분 동기화
+        id: sync
+        env:
+          FOOD_API_KEY: ${{ secrets.FOOD_API_KEY }}
+        run: |
+          if [ -z "$FOOD_API_KEY" ]; then
+            echo "::error::FOOD_API_KEY 시크릿이 설정되지 않았습니다."
+            exit 1
+          fi
+          python zero_soda_scan.py --mode sync ${{ inputs.force && '--force' || '' }}
+
+      - name: 변경분 커밋
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "커밋할 변경 없음"
+            exit 0
+          fi
+          git commit -m "데이터 동기화: $(date -u +%Y-%m-%d)"
+          git push
+
+      - name: 요약
+        if: always()
+        run: |
+          if [ "${{ steps.sync.outputs.changed }}" = "true" ]; then
+            echo "### 데이터 갱신됨" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### 변경 없음 — 재빌드/커밋 생략" >> $GITHUB_STEP_SUMMARY
+          fi

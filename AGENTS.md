@@ -34,8 +34,9 @@
 | `zero_soda_scan.py` | 수집·영양조인·산출 CLI. 표준 라이브러리만 사용 |
 | `zero_soda_result.csv` | 결과물 (UTF-8 BOM, 엑셀 호환) |
 | `zero_soda_report.html` | 검색·필터·정렬 가능한 단일 파일 리포트 (외부 리소스 0) |
-| `zero_soda_raw.json` | C002 원본 응답 보관. 재분류 시 API 재호출 없이 사용 |
-| `zero_soda_nutrition.json` | 영양(열량·당류) 조인 캐시. 재호출 없이 재사용 |
+| `zero_soda_raw.json` | C002 원본 스냅샷. **git 추적 대상** — 증분 비교의 기준이자 오프라인 재현용 |
+| `zero_soda_nutrition.json` | 영양 조인 캐시. **git 추적 대상**. `rows`(매칭분)와 `checked`(조회 시도한 보고번호 전체)를 함께 보관 |
+| `.github/workflows/monthly-sync.yml` | 매월 1일 09:00 KST 증분 동기화 |
 
 ## 실행
 
@@ -60,13 +61,30 @@ python zero_soda_scan.py --mode build --find 밀키스제로
 
 # 이전 스냅샷과 비교 (신제품/배합변경/단종 탐지)
 python zero_soda_scan.py --mode diff --diff-against zero_soda_raw.20260101.json
+
+# 월간 증분 동기화 (자동화용). 변경이 없으면 영양조회·재빌드를 전부 생략한다
+python zero_soda_scan.py --mode sync
+python zero_soda_scan.py --mode sync --force   # 변경이 없어도 강제 재빌드
 ```
 
 - Python 3.8+, **외부 의존성 없음**. 새 패키지를 추가하지 말 것
 - API 키(C002용)는 `--key` 인자, `FOOD_API_KEY` 환경변수, 또는 `.env` 파일(`FOOD_API_KEY=...` 또는
-  `API=...`) 중 하나로 넘긴다. `probe`/`collect`/`run` 모드에만 필요하고 **소스나 커밋에 하드코딩 금지**
+  `API=...`) 중 하나로 넘긴다. `probe`/`collect`/`run`/`sync` 모드에만 필요하고 **소스나 커밋에 하드코딩 금지**
 - `nutrition`/`build`/`diff` 모드는 인증키가 필요 없다 (영양 데이터는 키리스, `build`/`diff`는 오프라인)
-- `.gitignore`에 `*.csv`, `*.json`, `*.html`, `.env` 유지
+- `.gitignore`는 `*.csv`, `*.json`, `*.html`, `.env`를 막되 `zero_soda_raw.json`,
+  `zero_soda_nutrition.json`, `docs/*.html`은 예외로 추적한다. 스냅샷이 없으면 증분 판정이 불가능하다
+
+## 증분 동기화 규칙 (건드리기 전에 읽을 것)
+
+- **C002는 날짜 조건 검색을 지원하지 않는다.** `CHNG_DT`/`PRMS_DT`를 조건으로 넣으면 404다
+  (2026-08-09 실측). 서버측 증분 필터를 다시 시도하지 말 것. 전수 조회는 불가피하다.
+- 변경 판정 기준키는 `PRDLST_REPORT_NO`다. **행당 고유**임을 실측으로 확인했다(2,410행/2,410개).
+- `write_raw()`/`write_nutrition_cache()`는 정렬해서 저장한다. API 응답 순서가 흔들려도
+  git diff가 최소로 유지되도록 하기 위함이니 **정렬을 제거하지 말 것.**
+- 영양 캐시의 `checked`를 지우지 말 것. 영양DB에 매칭되지 않는 보고번호가 절반가량인데,
+  이를 기록하지 않으면 매달 "신규"로 오인해 수 분짜리 전수 조회를 반복한다.
+- README의 `<!-- STATS:START -->` ~ `<!-- STATS:END -->` 블록은 `sync`가 자동으로 덮어쓴다.
+  이 안의 내용을 손으로 고치지 말 것 (다음 실행에 사라진다).
 
 ## 필드명 (2026-08-07 probe로 검증됨)
 

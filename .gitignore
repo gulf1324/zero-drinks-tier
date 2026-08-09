@@ -2,6 +2,9 @@
 *.csv
 *.json
 *.html
+# 증분 동기화의 기준 스냅샷 — 이전 상태가 있어야 '바뀐 것만' 판정할 수 있다
+!zero_soda_raw.json
+!zero_soda_nutrition.json
 !docs/*.html
 __pycache__/
 *.pyc
