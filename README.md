@@ -2,21 +2,21 @@
 
 # 대체당 제로 음료 티어
 
-[![리포트 바로가기](https://img.shields.io/badge/%F0%9F%A5%A4%20%EB%A6%AC%ED%8F%AC%ED%8A%B8%20%EB%B0%94%EB%A1%9C%EA%B0%80%EA%B8%B0-gulf1324.github.io%2Fzero--drinks--tier-2563eb?style=for-the-badge&logoColor=white)](https://gulf1324.github.io/zero-drinks-tier/)
+![리포트 바로가기](https://img.shields.io/badge/%F0%9F%A5%A4%20%EB%A6%AC%ED%8F%AC%ED%8A%B8%20%EB%B0%94%EB%A1%9C%EA%B0%80%EA%B8%B0-gulf1324.github.io%2Fzero--drinks--tier-2563eb?style=for-the-badge&logoColor=white)
 
-### 🔗 https://gulf1324.github.io/zero-drinks-tier/
+### 🔗 [https://gulf1324.github.io/zero-drinks-tier/](https://gulf1324.github.io/zero-drinks-tier/)
 
 **정부 공식 데이터 · 동료평가 논문 근거 · 오픈 데이터**
 
 국내 유통 탄산음료·탄산수 **1,704개**의 대체당 구성을 식약처 품목제조보고 원재료 전문으로 수집하고,
 피어리뷰 메타분석 근거에 따라 **S~F 티어**로 분류합니다.
 
-[![데이터](https://img.shields.io/badge/data-%EC%8B%9D%ED%92%88%EC%95%88%EC%A0%84%EB%82%98%EB%9D%BC%20C002-005BAC)](https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002)
-[![영양](https://img.shields.io/badge/nutrition-%EA%B3%B5%EA%B3%B5%EB%8D%B0%EC%9D%B4%ED%84%B0%ED%8F%AC%ED%84%B8%2015100066-0B5FA5)](https://www.data.go.kr/data/15100066/standard.do)
-[![python](https://img.shields.io/badge/python-3.8%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![dependencies](https://img.shields.io/badge/dependencies-0-success)](#설치--실행)
-[![tests](https://img.shields.io/badge/tests-25%20passing-brightgreen)](test_classify.py)
-[![last commit](https://img.shields.io/github/last-commit/gulf1324/zero-drinks-tier)](https://github.com/gulf1324/zero-drinks-tier/commits/main)
+![데이터](https://img.shields.io/badge/data-%EC%8B%9D%ED%92%88%EC%95%88%EC%A0%84%EB%82%98%EB%9D%BC%20C002-005BAC)
+![영양](https://img.shields.io/badge/nutrition-%EA%B3%B5%EA%B3%B5%EB%8D%B0%EC%9D%B4%ED%84%B0%ED%8F%AC%ED%84%B8%2015100066-0B5FA5)
+![python](https://img.shields.io/badge/python-3.8%2B-3776AB?logo=python&logoColor=white)
+![dependencies](https://img.shields.io/badge/dependencies-0-success)
+![tests](https://img.shields.io/badge/tests-25%20passing-brightgreen)
+![last commit](https://img.shields.io/github/last-commit/gulf1324/zero-drinks-tier)
 
 </div>
 
@@ -39,38 +39,71 @@
 모든 수치는 아래 **정부 공식 API**에서 직접 수집하며, 중간 가공·수기 입력이 없습니다.
 
 <table>
+
 <thead>
+
 <tr><th width="52"></th><th>출처</th><th>사용 내용</th><th>인증키</th></tr>
+
 </thead>
+
 <tbody>
+
 <tr>
-<td align="center"><img src="https://www.google.com/s2/favicons?domain=foodsafetykorea.go.kr&sz=64" width="32" height="32" alt="식품안전나라"></td>
+
+<td align="center"><img src="https://www.google.com/s2/favicons?domain=foodsafetykorea.go.kr&sz=64" width="32" height="32" alt="식품안전나라">
+
+</td>
+
 <td>
+
 <b><a href="https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002">식품안전나라 OpenAPI <code>C002</code></a></b><br>
 <sub>식품의약품안전처 · 식품(첨가물)품목제조보고(원재료)</sub>
+
 </td>
+
 <td>제품명 · 업소명 · 식품유형 · <b>원재료 전문</b> · 보고일자 · 품목보고번호</td>
 <td align="center">필요</td>
+
 </tr>
+
 <tr>
-<td align="center"><img src="https://www.google.com/s2/favicons?domain=data.go.kr&sz=64" width="32" height="32" alt="공공데이터포털"></td>
+
+<td align="center"><img src="https://www.google.com/s2/favicons?domain=data.go.kr&sz=64" width="32" height="32" alt="공공데이터포털">
+
+</td>
+
 <td>
+
 <b><a href="https://www.data.go.kr/data/15100066/standard.do">공공데이터포털 표준데이터 <code>15100066</code></a></b><br>
 <sub>전국통합식품영양성분정보(가공식품)</sub>
+
 </td>
+
 <td>열량(kcal) · 당류(g) · 기준량 · 내용량</td>
 <td align="center">불필요</td>
+
 </tr>
+
 <tr>
-<td align="center"><img src="https://www.google.com/s2/favicons?domain=mfds.go.kr&sz=64" width="32" height="32" alt="식품의약품안전처"></td>
+
+<td align="center"><img src="https://www.google.com/s2/favicons?domain=mfds.go.kr&sz=64" width="32" height="32" alt="식품의약품안전처">
+
+</td>
+
 <td>
+
 <b><a href="https://www.mfds.go.kr/">식품의약품안전처</a></b><br>
 <sub>소관 부처 · 제로칼로리 표시기준의 근거</sub>
+
 </td>
+
 <td>표시광고 기준 해석 (100mL당 4kcal 미만)</td>
 <td align="center">—</td>
+
 </tr>
+
 </tbody>
+
 </table>
 
 > **조인 키** — C002의 `PRDLST_REPORT_NO` ↔ 영양성분DB의 `ITEM_MNFTR_RPT_NO`
@@ -84,34 +117,41 @@
 ## 수집 현황
 
 <!-- STATS:START -->
+
 `2026-08-10` 수집 · `2026-08-10` 산출 기준 — 매월 `--mode sync`로 갱신
 
-| 항목 | 값 |
-|---|---:|
-| C002 원본 응답 행 | 2,410건 |
-| 주류·무알콜맥주 등 비대상 제외 | −108건 |
-| 제품 단위로 통합한 최종 레코드 | **1,699개** |
-| 열량·당류 조인 성공 | 893개 (52.6%) |
-| 제품명에 제로 표기 | 325개 |
-| └ 그중 **원재료에 당류가 있는 제품** | **22개** |
-| 배합 변경 이력이 확인된 제품 | 311개 |
-| 제로↔일반판 짝이 매칭된 제품 | 72개 |
+
+| 항목                      | 값            |
+| ----------------------- | ------------: |
+| C002 원본 응답 행            | 2,410건       |
+| 주류·무알콜맥주 등 비대상 제외       | −108건        |
+| 제품 단위로 통합한 최종 레코드       | **1,699개**   |
+| 열량·당류 조인 성공             | 893개 (52.6%) |
+| 제품명에 제로 표기              | 325개         |
+| └ 그중 **원재료에 당류가 있는 제품** | **22개**      |
+| 배합 변경 이력이 확인된 제품        | 311개         |
+| 제로↔일반판 짝이 매칭된 제품        | 72개          |
+
 
 ### 티어 분포
 
-| 무감미료 | S | A | B | C | D | F |
-|---:|---:|---:|---:|---:|---:|---:|
-| 420 | 3 | 25 | 288 | 257 | 0 | 706 |
+
+| 무감미료 | S   | A   | B   | C   | D   | F   |
+| ----: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 420  | 3   | 25  | 288 | 257 | 0   | 706 |
+
 
 <sub>D 티어는 이번 수집분에서 **실제로 0건**입니다. 판정 규칙은 유지하되 결과를 있는 그대로 표시합니다.</sub>
 
 **S 티어 전체 3개** — 알룰로스만 사용:
 
-| 제품명 | 업소명 | 보고일자 |
-|---|---|---|
-| 테라 제로 | 하이트진로(주) 외 3곳 | 2026-06-03 |
-| 암바사 ZERO by 환타 | 코카콜라음료주식회사 외 1곳 | 2025-04-29 |
-| 제로칼로리 포도(알룰로스 100%) CAN | (주)금강비앤에프 | 2023-06-08 |
+
+| 제품명                     | 업소명             | 보고일자       |
+| ----------------------- | --------------- | ---------- |
+| 테라 제로                   | 하이트진로(주) 외 3곳   | 2026-06-03 |
+| 암바사 ZERO by 환타          | 코카콜라음료주식회사 외 1곳 | 2025-04-29 |
+| 제로칼로리 포도(알룰로스 100%) CAN | (주)금강비앤에프       | 2023-06-08 |
+
 
 <!-- STATS:END -->
 
@@ -122,35 +162,37 @@
 원재료 문자열에서 감미료를 탐지하고, **가장 나쁜 등급을 최종 티어로** 부여합니다.
 (알룰로스 + 수크랄로스 → `B`)
 
-| 티어 | 성분 | 근거 | 출처 |
-|:--:|---|---|---|
-| **S** | 알룰로스, 타가토스 | 0.2~0.4 kcal/g. 식후 혈당·인슐린을 오히려 **낮춤** (allulose 식후혈당 iAUC SMD −0.66) | [AJCN 2026](https://doi.org/10.1016/j.ajcnut.2026.101314) · [PMID 41985675](https://pubmed.ncbi.nlm.nih.gov/41985675/) |
-| **A** | 스테비올배당체, 나한과 | 0 kcal, 혈당 영향 없음, 장기 안전성 양호 | 아래 *한계* 참고 |
-| **B** | 수크랄로스, 아세설팜칼륨, 아스파탐, 사카린 | RCT 21건 메타분석에서 공복 인슐린·HbA1c **상승** | [Curr Atheroscler Rep 2026](https://doi.org/10.1007/s11883-026-01429-9) · [PMID 42347889](https://pubmed.ncbi.nlm.nih.gov/42347889/) · [Tufts](https://now.tufts.edu/2026/06/30/growing-evidence-sugar-substitutes-disrupt-gut-health-and-metabolism) |
-| **C** | 에리스리톨, 자일리톨 | 혈당은 무해하나 혈소판 반응성·심혈관 사건 신호 | [Nature Medicine 2023](https://www.nature.com/articles/s41591-023-02223-9) · [ATVB 2024](https://www.ahajournals.org/doi/10.1161/ATVBAHA.124.321019) |
-| **D** | 말티톨, 소르비톨, 락티톨 등 당알코올 | 실제 2~2.6 kcal/g, 말티톨은 GI 35~52로 혈당 상승 | 성분 규격 기준 |
-| **F** | 설탕, 액상과당, 농축과즙, 올리고당 등 | 제로가 아님 | — |
-| 무감미료 | 감미료 표기 없음 | 탄산수 등 | — |
+
+| 티어    | 성분                       | 근거                                                                   | 출처                                                                                                                                                                                                                                                    |
+| :-----: | ------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **S** | 알룰로스, 타가토스               | 0.2~0.4 kcal/g. 식후 혈당·인슐린을 오히려 **낮춤** (allulose 식후혈당 iAUC SMD −0.66) | [AJCN 2026](https://doi.org/10.1016/j.ajcnut.2026.101314) · [PMID 41985675](https://pubmed.ncbi.nlm.nih.gov/41985675/)                                                                                                                                |
+| **A** | 스테비올배당체, 나한과             | 0 kcal, 혈당 영향 없음, 장기 안전성 양호                                          | 아래 *한계* 참고                                                                                                                                                                                                                                            |
+| **B** | 수크랄로스, 아세설팜칼륨, 아스파탐, 사카린 | RCT 21건 메타분석에서 공복 인슐린·HbA1c **상승**                                   | [Curr Atheroscler Rep 2026](https://doi.org/10.1007/s11883-026-01429-9) · [PMID 42347889](https://pubmed.ncbi.nlm.nih.gov/42347889/) · [Tufts](https://now.tufts.edu/2026/06/30/growing-evidence-sugar-substitutes-disrupt-gut-health-and-metabolism) |
+| **C** | 에리스리톨, 자일리톨              | 혈당은 무해하나 혈소판 반응성·심혈관 사건 신호                                           | [Nature Medicine 2023](https://www.nature.com/articles/s41591-023-02223-9) · [ATVB 2024](https://www.ahajournals.org/doi/10.1161/ATVBAHA.124.321019)                                                                                                  |
+| **D** | 말티톨, 소르비톨, 락티톨 등 당알코올    | 실제 2~~2.6 kcal/g, 말티톨은 GI 35~~52로 혈당 상승                              | 성분 규격 기준                                                                                                                                                                                                                                              |
+| **F** | 설탕, 액상과당, 농축과즙, 올리고당 등   | 제로가 아님                                                               | —                                                                                                                                                                                                                                                     |
+| 무감미료  | 감미료 표기 없음                | 탄산수 등                                                                | —                                                                                                                                                                                                                                                     |
+
 
 ### 근거의 한계 (반드시 함께 읽어주세요)
 
 - **C 티어의 인과관계는 확정되지 않았습니다.** 에리스리톨 심혈관 신호는 관찰연구에서
-  제기되고 소규모 개입연구로 보강된 단계입니다. "에리스리톨을 먹으면 심장병에 걸린다"가
-  **아닙니다.**
+제기되고 소규모 개입연구로 보강된 단계입니다. "에리스리톨을 먹으면 심장병에 걸린다"가
+**아닙니다.**
 - **A 티어는 이 프로젝트에서 가장 약한 근거입니다.** B 티어 판정의 근거인 Tufts 리뷰는
-  검토 대상에 **스테비아도 포함**했습니다. 스테비아를 A로 둔 것은 현재까지 0 kcal·무혈당
-  영향과 장기 안전성 자료가 상대적으로 양호하다는 판단이며, 후속 연구로 바뀔 수 있습니다.
+검토 대상에 **스테비아도 포함**했습니다. 스테비아를 A로 둔 것은 현재까지 0 kcal·무혈당
+영향과 장기 안전성 자료가 상대적으로 양호하다는 판단이며, 후속 연구로 바뀔 수 있습니다.
 - **티어는 건강 조언이 아닙니다.** 성분 구성의 상대 비교일 뿐이며, 섭취량·개인 질환·
-  전체 식단을 반영하지 않습니다.
+전체 식단을 반영하지 않습니다.
 - **'제로 사칭'은 법 위반을 뜻하지 않습니다.** 제로칼로리 표시 기준은 100mL당 4kcal
-  미만이므로, 소량의 당류가 들어가도 적법하게 "제로"를 표기할 수 있습니다. 이 리포트는
-  *표기와 원재료의 불일치*를 보여줄 뿐입니다.
+미만이므로, 소량의 당류가 들어가도 적법하게 "제로"를 표기할 수 있습니다. 이 리포트는
+*표기와 원재료의 불일치*를 보여줄 뿐입니다.
 
 ---
 
 ## 리포트 기능
 
-**[gulf1324.github.io/zero-drinks-tier](https://gulf1324.github.io/zero-drinks-tier/)** — 외부 리소스 0개의 단일 HTML 파일
+[**gulf1324.github.io/zero-drinks-tier**](https://gulf1324.github.io/zero-drinks-tier/) — 외부 리소스 0개의 단일 HTML 파일
 
 - 티어 배지 **다중 선택** 필터 (S + A 동시 선택 = 합집합)
 - 제품명·업소명 실시간 검색
@@ -207,13 +249,15 @@ python zero_soda_scan.py --mode sync --push
 C002는 날짜 조건 검색을 지원하지 않아(`CHNG_DT` 조건은 404) 전수 조회 자체는 피할 수 없습니다.
 대신 **바뀐 게 없으면 그 뒤 작업을 전부 건너뜁니다.**
 
-| 단계 | 변경 있을 때 | 변경 없을 때 |
-|---|---|---|
-| C002 전수 조회 (약 25콜) | 실행 | 실행 |
-| 영양 표준데이터 조회 | 신규 보고번호가 있을 때만 | **생략** |
-| CSV·HTML 재생성 | 실행 | **생략** |
-| 커밋·Pages 재배포 | 실행 | **생략** |
-| 실측 소요 | 457초 | **95초** |
+
+| 단계                 | 변경 있을 때        | 변경 없을 때 |
+| ------------------ | -------------- | ------- |
+| C002 전수 조회 (약 25콜) | 실행             | 실행      |
+| 영양 표준데이터 조회        | 신규 보고번호가 있을 때만 | **생략**  |
+| CSV·HTML 재생성       | 실행             | **생략**  |
+| 커밋·Pages 재배포       | 실행             | **생략**  |
+| 실측 소요              | 457초           | **95초** |
+
 
 판정 기준은 `PRDLST_REPORT_NO`(품목제조보고번호)로, 행마다 고유합니다.
 이전 스냅샷과 대조해 신규·변경·삭제를 가려냅니다.
@@ -240,16 +284,18 @@ python -m unittest test_classify -v    # 25 tests — 분류 로직 회귀 검�
 
 ## 파일 구성
 
-| 파일 | 역할 |
-|---|---|
-| `zero_soda_scan.py` | 수집 · 영양조인 · 산출 CLI. 표준 라이브러리만 사용 |
-| `test_classify.py` | 분류/알코올판정/파생플래그 테스트 25개 |
-| `LICENSE` · `NOTICE.md` | 코드 MIT / 데이터 출처·이용조건 |
-| `docs/index.html` | GitHub Pages로 서빙되는 리포트 |
-| `zero_soda_report.html` | 로컬 산출 리포트 (단일 파일) |
-| `zero_soda_result.csv` | 결과 CSV (UTF-8 BOM, 엑셀 호환) |
-| `zero_soda_raw.json` | C002 원본 스냅샷 — 증분 비교의 기준이자 오프라인 재현용 |
+
+| 파일                         | 역할                                    |
+| -------------------------- | ------------------------------------- |
+| `zero_soda_scan.py`        | 수집 · 영양조인 · 산출 CLI. 표준 라이브러리만 사용      |
+| `test_classify.py`         | 분류/알코올판정/파생플래그 테스트 25개                |
+| `LICENSE` · `NOTICE.md`    | 코드 MIT / 데이터 출처·이용조건                  |
+| `docs/index.html`          | GitHub Pages로 서빙되는 리포트                |
+| `zero_soda_report.html`    | 로컬 산출 리포트 (단일 파일)                     |
+| `zero_soda_result.csv`     | 결과 CSV (UTF-8 BOM, 엑셀 호환)             |
+| `zero_soda_raw.json`       | C002 원본 스냅샷 — 증분 비교의 기준이자 오프라인 재현용    |
 | `zero_soda_nutrition.json` | 영양 조인 캐시 (`checked` 2,410 / 매칭 1,203) |
+
 
 <sub>결과 CSV와 로컬 HTML은 `.gitignore` 대상입니다. 두 JSON 스냅샷은 증분 비교와 재현을 위해 추적합니다.</sub>
 
@@ -304,10 +350,12 @@ python -m unittest test_classify -v    # 25 tests — 분류 로직 회귀 검�
 
 ## 라이선스
 
-| 대상 | 조건 |
-|---|---|
-| **소스 코드** (`zero_soda_scan.py`, `test_classify.py`, 템플릿) | [MIT](LICENSE) — 자유롭게 사용·수정·재배포 |
+
+| 대상                                                                      | 조건                                        |
+| ----------------------------------------------------------------------- | ----------------------------------------- |
+| **소스 코드** (`zero_soda_scan.py`, `test_classify.py`, 템플릿)                | [MIT](LICENSE) — 자유롭게 사용·수정·재배포           |
 | **데이터** (`zero_soda_raw.json`, `zero_soda_nutrition.json`, CSV, 리포트 수치) | 원 제공 기관 이용약관에 따름 → [NOTICE.md](NOTICE.md) |
+
 
 데이터의 권리는 **식품의약품안전처**와 **공공데이터포털**에 있습니다.
 이 저장소의 스냅샷은 재현성을 위해 보관한 사본이므로, 재사용하실 때는
@@ -316,13 +364,15 @@ python -m unittest test_classify -v    # 25 tests — 분류 로직 회귀 검�
 각 기관의 최신 약관을 확인해 주세요.
 
 **티어 분류는 인용된 연구를 근거로 한 이 프로젝트의 해석이며, 정부 기관의 공식 평가가 아닙니다.**
----
 
 <div align="center">
+
 <sub>
 
 데이터 © 식품의약품안전처 · 공공데이터포털 — 각 기관 이용약관에 따름
 이 리포트는 의학적 조언이 아니며, 특정 제품의 구매·회피를 권유하지 않습니다.
 
 </sub>
+
 </div>
+
