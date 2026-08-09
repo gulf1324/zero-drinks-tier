@@ -1,0 +1,42 @@
+name: 임시 진단
+on:
+  workflow_dispatch:
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 러너 위치
+        run: curl -s --max-time 20 https://ipinfo.io/json || echo "ipinfo 실패"
+
+      - name: 식약처 호스트 TCP 연결
+        run: |
+          for url in \
+            "http://openapi.foodsafetykorea.go.kr/" \
+            "https://openapi.foodsafetykorea.go.kr/" ; do
+            echo "--- $url"
+            curl -sS -o /dev/null --max-time 60 \
+              -w "code=%{http_code} dns=%{time_namelookup}s conn=%{time_connect}s total=%{time_total}s\n" \
+              "$url" || echo "실패(exit $?)"
+          done
+
+      - name: C002 실제 호출 (1건)
+        env:
+          K: ${{ secrets.FOOD_API_KEY }}
+        run: |
+          for base in "http://openapi.foodsafetykorea.go.kr" "https://openapi.foodsafetykorea.go.kr"; do
+            echo "--- $base"
+            curl -sS -o /tmp/r.json --max-time 90 \
+              -w "code=%{http_code} total=%{time_total}s size=%{size_download}\n" \
+              "$base/api/$K/C002/json/1/1" || echo "실패(exit $?)"
+            head -c 200 /tmp/r.json 2>/dev/null | sed "s/$K/KEY/g"; echo
+          done
+
+      - name: 공공데이터포털 도달성
+        run: |
+          curl -sS -o /dev/null --max-time 60 \
+            -w "code=%{http_code} total=%{time_total}s\n" \
+            -H "Referer: https://www.data.go.kr/data/15100066/standard.do" \
+            -H "X-Requested-With: XMLHttpRequest" \
+            "https://www.data.go.kr/data/15100066/standard.do" || echo "실패(exit $?)"
