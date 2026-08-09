@@ -802,6 +802,11 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   .detail-box{padding:11px 13px;border-left:3px solid var(--accent);margin:2px 0;white-space:pre-wrap;line-height:1.65}
   .detail-raw{color:var(--text);margin-bottom:6px}
   .detail-box div{color:var(--muted)}
+  tr.more td{text-align:center;padding:14px 10px;border-bottom:0;background:#fafbfc}
+  #moreBtn{border:1px solid var(--border-strong);background:var(--surface);border-radius:var(--pill);
+           padding:9px 20px;font-size:12.5px;font-weight:600;color:var(--text);cursor:pointer;
+           font-family:inherit;box-shadow:var(--shadow-sm)}
+  #moreBtn:hover{border-color:var(--accent);color:var(--accent)}
 
   footer{margin-top:18px;padding-top:13px;border-top:1px solid var(--border);font-size:11px;color:var(--muted-2);line-height:1.7}
   footer div+div{margin-top:3px}
@@ -854,6 +859,8 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
                          background:var(--danger)}
     tr.detail td{padding:0}
     tr.detail td::before{display:none}
+    tr.more td{display:block;text-align:center;padding:13px 10px}
+    tr.more td::before{display:none}
     .detail-box{padding:10px 12px;font-size:11.5px}
   }
 </style>
@@ -871,8 +878,8 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
       <button type="button" class="s-clear" id="qClear" aria-label="검색어 지우기" hidden>&times;</button>
     </div>
     <div class="searchmeta">
-      <span class="count-pill"><b id="shownCount">0</b>개 표시</span>
-      <span class="hint">행을 누르면 원재료 전문이 열립니다</span>
+      <span class="count-pill"><b id="shownCount">0</b>개 검색됨</span>
+      <span class="hint">행을 누르면 원재료 전문이 열립니다 · 스크롤하면 계속 불러옵니다</span>
     </div>
   </section>
   <div class="badges" id="badges">__BADGES__<button class="clear-tiers" id="clearTiers" disabled>전체 해제</button></div>
@@ -940,8 +947,11 @@ const RANK = __RANK_JSON__;
 const MAKERS = __MAKERS_JSON__;
 const TIER_COLORS = {"무감미료":"#4caf50","S":"#8bc34a","A":"#cddc39","B":"#ffc107","C":"#ff9800","D":"#f4511e","F":"#c00","?":"#999"};
 
+// PAGE_SIZE: 1,699행을 한 번에 그리면 표 높이가 11만 px가 되어 강제 레이아웃에만
+// 216ms가 든다(실측). 화면에 필요한 만큼만 그리고 스크롤에 따라 이어붙인다.
+const PAGE_SIZE = 60;
 let state = { q: "", fFake:false, fAllulose:false, fErythritol:false, fNoCaffeine:false, fNoAspartame:false, fHasKcal:false,
-              tierFilters: new Set(), sortKey: "티어", sortDir: 1, expanded: new Set() };
+              tierFilters: new Set(), sortKey: "티어", sortDir: 1, expanded: new Set(), limit: PAGE_SIZE };
 
 function norm(s) { return (s||"").replace(/\s+/g, "").toLowerCase(); }
 
@@ -1032,23 +1042,36 @@ function detailHtml(r) {
          '<div class="detail-raw">' + escapeHtml(r['원재료전문']) + '</div>' + extra + '</div></td></tr>';
 }
 
+let moreObserver = null;
+
 function render() {
   const rows = sortedRows(filtered());
   const tbody = document.getElementById('tbody');
+  const slice = rows.slice(0, state.limit);
   let html = '';
-  rows.forEach(function(r) {
+  slice.forEach(function(r) {
     html += rowHtml(r);
     if (state.expanded.has(r['제품명'])) html += detailHtml(r);
   });
+  const rest = rows.length - slice.length;
+  if (rest > 0) {
+    html += '<tr class="more"><td colspan="9">' +
+            '<button type="button" id="moreBtn">남은 ' + rest.toLocaleString() + '개 더 보기</button>' +
+            '</td></tr>';
+  }
   tbody.innerHTML = html;
-  Array.from(tbody.querySelectorAll('tr.row')).forEach(function(tr) {
-    tr.addEventListener('click', function() {
-      const nm = tr.getAttribute('data-name');
-      if (state.expanded.has(nm)) state.expanded.delete(nm);
-      else state.expanded.add(nm);
-      render();
-    });
-  });
+
+  // 행 클릭은 tbody 하나에 위임한다(아래 최초 1회 등록). 렌더마다 리스너를
+  // 다시 붙이지 않으므로 누수도 없다.
+  if (moreObserver) moreObserver.disconnect();
+  const moreBtn = document.getElementById('moreBtn');
+  if (moreBtn && 'IntersectionObserver' in window) {
+    moreObserver = new IntersectionObserver(function(entries) {
+      if (entries.some(function(e){ return e.isIntersecting; })) showMore();
+    }, {rootMargin: '400px'});
+    moreObserver.observe(moreBtn);
+  }
+
   document.querySelectorAll('#badges .badge').forEach(function(b) {
     b.classList.toggle('active', state.tierFilters.has(b.dataset.tier));
   });
@@ -1063,37 +1086,62 @@ function render() {
   });
 }
 
-document.getElementById('q').addEventListener('input', function(e) { state.q = norm(e.target.value); render(); });
+function showMore() {
+  state.limit += PAGE_SIZE;
+  render();
+}
+
+// 필터·검색·정렬이 바뀌면 처음부터 다시 보여준다. 행 펼치기는 limit 을 건드리지 않는다.
+function update() {
+  state.limit = PAGE_SIZE;
+  render();
+}
+
+document.getElementById('tbody').addEventListener('click', function(e) {
+  if (e.target.closest('#moreBtn')) { showMore(); return; }
+  const tr = e.target.closest('tr.row');
+  if (!tr) return;
+  const nm = tr.getAttribute('data-name');
+  if (state.expanded.has(nm)) state.expanded.delete(nm);
+  else state.expanded.add(nm);
+  render();
+});
+
+document.getElementById('q').addEventListener('input', function(e) { state.q = norm(e.target.value); update(); });
 document.getElementById('qClear').addEventListener('click', function() {
   const q = document.getElementById('q');
-  q.value = ''; state.q = ''; q.focus(); render();
+  q.value = ''; state.q = ''; q.focus(); update();
 });
 document.getElementById('sortSel').addEventListener('change', function(e) {
-  state.sortKey = e.target.value; state.sortDir = 1; render();
+  state.sortKey = e.target.value; state.sortDir = 1; update();
 });
 document.getElementById('sortDir').addEventListener('click', function() {
-  state.sortDir *= -1; render();
+  state.sortDir *= -1; update();
 });
-document.getElementById('fFake').addEventListener('change', function(e) { state.fFake = e.target.checked; render(); });
-document.getElementById('fAllulose').addEventListener('change', function(e) { state.fAllulose = e.target.checked; render(); });
-document.getElementById('fErythritol').addEventListener('change', function(e) { state.fErythritol = e.target.checked; render(); });
-document.getElementById('fNoCaffeine').addEventListener('change', function(e) { state.fNoCaffeine = e.target.checked; render(); });
-document.getElementById('fNoAspartame').addEventListener('change', function(e) { state.fNoAspartame = e.target.checked; render(); });
-document.getElementById('fHasKcal').addEventListener('change', function(e) { state.fHasKcal = e.target.checked; render(); });
-document.getElementById('fakeZeroBanner').addEventListener('click', function() { state.fFake = !state.fFake; render(); });
+document.getElementById('fFake').addEventListener('change', function(e) { state.fFake = e.target.checked; update(); });
+document.getElementById('fAllulose').addEventListener('change', function(e) { state.fAllulose = e.target.checked; update(); });
+document.getElementById('fErythritol').addEventListener('change', function(e) { state.fErythritol = e.target.checked; update(); });
+document.getElementById('fNoCaffeine').addEventListener('change', function(e) { state.fNoCaffeine = e.target.checked; update(); });
+document.getElementById('fNoAspartame').addEventListener('change', function(e) { state.fNoAspartame = e.target.checked; update(); });
+document.getElementById('fHasKcal').addEventListener('change', function(e) { state.fHasKcal = e.target.checked; update(); });
+document.getElementById('fakeZeroBanner').addEventListener('click', function() {
+  state.fFake = !state.fFake;
+  document.getElementById('fFake').checked = state.fFake;   // 체크박스 표시도 함께 맞춘다
+  update();
+});
 document.getElementById('badges').addEventListener('click', function(e) {
   const t = e.target.closest('.badge'); if (!t) return;
   state.tierFilters.has(t.dataset.tier) ? state.tierFilters.delete(t.dataset.tier) : state.tierFilters.add(t.dataset.tier);
-  render();
+  update();
 });
 document.getElementById('clearTiers').addEventListener('click', function() {
-  state.tierFilters.clear(); render();
+  state.tierFilters.clear(); update();
 });
 document.querySelectorAll('th[data-key]').forEach(function(th) {
   th.addEventListener('click', function() {
     if (state.sortKey === th.dataset.key) state.sortDir *= -1;
     else { state.sortKey = th.dataset.key; state.sortDir = 1; }
-    render();
+    update();
   });
 });
 
