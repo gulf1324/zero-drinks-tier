@@ -2,32 +2,51 @@
 # -*- coding: utf-8 -*-
 """
 식품안전나라 OpenAPI(C002: 식품(첨가물)품목제조보고 - 원재료)로
-탄산음료 품목을 수집하고, 감미료 구성에 따라 티어를 매기는 스크립트.
+탄산음료·탄산수 품목을 전수 수집하고, 감미료 구성에 따라 티어를 매기는 스크립트.
+공공데이터포털 표준데이터(15100066, 인증키 불필요)로 열량·당류를 조인한다.
 
 의존성 없음 (표준 라이브러리만 사용). Python 3.8+
 
 사용법
 ------
 1) 필드 이름부터 확인 (반드시 이것부터 실행):
-   python zero_soda_scan.py --key YOUR_KEY --mode probe
+   python zero_soda_scan.py --mode probe
 
-2) 제품명 키워드로 수집:
-   python zero_soda_scan.py --key YOUR_KEY --mode search --keyword 제로
+2) 전수 수집 (기본: 탄산음료 + 탄산수):
+   python zero_soda_scan.py --mode collect
 
-3) 여러 키워드 한번에:
-   python zero_soda_scan.py --key YOUR_KEY --mode search \
-       --keyword 제로 --keyword 사이다 --keyword 콜라 --keyword 스파클링
+3) 영양(열량·당류) 조인 — 인증키 불필요:
+   python zero_soda_scan.py --mode nutrition
 
-결과: zero_soda_result.csv (엑셀에서 열 수 있게 UTF-8 BOM)
-      zero_soda_raw.json (원본 응답 보관용)
+4) 산출 (오프라인, API 호출 없음):
+   python zero_soda_scan.py --mode build
+
+5) 1~4를 순서대로 한번에:
+   python zero_soda_scan.py --mode run
+
+6) 특정 제품만 콘솔에서 조회:
+   python zero_soda_scan.py --mode build --find 밀키스제로
+
+7) 이전 스냅샷과 비교 (신제품/배합변경/단종 탐지):
+   python zero_soda_scan.py --mode diff --diff-against zero_soda_raw.20260101.json
+
+인증키: --key 인자, FOOD_API_KEY 환경변수, 또는 .env 파일(FOOD_API_KEY=... 혹은 API=...)
+        중 하나로 넘긴다. build/nutrition/diff 모드는 키가 필요 없다.
+
+결과: zero_soda_result.csv     (엑셀에서 열 수 있게 UTF-8 BOM)
+      zero_soda_report.html    (검색·필터·정렬 가능한 단일 파일 리포트)
+      zero_soda_raw.json       (C002 원본 응답 보관용)
+      zero_soda_nutrition.json (영양DB 조인 캐시)
 """
 
 import argparse
 import csv
 import json
 import os
+import re
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -35,6 +54,17 @@ BASE = "http://openapi.foodsafetykorea.go.kr/api"
 SERVICE = "C002"          # 식품(첨가물)품목제조보고(원재료)
 PAGE = 100                # 이 API는 1회 최대 100건
 SLEEP = 0.3               # 호출 간격 (서버 부하/차단 방지)
+
+ENV_FILE = ".env"
+KEY_NAMES = ("FOOD_API_KEY", "API")   # 앞에 있는 이름이 우선
+UA = "Mozilla/5.0"
+
+DEFAULT_TYPES = ["탄산음료", "탄산수"]
+DEFAULT_RAW = "zero_soda_raw.json"
+DEFAULT_NUTRITION_CACHE = "zero_soda_nutrition.json"
+DEFAULT_OUT_CSV = "zero_soda_result.csv"
+DEFAULT_OUT_HTML = "zero_soda_report.html"
+
 
 # ── 감미료 사전 ────────────────────────────────────────────────
 # 표기 흔들림(알룰로스/알룰로오스, 에리스리톨/에리스리트리톨 등)까지 커버
@@ -45,58 +75,196 @@ SWEETENERS = {
     "B": ["수크랄로스", "아세설팜", "아스파탐", "사카린", "네오탐", "어드밴탐", "시클라메이트"],
     "C": ["에리스리톨", "에리스리트리톨", "에리트리톨", "자일리톨", "자일리트"],
     "D": ["말티톨", "소르비톨", "솔비톨", "락티톨", "만니톨", "이소말트", "환원물엿"],
-    "SUGAR": ["설탕", "액상과당", "과당", "물엿", "포도당", "정백당", "결정과당",
-              "농축과즙", "고과당", "올리고당", "벌꿀"],
+    "SUGAR": ["설탕", "백설탕", "자당", "액상과당", "과당", "물엿", "포도당", "정백당",
+              "결정과당", "농축과즙", "고과당", "올리고당", "벌꿀"],
 }
-TIER_ORDER = ["S", "A", "B", "C", "D", "SUGAR"]  # 뒤로 갈수록 나쁨
+TIER_ORDER = ["S", "A", "B", "C", "D", "SUGAR"]            # 뒤로 갈수록 나쁨
+TIER_RANK = {"무감미료": 0, "S": 1, "A": 2, "B": 3, "C": 4, "D": 5, "F": 6, "?": 7}
+NEGATIONS = ["설탕무첨가", "당류무첨가", "무설탕", "무가당", "제로슈가"]
+_TOKENS = sorted(((w, t) for t, ws in SWEETENERS.items() for w in ws),
+                  key=lambda x: -len(x[0]))                # 긴 표기 우선
+
+CAFFEINE_TOKENS = ("무수카페인", "카페인")
+ASPARTAME_TOKENS = ("아스파탐",)
+ZERO_TOKEN = re.compile(r"제로|ZERO|0\s*kcal", re.IGNORECASE)
+
+# 음료가 아닌 식품유형 — PRDLST_DCNM=탄산수 조건의 부분일치로 딸려온다
+NON_BEVERAGE_TYPES = {"탄산수소나트륨"}
+
+# 원재료 토큰 완전일치 집합. '맥아추출물분말'·'맥아시럽'(착향 첨가물)과 구분하려면
+# 부분일치가 아니라 완전일치여야 한다.
+ALCOHOL_ING_EXACT = {
+    "맥아", "맥아즙", "홉", "알코올", "알콜", "주정",
+    "탁주", "약주", "청주", "일반증류주", "증류주",
+}
+ALCOHOL_ING_PREFIX = ("호프", "홉추출", "맥아(")
+ALCOHOL_ING_SUBSTR = ("위스키", "럼주", "보드카")
+
+# 제품명 신호. '에일'(→진저에일)·'럼'(→플럼) 같은 부분문자열 함정을 피해
+# 단독 토큰으로 쓰지 않는다. 아래 목록은 오탐 0으로 실측 검증됨.
+ALCOHOL_NAME = re.compile(
+    r"논알콜|논알코올|넌알콜|넌 알콜|무알콜|무알코올|non[- ]?alcohol|"
+    r"맥주|beer|라거|lager|스타우트|IPA|페일에일|몰트드링크|밀맥|낫맥|"
+    r"하이볼|막걸리|와인|소주|위스키|사케|칵테일|NAB",
+    re.I,
+)
+
+
+def is_alcoholic(name, raw_text):
+    """무알콜 맥주·논알콜 주류맛 음료 판정. 대체당 티어 대상이 아니므로 배제한다."""
+    if ALCOHOL_NAME.search(name or ""):
+        return True
+    for part in (raw_text or "").split(","):
+        p = part.strip().replace(" ", "")
+        if p in ALCOHOL_ING_EXACT:
+            return True
+        if p.startswith(ALCOHOL_ING_PREFIX):
+            return True
+        if any(s in p for s in ALCOHOL_ING_SUBSTR):
+            return True
+    return False
+
+
+def split_ingredients(raw_text):
+    """괄호 depth 0의 쉼표로만 분할. '구연산(결정), 비타민C' 같은 표기 보호."""
+    parts, buf, depth = [], [], 0
+    for ch in raw_text:
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth = max(0, depth - 1)
+        if ch == "," and depth == 0:
+            parts.append("".join(buf))
+            buf = []
+        else:
+            buf.append(ch)
+    parts.append("".join(buf))
+    return [p.replace(" ", "") for p in parts if p.strip()]
 
 
 def classify(raw_text):
-    """원재료 문자열 -> (최종티어, 발견된 감미료 목록)"""
-    if not raw_text:
-        return "?", []
+    """원재료 문자열 -> {'tier','combo','hits'}   hits: [{'표기','티어','순번'}]"""
+    if not raw_text or not raw_text.strip():
+        return {"tier": "?", "combo": "-", "hits": []}
+    parts = split_ingredients(raw_text)
     text = raw_text.replace(" ", "")
-    found, tiers = [], set()
-    for tier, words in SWEETENERS.items():
-        for w in words:
-            if w.replace(" ", "") in text:
-                found.append(f"{w}({tier})")
-                tiers.add(tier)
+    for neg in NEGATIONS:                        # 길이 보존 마스킹
+        text = text.replace(neg, "\x00" * len(neg))
+    hits, tiers = [], set()
+    for w, tier in _TOKENS:                       # 긴 표기부터
+        if w not in text:
+            continue
+        text = text.replace(w, "\x00" * len(w))   # 소비 → 짧은 표기 재매칭 차단
+        seq = next((i + 1 for i, p in enumerate(parts) if w in p), 0)
+        hits.append({"표기": w, "티어": tier, "순번": seq})
+        tiers.add(tier)
     if not tiers:
-        return "무감미료?", []
-    worst = max(tiers, key=lambda t: TIER_ORDER.index(t))
-    if worst == "SUGAR":
-        worst = "F(당류함유)"
-    return worst, found
+        return {"tier": "무감미료", "combo": "-", "hits": []}
+    hits.sort(key=lambda h: (TIER_ORDER.index(h["티어"]), h["순번"]))
+    label = lambda t: "F" if t == "SUGAR" else t
+    worst = label(max(tiers, key=TIER_ORDER.index))
+    combo = "+".join(label(t) for t in TIER_ORDER if t in tiers)
+    return {"tier": worst, "combo": combo, "hits": hits}
 
 
 # ── API 호출 ──────────────────────────────────────────────────
+class ApiError(RuntimeError):
+    """서버가 명시적으로 거부한 요청. 재시도해도 소용없음."""
+
+
+def load_key(cli_key):
+    if cli_key:
+        return cli_key
+    for name in KEY_NAMES:
+        v = os.environ.get(name)
+        if v:
+            return v.strip()
+    if os.path.exists(ENV_FILE):
+        pairs = {}
+        with open(ENV_FILE, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, _, v = line.partition("=")
+                pairs[k.strip()] = v.strip().strip('"').strip("'")
+        for name in KEY_NAMES:
+            if pairs.get(name):
+                return pairs[name]
+    raise SystemExit(
+        "인증키를 찾을 수 없습니다. --key 로 넘기거나 FOOD_API_KEY 환경변수 "
+        "또는 .env 파일에 FOOD_API_KEY=... 를 설정하세요."
+    )
+
+
+def _get_json(url, timeout=30, retries=3, headers=None):
+    last = None
+    hdrs = {"User-Agent": UA}
+    if headers:
+        hdrs.update(headers)
+    for attempt in range(retries):
+        try:
+            req = urllib.request.Request(url, headers=hdrs)
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                body = r.read().decode("utf-8", "replace")
+        except urllib.error.HTTPError as e:
+            if e.code < 500:
+                raise ApiError(f"HTTP {e.code} {e.reason}")
+            last = e
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            last = e
+        else:
+            try:
+                return json.loads(body)
+            except json.JSONDecodeError:
+                m = re.search(r"alert\('([^']*)'\)", body)
+                raise ApiError(m.group(1) if m else
+                               "JSON이 아닌 응답: " + body.strip()[:200])
+        time.sleep(2 ** attempt)
+    raise ApiError(f"요청 실패: {last}")
+
+
 def call(key, start, end, cond=None):
-    """cond: dict 형태의 검색조건. 예: {'PRDLST_NM': '제로'}"""
+    """cond: dict 형태의 검색조건. 예: {'PRDLST_DCNM': '탄산음료'}"""
     url = f"{BASE}/{key}/{SERVICE}/json/{start}/{end}"
     if cond:
         for k, v in cond.items():
             url += "/" + urllib.parse.quote(f"{k}={v}", safe="=")
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return json.loads(r.read().decode("utf-8"))
+    return _get_json(url)
 
 
 def unwrap(payload):
     """{'C002': {'RESULT': {...}, 'total_count': '..', 'row': [...]}} 구조를 벗김"""
     body = payload.get(SERVICE)
     if body is None:
-        # 인증 실패 등은 RESULT만 최상위에 오는 경우가 있음
-        raise RuntimeError(f"예상과 다른 응답: {json.dumps(payload, ensure_ascii=False)[:400]}")
+        raise ApiError(f"예상과 다른 응답: {json.dumps(payload, ensure_ascii=False)[:400]}")
     result = body.get("RESULT", {})
     code = result.get("CODE", "")
     if code and not code.startswith("INFO-000"):
-        raise RuntimeError(f"API 오류 {code}: {result.get('MSG')}")
+        raise ApiError(f"API 오류 {code}: {result.get('MSG')}")
     total = int(body.get("total_count", 0))
     return total, body.get("row", [])
 
 
-# ── 모드별 동작 ────────────────────────────────────────────────
+# ── 필드명 ────────────────────────────────────────────────────
+# probe로 전부 검증됨 (2026-08-07). 새 환경에서 응답이 다르면 후보를 추가한다.
+FIELD_NAME = ["PRDLST_NM", "PRDT_NM", "PRODUCT_NM"]         # 제품명
+FIELD_RAW = ["RAWMTRL_NM", "RAWMTRL", "RAW_MTRL_NM"]        # 원재료
+FIELD_TYPE = ["PRDLST_DCNM", "PRDLST_DC_NM", "PRDT_TYPE"]   # 식품유형
+FIELD_MAKER = ["BSSH_NM", "MAKER_NM", "CMPNY_NM"]           # 업소명
+FIELD_DATE = ["PRMS_DT", "RPT_DT", "PRDLST_REPORT_DE"]      # 보고일자
+FIELD_CHNG = ["CHNG_DT"]                                     # 변경일자
+FIELD_REPORT_NO = ["PRDLST_REPORT_NO"]                       # 품목제조보고번호
+
+
+def pick(row, candidates):
+    for c in candidates:
+        if c in row and row[c]:
+            return str(row[c])
+    return ""
+
+
+# ── probe ─────────────────────────────────────────────────────
 def probe(key):
     """필드명 확인용. 5건만 받아서 키와 샘플을 그대로 출력."""
     total, rows = unwrap(call(key, 1, 5))
@@ -113,112 +281,842 @@ def probe(key):
     print("   아래 FIELD_* 상수를 맞춰 수정하세요 (기본값이 안 맞을 수 있음).")
 
 
-# 기본 추정 필드명 — probe 결과 보고 필요하면 여기만 고치면 됩니다
-FIELD_NAME = ["PRDLST_NM", "PRDT_NM", "PRODUCT_NM"]      # 제품명
-FIELD_RAW = ["RAWMTRL_NM", "RAWMTRL", "RAW_MTRL_NM"]      # 원재료
-FIELD_TYPE = ["PRDLST_DCNM", "PRDLST_DC_NM", "PRDT_TYPE"]  # 식품유형
-FIELD_MAKER = ["BSSH_NM", "MAKER_NM", "CMPNY_NM"]          # 업소명
-FIELD_DATE = ["PRMS_DT", "RPT_DT", "PRDLST_REPORT_DE"]     # 보고일자
-
-
-def pick(row, candidates):
-    for c in candidates:
-        if c in row and row[c]:
-            return str(row[c])
-    return ""
-
-
-def search(key, keywords, only_carbonated, out_csv, out_json):
-    seen, records, raw_all = set(), [], []
-
-    for kw in keywords:
-        print(f"\n=== 키워드 '{kw}' 수집 시작 ===")
+# ── Step 1: collect ──────────────────────────────────────────
+def collect(key, types, out_raw):
+    rows = []
+    counts = {}
+    for t in types:
+        print(f"\n=== 식품유형 '{t}' 수집 시작 ===")
         start = 1
         total = None
+        type_rows = []
         while True:
             end = start + PAGE - 1
             try:
-                payload = call(key, start, end, {"PRDLST_NM": kw})
-                t, rows = unwrap(payload)
-            except Exception as e:
+                payload = call(key, start, end, {"PRDLST_DCNM": t})
+                total_now, page_rows = unwrap(payload)
+            except ApiError as e:
                 print(f"  ! {start}-{end} 실패: {e}")
                 break
             if total is None:
-                total = t
+                total = total_now
                 print(f"  총 {total:,}건")
-            raw_all.extend(rows)
-            for row in rows:
-                name = pick(row, FIELD_NAME)
-                ftype = pick(row, FIELD_TYPE)
-                raw = pick(row, FIELD_RAW)
-                maker = pick(row, FIELD_MAKER)
-                date = pick(row, FIELD_DATE)
-
-                if only_carbonated and ftype and "탄산" not in ftype:
-                    continue
-                sig = (name, maker, raw[:80])
-                if sig in seen:
-                    continue
-                seen.add(sig)
-
-                tier, found = classify(raw)
-                records.append({
-                    "티어": tier,
-                    "제품명": name,
-                    "식품유형": ftype,
-                    "업소명": maker,
-                    "보고일자": date,
-                    "감미료": " / ".join(found),
-                    "원재료전문": raw,
-                })
+            type_rows.extend(page_rows)
             print(f"  {min(end, total):,}/{total:,}")
-            if end >= total or not rows:
+            if end >= total or not page_rows:
                 break
             start = end + 1
             time.sleep(SLEEP)
+        rows.extend(type_rows)
+        counts[t] = len(type_rows)
 
-    records.sort(key=lambda r: (TIER_ORDER.index(r["티어"])
-                                if r["티어"] in TIER_ORDER else 99,
-                                r["제품명"]))
+    data = {
+        "fetched_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "types": types,
+        "rows": rows,
+    }
+    with open(out_raw, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=1)
+
+    print(f"\n완료: 총 {len(rows):,}건 -> {out_raw}")
+    for t, c in counts.items():
+        print(f"  {t}: {c:,}건")
+
+
+def load_raw_full(path):
+    if not os.path.exists(path):
+        raise SystemExit(f"원본 데이터 파일이 없습니다: {path} (먼저 --mode collect 실행)")
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    if isinstance(data, list):
+        return data, []
+    return data.get("rows", []), data.get("types", [])
+
+
+def load_raw(path):
+    return load_raw_full(path)[0]
+
+
+# ── Step 2: nutrition ────────────────────────────────────────
+NUTRI_URL = "https://www.data.go.kr/download/standard.json"
+NUTRI_PK = "15100066"
+NUTRI_TABLE = "tn_pubr_public_nutri_process_info_svc"
+NUTRI_PER_PAGE = 10000
+NUTRI_TOTAL_COUNT = 50000   # 엔드포인트가 요구하는 파라미터. 실제 반환 건수는 이보다 많을 수 있음(무시됨)
+# 엔드포인트가 부분 컬럼 목록을 보내면 500을 반환한다 — 표준데이터 화면이 요청하는 전체 컬럼을 그대로 보낸다.
+NUTRI_ALL_COLS = [
+    "FOOD_CD", "FOOD_NM", "DATA_CD", "TYPE_NM", "FOOD_ORIGIN_CD", "FOOD_ORIGIN_NM",
+    "FOOD_LV3_CD", "FOOD_LV3_NM", "FOOD_LV4_CD", "FOOD_LV4_NM", "FOOD_LV5_CD", "FOOD_LV5_NM",
+    "FOOD_LV6_CD", "FOOD_LV6_NM", "FOOD_LV7_CD", "FOOD_LV7_NM", "NUT_CON_SRTR_QUA", "ENERC",
+    "WATER", "PROT", "FATCE", "ASH", "CHOCDF", "SUGAR", "FIBTG", "CA", "FE", "P", "K", "NAT",
+    "VITA_RAE", "RETOL", "CARTB", "THIA", "RIBF", "NIA", "VITC", "VITD", "CHOLE", "FASAT", "FATRN",
+    "SRC_CD", "SRC_NM", "SERV_SIZE", "FOOD_SIZE", "ITEM_MNFTR_RPT_NO", "MFR_NM", "IMPT_NM",
+    "DIST_NM", "IMPT_YN", "COO_CD", "COO_NM", "DATA_PROD_CD", "DATA_PROD_NM", "CRT_YMD", "CRTR_YMD",
+]
+# canonicalize()가 실제로 쓰는 부분만 캐시에 남겨 파일 크기를 줄인다.
+NUTRI_KEEP = ["FOOD_NM", "NUT_CON_SRTR_QUA", "ENERC", "SUGAR", "FOOD_SIZE",
+              "ITEM_MNFTR_RPT_NO", "MFR_NM", "FOOD_LV3_NM", "CRT_YMD"]
+# 이 헤더 없이는 404/500을 반환한다 (브라우저 XHR과 동일한 조건 요구).
+NUTRI_HEADERS = {
+    "Referer": "https://www.data.go.kr/data/15100066/standard.do",
+    "X-Requested-With": "XMLHttpRequest",
+    "Accept": "application/json, text/javascript, */*; q=0.01",
+}
+
+
+def fetch_nutrition(wanted_nos, cache_path, refresh):
+    if not refresh and os.path.exists(cache_path):
+        with open(cache_path, encoding="utf-8") as f:
+            cache = json.load(f)
+        table = cache.get("rows", {})
+        print(f"[nutrition] 캐시 사용: {cache_path} ({len(table):,}건)")
+        return table
+
+    table = {}
+    page = 1
+    while True:
+        qs = urllib.parse.urlencode(
+            [("publicDataPk", NUTRI_PK)]
+            + [("colNmList", c) for c in NUTRI_ALL_COLS]
+            + [("totalCount", str(NUTRI_TOTAL_COUNT)),
+               ("svcTableNm", NUTRI_TABLE),
+               ("perPage", str(NUTRI_PER_PAGE)),
+               ("page", str(page))]
+        )
+        url = f"{NUTRI_URL}?{qs}"
+        try:
+            page_rows = _get_json(url, timeout=120, headers=NUTRI_HEADERS)
+        except ApiError as e:
+            print(f"영양 데이터 수집 실패: {e} — 열량/당류 없이 진행합니다")
+            return {}
+        if not page_rows:
+            break
+        for rec in page_rows:
+            no = (rec.get("ITEM_MNFTR_RPT_NO") or "").strip()
+            if no and no in wanted_nos:
+                prev = table.get(no)
+                if prev is None or (rec.get("CRT_YMD") or "") > (prev.get("CRT_YMD") or ""):
+                    table[no] = {k: rec.get(k, "") for k in NUTRI_KEEP}
+        if page % 10 == 0:
+            print(f"  page {page} / 누적 매칭 {len(table):,}건")
+        if len(page_rows) < NUTRI_PER_PAGE:
+            break
+        page += 1
+
+    if wanted_nos:
+        print(f"[nutrition] 보고번호 {len(wanted_nos):,}개 중 {len(table):,}개 매칭 "
+              f"({len(table) / len(wanted_nos):.0%})")
+    else:
+        print("[nutrition] 대상 보고번호가 없습니다.")
+
+    cache = {
+        "fetched_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "source": f"{NUTRI_URL}?publicDataPk={NUTRI_PK}",
+        "rows": table,
+    }
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(cache, f, ensure_ascii=False, indent=1)
+    return table
+
+
+def nutrition_mode(raw_path, cache_path, refresh):
+    rows = load_raw(raw_path)
+    wanted = {pick(r, FIELD_REPORT_NO).strip() for r in rows}
+    wanted.discard("")
+    fetch_nutrition(wanted, cache_path, refresh)
+
+
+# ── Step 4: 제품 통합과 배합 이력 ────────────────────────────
+def recency(row):
+    return (max(pick(row, FIELD_DATE) or "", pick(row, FIELD_CHNG) or ""),
+            pick(row, FIELD_REPORT_NO) or "")
+
+
+CSV_FIELDS = ["티어", "조합", "제품명", "식품유형", "업소명", "보고일자", "감미료",
+              "열량", "기준량", "당류", "용량", "이력행수", "배합변경", "티어불일치",
+              "원재료전문", "제로표기", "제로사칭", "카페인", "아스파탐",
+              "일반판", "일반판티어"]
+
+
+def canonicalize(rows, nutrition):
+    groups = {}
+    for row in rows:
+        name = pick(row, FIELD_NAME).strip()
+        if not name:
+            continue
+        groups.setdefault(name, []).append(row)
+
+    records = []
+    for name, group in groups.items():
+        group.sort(key=recency, reverse=True)
+        cur = group[0]
+        raw = pick(cur, FIELD_RAW)
+        cls = classify(raw)
+
+        makers = {pick(r, FIELD_MAKER) for r in group if pick(r, FIELD_MAKER)}
+        maker = pick(cur, FIELD_MAKER)
+        display_maker = f"{maker} 외 {len(makers) - 1}곳" if len(makers) > 1 else maker
+
+        changed = any(pick(r, FIELD_RAW) != raw for r in group[1:])
+        tiers = {classify(pick(r, FIELD_RAW))["tier"] for r in group}
+        mismatch = "Y" if len(tiers) > 1 else ""
+
+        nut = None
+        for r in group:  # recency 순 — 현행 행부터 훑는다
+            no = pick(r, FIELD_REPORT_NO).strip()
+            if no and no in nutrition:
+                nut = nutrition[no]
+                break
+
+        history = [{
+            "보고일자": recency(r)[0],
+            "보고번호": pick(r, FIELD_REPORT_NO),
+            "원재료전문": pick(r, FIELD_RAW),
+        } for r in group]
+
+        records.append({
+            "티어": cls["tier"],
+            "조합": cls["combo"],
+            "제품명": name,
+            "식품유형": pick(cur, FIELD_TYPE),
+            "업소명": display_maker,
+            "보고일자": recency(cur)[0],
+            "감미료": " / ".join(f"{h['표기']}({h['티어']},{h['순번']})" for h in cls["hits"]),
+            "열량": nut.get("ENERC", "") if nut else "",
+            "기준량": nut.get("NUT_CON_SRTR_QUA", "") if nut else "",
+            "당류": nut.get("SUGAR", "") if nut else "",
+            "용량": nut.get("FOOD_SIZE", "") if nut else "",
+            "이력행수": len(group),
+            "배합변경": "Y" if changed else "",
+            "티어불일치": mismatch,
+            "원재료전문": raw,
+            "_원본업소명": maker,      # 제조사 집계용 (annotate). CSV/HTML에는 안 씀
+            "이력": history,          # HTML 배합 이력용. CSV에는 안 씀
+        })
+    return records
+
+
+# ── Step 4b: 파생 플래그와 제로↔일반판 짝 매칭 ─────────────────
+def annotate(records):
+    for rec in records:
+        name = rec["제품명"]
+        rec["제로표기"] = "Y" if ZERO_TOKEN.search(name) else "N"
+        rec["제로사칭"] = "Y" if rec["제로표기"] == "Y" and rec["티어"] == "F" else ""
+        text = rec["원재료전문"].replace(" ", "")
+        rec["카페인"] = "Y" if any(tok in text for tok in CAFFEINE_TOKENS) else ""
+        rec["아스파탐"] = "Y" if any(tok in text for tok in ASPARTAME_TOKENS) else ""
+        rec["일반판"] = ""
+        rec["일반판티어"] = ""
+
+    groups = {}
+    for rec in records:
+        base = re.sub(r"\s+", "", ZERO_TOKEN.sub("", rec["제품명"]))
+        groups.setdefault(base, []).append(rec)
+
+    for base, group in groups.items():
+        zeros = [r for r in group if r["제로표기"] == "Y"]
+        normals = [r for r in group if r["제로표기"] == "N"]
+        if not zeros or not normals:
+            continue
+        worst_normal = max(normals, key=lambda r: TIER_RANK.get(r["티어"], 99))
+        for z in zeros:
+            z["일반판"] = worst_normal["제품명"]
+            z["일반판티어"] = worst_normal["티어"]
+
+    # 제조사 집계 (제로 표기 제품만, 상위 15)
+    maker_tiers = {}
+    for rec in records:
+        if rec["제로표기"] != "Y":
+            continue
+        maker = rec.get("_원본업소명") or rec["업소명"]
+        maker_tiers.setdefault(maker, {})
+        maker_tiers[maker][rec["티어"]] = maker_tiers[maker].get(rec["티어"], 0) + 1
+    top_makers = sorted(maker_tiers.items(), key=lambda kv: -sum(kv[1].values()))[:15]
+
+    return {"제조사": top_makers}
+
+
+# ── Step 5: 단일 파일 HTML 리포트 ────────────────────────────
+_HTML_TEMPLATE = r"""<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>제로 탄산음료 티어 리포트</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --surface:#fff; --border:#e4e7eb; --border-strong:#d3d8de;
+    --text:#16191d; --muted:#6b7280; --muted-2:#8a919b;
+    --accent:#2563eb; --accent-soft:#eef4ff; --danger:#c0262c; --danger-soft:#fdf4f4;
+    --radius:10px; --radius-sm:7px; --pill:999px;
+    --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+    --shadow:0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
+  }
+  /* 티어 색의 단일 진원지 — 배지 점·배지 활성·표 칩·범례 칩이 모두 상속 */
+  [data-tier="무감미료"]{--tc:#4caf50;--tf:#ffffff}
+  [data-tier="S"]{--tc:#8bc34a;--tf:#14210a}
+  [data-tier="A"]{--tc:#cddc39;--tf:#1f2408}
+  [data-tier="B"]{--tc:#ffc107;--tf:#2b2000}
+  [data-tier="C"]{--tc:#ff9800;--tf:#2b1800}
+  [data-tier="D"]{--tc:#f4511e;--tf:#ffffff}
+  [data-tier="F"]{--tc:#cc0000;--tf:#ffffff}
+  [data-tier="?"]{--tc:#9aa1ab;--tf:#ffffff}
+
+  *{box-sizing:border-box}
+  body{margin:0;padding:20px 18px 44px;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;
+       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+       -webkit-font-smoothing:antialiased}
+  .page{max-width:1320px;margin:0 auto}
+
+  header{margin-bottom:14px}
+  h1{font-size:22px;line-height:1.25;letter-spacing:-.01em;margin:0 0 5px;font-weight:700}
+  .meta{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+
+  .tier-chip{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:20px;padding:0 7px;
+             border-radius:var(--radius-sm);font-size:11.5px;font-weight:700;white-space:nowrap;
+             background:var(--tc,#9aa1ab);color:var(--tf,#fff)}
+
+  .badges{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+  .badge{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-strong);background:var(--surface);
+         border-radius:var(--pill);padding:5px 12px 5px 10px;font-size:12.5px;font-weight:600;color:var(--text);
+         cursor:pointer;box-shadow:var(--shadow-sm);transition:background .12s,border-color .12s,box-shadow .12s}
+  .badge:hover{border-color:#b9c0c9;box-shadow:var(--shadow)}
+  .badge .dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--tc,#9aa1ab)}
+  .badge .cnt{color:var(--muted);font-variant-numeric:tabular-nums}
+  .badge.active{background:var(--tc,#4b5563);color:var(--tf,#fff);border-color:transparent;box-shadow:var(--shadow)}
+  .badge.active .cnt{color:var(--tf,#fff);opacity:.7}
+  .badge.active .dot{background:var(--tf,#fff);opacity:.85}
+  .clear-tiers{border:1px solid var(--border-strong);background:var(--surface);border-radius:var(--pill);
+               padding:5px 12px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;box-shadow:var(--shadow-sm)}
+  .clear-tiers:hover:not(:disabled){color:var(--text);border-color:#b9c0c9}
+  .clear-tiers:disabled{opacity:.4;cursor:default;box-shadow:none}
+
+  .warn{display:flex;gap:9px;align-items:flex-start;background:var(--danger-soft);border:1px solid #f0cdcd;
+        border-left:4px solid var(--danger);border-radius:var(--radius-sm);padding:10px 13px;margin:0 0 12px;
+        cursor:pointer;font-size:12.5px;color:#7d1d21;box-shadow:var(--shadow-sm)}
+  .warn:hover{background:#fbebeb}
+  .warn::before{content:"!";flex:none;width:16px;height:16px;border-radius:50%;background:var(--danger);color:#fff;
+                font-size:11px;font-weight:700;line-height:16px;text-align:center;margin-top:1px}
+
+  details.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+                margin:0 0 12px;box-shadow:var(--shadow-sm);font-size:12.5px}
+  details.panel>summary{cursor:pointer;padding:10px 14px;font-weight:600;list-style:none;user-select:none;color:var(--text)}
+  details.panel>summary::-webkit-details-marker{display:none}
+  details.panel>summary::before{content:"\25B8";display:inline-block;margin-right:7px;color:var(--muted-2);
+                                transition:transform .15s}
+  details.panel[open]>summary::before{transform:rotate(90deg)}
+  details.panel>summary:hover{background:#fafbfc;border-radius:var(--radius) var(--radius) 0 0}
+  .panel-body{padding:2px 14px 12px}
+
+  .tier-row{display:grid;grid-template-columns:30px 96px minmax(190px,1.1fr) minmax(240px,2fr);gap:10px;
+            align-items:start;padding:7px 0;border-top:1px solid var(--border)}
+  .tier-row:first-child{border-top:0}
+  .tier-ing{color:var(--text)}
+  .tier-why{color:var(--muted)}
+  .tier-note{margin-top:10px;padding-top:9px;border-top:1px solid var(--border);color:var(--muted);font-size:12px}
+
+  .maker-row{display:flex;align-items:center;gap:10px;margin:4px 0}
+  .maker-name{width:230px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+  .maker-bar{flex:1;height:14px;background:#eef0f2;border-radius:var(--radius-sm);overflow:hidden;display:flex}
+  .maker-bar span{height:100%}
+
+  .toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:var(--surface);border:1px solid var(--border);
+           border-radius:var(--radius);padding:11px 13px;margin:0 0 12px;box-shadow:var(--shadow-sm)}
+  input[type=search]{padding:7px 12px;font-size:13px;width:270px;border:1px solid var(--border-strong);
+                     border-radius:var(--pill);background:#fbfcfd;color:var(--text);outline:none;font-family:inherit}
+  input[type=search]:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.13)}
+  .chks{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  .chk{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fbfcfd;
+       border-radius:var(--pill);padding:5px 11px;font-size:12.5px;cursor:pointer;color:var(--muted);
+       transition:background .12s,border-color .12s,color .12s}
+  .chk:hover{border-color:var(--border-strong);color:var(--text)}
+  .chk input{accent-color:var(--accent);margin:0;cursor:pointer}
+  .chk:has(input:checked){background:var(--accent-soft);border-color:#bcd3fb;color:#12356e;font-weight:600}
+  .count-pill{margin-left:auto;color:var(--muted);font-size:12.5px;white-space:nowrap}
+  .count-pill b{color:var(--text);font-variant-numeric:tabular-nums}
+
+  .tablecard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  table{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
+  th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--border)}
+  th{position:sticky;top:0;z-index:2;background:#f7f8fa;color:var(--muted);font-size:11.5px;font-weight:700;
+     letter-spacing:.02em;white-space:nowrap;cursor:pointer;user-select:none;
+     box-shadow:inset 0 -1px 0 var(--border-strong)}
+  th:hover{color:var(--text);background:#f1f3f5}
+  th:first-child{border-top-left-radius:var(--radius)}
+  th:last-child{border-top-right-radius:var(--radius)}
+  th.sorted{color:var(--accent)}
+  th.sorted::after{content:" " attr(data-dir);font-size:9px}
+  tbody tr:last-child td{border-bottom:0}
+  tr.row{cursor:pointer}
+  tr.row:hover td{background:#f7f9fc}
+  tr.fake-zero td:first-child{box-shadow:inset 3px 0 0 var(--danger)}
+  td.c-name .pname{font-weight:600}
+  td.c-maker{color:var(--muted)}
+  td.c-date,td.c-vol{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}
+  td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  td.c-sweet{color:var(--muted);font-size:12px;max-width:280px}
+  td.c-combo{white-space:nowrap}
+  .combo-plus{color:var(--muted-2);margin:0 3px;font-size:11px}
+  .na{color:#c3c8cf}
+  .chip{display:inline-block;background:#eef0f2;color:var(--muted);border-radius:var(--pill);padding:1px 7px;
+        font-size:10.5px;font-weight:600;margin-left:5px;vertical-align:1px}
+  tr.detail td{background:#fafbfc;font-size:12px;padding:0}
+  .detail-box{padding:11px 13px;border-left:3px solid var(--accent);margin:2px 0;white-space:pre-wrap;line-height:1.65}
+  .detail-raw{color:var(--text);margin-bottom:6px}
+  .detail-box div{color:var(--muted)}
+
+  footer{margin-top:18px;padding-top:13px;border-top:1px solid var(--border);font-size:11px;color:var(--muted-2);line-height:1.7}
+  footer div+div{margin-top:3px}
+
+  @media (max-width:820px){
+    .tier-row{grid-template-columns:30px 1fr;gap:3px 10px}
+    .tier-ing,.tier-why{grid-column:2}
+    .maker-name{width:150px}
+    input[type=search]{width:100%}
+    .count-pill{margin-left:0}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <h1>제로 탄산음료 티어 리포트</h1>
+  <div class="meta">생성 __GENERATED_AT__ · 대상 식품유형 __TYPES__ · 총 __TOTAL__개 제품</div>
+  <div class="badges" id="badges">__BADGES__<button class="clear-tiers" id="clearTiers" disabled>전체 해제</button></div>
+  <div class="warn" id="fakeZeroBanner">제로 표기 제품 __ZERO_TOTAL__개 중 __FAKE_ZERO__개는 신고 원재료에 당류가 있습니다</div>
+  <details class="panel tierlegend" open>
+    <summary>티어 기준</summary>
+    <div class="panel-body">
+      <div class="tier-row"><span class="tier-chip" data-tier="무감미료">무</span><b>무감미료</b><span class="tier-ing">감미료 표기 없음</span><span class="tier-why">원재료에 감미료가 없음 (탄산수 등)</span></div>
+      <div class="tier-row"><span class="tier-chip" data-tier="S">S</span><b>S</b><span class="tier-ing">알룰로스, 타가토스</span><span class="tier-why">0.2~0.4 kcal/g. 식후 혈당을 오히려 낮춤 (2026 AJCN 메타분석)</span></div>
+      <div class="tier-row"><span class="tier-chip" data-tier="A">A</span><b>A</b><span class="tier-ing">스테비올배당체, 나한과(모그로사이드)</span><span class="tier-why">0 kcal, 혈당 영향 없음, 장기 안전성 양호</span></div>
+      <div class="tier-row"><span class="tier-chip" data-tier="B">B</span><b>B</b><span class="tier-ing">수크랄로스, 아세설팜칼륨, 아스파탐, 사카린</span><span class="tier-why">0 kcal이나 공복 인슐린·HbA1c 상승 신호 (2026 Tufts 메타분석)</span></div>
+      <div class="tier-row"><span class="tier-chip" data-tier="C">C</span><b>C</b><span class="tier-ing">에리스리톨, 자일리톨</span><span class="tier-why">혈당은 무해하나 혈소판 반응성·심혈관 사건 신호 (Cleveland Clinic). 인과관계는 확정되지 않음</span></div>
+      <div class="tier-row"><span class="tier-chip" data-tier="D">D</span><b>D</b><span class="tier-ing">말티톨, 소르비톨, 락티톨 등 당알코올</span><span class="tier-why">실제 2~2.6 kcal/g, 말티톨은 GI 35~52로 혈당 상승</span></div>
+      <div class="tier-row"><span class="tier-chip" data-tier="F">F</span><b>F</b><span class="tier-ing">설탕, 액상과당, 농축과즙 등</span><span class="tier-why">제로가 아님</span></div>
+      <div class="tier-note">한 제품에 여러 감미료가 있으면 가장 나쁜 등급이 최종 티어가 됩니다. 전체 구성은 '조합' 열에서 볼 수 있습니다.</div>
+    </div>
+  </details>
+  <details class="panel makers">
+    <summary>제조사별 제로 제품 티어 분포 (상위 15)</summary>
+    <div class="panel-body"><div id="makerList"></div></div>
+  </details>
+</header>
+<div class="toolbar">
+  <input type="search" id="q" placeholder="제품명·업소명 검색">
+  <div class="chks">
+    <label class="chk"><input type="checkbox" id="fFake"> 제로사칭만</label>
+    <label class="chk"><input type="checkbox" id="fAllulose"> 알룰로스 함유</label>
+    <label class="chk"><input type="checkbox" id="fErythritol"> 에리스리톨 함유</label>
+    <label class="chk"><input type="checkbox" id="fNoCaffeine"> 카페인 없음</label>
+    <label class="chk"><input type="checkbox" id="fNoAspartame"> 아스파탐 없음</label>
+    <label class="chk"><input type="checkbox" id="fHasKcal"> 열량 데이터 있음</label>
+  </div>
+  <span class="count-pill">표시 <b id="shownCount">0</b>개</span>
+</div>
+<div class="tablecard">
+<table id="tbl">
+  <thead><tr>
+    <th data-key="티어">티어</th><th data-key="조합">조합</th><th data-key="제품명">제품명</th>
+    <th data-key="업소명">업소명</th><th data-key="보고일자">보고일자</th>
+    <th data-key="열량">열량</th><th data-key="당류">당류</th><th data-key="용량">용량</th>
+    <th data-key="감미료">감미료</th>
+  </tr></thead>
+  <tbody id="tbody"></tbody>
+</table>
+</div>
+<footer>
+  <div>출처: 식품의약품안전처 C002 품목제조보고(원재료). 표시된 배합은 각 제품의 최신 보고일자 기준이며 배합은 자주 바뀝니다.</div>
+  <div>열량·당류: 전국통합식품영양성분정보(가공식품) 표준데이터(공공데이터포털 15100066). 품목제조보고번호로 조인되지 않은 제품은 공란이며 0을 의미하지 않습니다.</div>
+  <div>C 티어 근거인 에리스리톨의 심혈관 사건 신호는 관찰 연구에서 제기된 것으로 인과관계가 확정되지 않았습니다.</div>
+  <div>'제로 사칭'은 제품명에 제로 표기가 있으면서 신고 원재료에 당류가 포함된 경우를 가리킵니다. 제조사의 표시 기준 위반을 뜻하지 않습니다 — 제로칼로리 표기 기준은 100ml당 4kcal 미만이며, 소량의 당류로도 이를 충족할 수 있습니다.</div>
+</footer>
+</div>
+<script id="data" type="application/json">__DATA_JSON__</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const RANK = __RANK_JSON__;
+const MAKERS = __MAKERS_JSON__;
+const TIER_COLORS = {"무감미료":"#4caf50","S":"#8bc34a","A":"#cddc39","B":"#ffc107","C":"#ff9800","D":"#f4511e","F":"#c00","?":"#999"};
+
+let state = { q: "", fFake:false, fAllulose:false, fErythritol:false, fNoCaffeine:false, fNoAspartame:false, fHasKcal:false,
+              tierFilters: new Set(), sortKey: "티어", sortDir: 1, expanded: new Set() };
+
+function norm(s) { return (s||"").replace(/\s+/g, "").toLowerCase(); }
+
+function renderMakers() {
+  const el = document.getElementById('makerList');
+  el.innerHTML = MAKERS.map(function(entry) {
+    const name = entry[0], tiers = entry[1];
+    const total = Object.values(tiers).reduce(function(a,b){return a+b;}, 0);
+    const bars = Object.entries(tiers).sort(function(a,b){return (RANK[a[0]] ?? 99)-(RANK[b[0]] ?? 99);})
+      .map(function(kv){
+        const t = kv[0], c = kv[1];
+        return '<span style="width:' + (c/total*100) + '%;background:' + (TIER_COLORS[t]||'#ccc') + '" title="' + t + ':' + c + '"></span>';
+      }).join('');
+    return '<div class="maker-row"><div class="maker-name">' + name + ' (' + total + ')</div><div class="maker-bar">' + bars + '</div></div>';
+  }).join('');
+}
+
+function filtered() {
+  return DATA.filter(function(r) {
+    if (state.tierFilters.size && !state.tierFilters.has(r['티어'])) return false;
+    if (state.q && !norm(r['제품명']).includes(state.q) && !norm(r['업소명']).includes(state.q)) return false;
+    if (state.fFake && r['제로사칭'] !== 'Y') return false;
+    if (state.fAllulose && !(r['조합']||'').split('+').includes('S')) return false;
+    if (state.fErythritol && !(r['감미료']||'').includes('에리스')) return false;
+    if (state.fNoCaffeine && r['카페인'] === 'Y') return false;
+    if (state.fNoAspartame && r['아스파탐'] === 'Y') return false;
+    if (state.fHasKcal && !r['열량']) return false;
+    return true;
+  });
+}
+
+function sortedRows(rows) {
+  const key = state.sortKey, dir = state.sortDir;
+  const numeric = key === '열량' || key === '당류';
+  return rows.slice().sort(function(a,b) {
+    let av = a[key], bv = b[key];
+    if (key === '티어') { av = RANK[av] ?? 99; bv = RANK[bv] ?? 99; }
+    else if (numeric) { av = parseFloat(av); if (isNaN(av)) av = -Infinity; bv = parseFloat(bv); if (isNaN(bv)) bv = -Infinity; }
+    if (av < bv) return -1*dir;
+    if (av > bv) return 1*dir;
+    return 0;
+  });
+}
+
+function escapeHtml(s) {
+  return (s===undefined||s===null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function tierChip(t) {
+  const v = escapeHtml(t);
+  return '<span class="tier-chip" data-tier="' + v + '">' + (v === '무감미료' ? '무' : v) + '</span>';
+}
+function comboChips(c) {
+  if (!c || c === '-') return '<span class="na">\u2014</span>';
+  return c.split('+').map(function(p){ return tierChip(p.trim()); }).join('<span class="combo-plus">+</span>');
+}
+
+function rowHtml(r) {
+  const cls = ['row']; if (r['제로사칭']==='Y') cls.push('fake-zero');
+  const chips = (r['카페인']==='Y' ? '<span class="chip">카페인</span>':'') + (r['아스파탐']==='Y' ? '<span class="chip">아스파탐</span>':'');
+  const na = function(v){ return v ? escapeHtml(v) : '<span class="na">\u2014</span>'; };
+  return '<tr class="' + cls.join(' ') + '" data-name="' + escapeHtml(r['제품명']) + '">' +
+    '<td class="c-tier">' + tierChip(r['티어']) + '</td>' +
+    '<td class="c-combo">' + comboChips(r['조합']) + '</td>' +
+    '<td class="c-name"><span class="pname">' + escapeHtml(r['제품명']) + '</span>' + chips + '</td>' +
+    '<td class="c-maker">' + escapeHtml(r['업소명']) + '</td>' +
+    '<td class="c-date">' + na(r['보고일자']) + '</td>' +
+    '<td class="num">' + na(r['열량']) + '</td>' +
+    '<td class="num">' + na(r['당류']) + '</td>' +
+    '<td class="c-vol">' + na(r['용량']) + '</td>' +
+    '<td class="c-sweet">' + na(r['감미료']) + '</td></tr>';
+}
+
+function detailHtml(r) {
+  let extra = '';
+  if (r['일반판']) extra += '<div>일반판 대비: ' + escapeHtml(r['일반판']) + ' [' + escapeHtml(r['일반판티어']) + '] \u2192 [' + escapeHtml(r['티어']) + ']</div>';
+  if (r['배합변경'] === 'Y') {
+    extra += '<div>배합 이력:</div>' + (r['이력']||[]).map(function(h){
+      return '<div>&nbsp;&nbsp;' + escapeHtml(h['보고일자']) + ' \u00b7 ' + escapeHtml(h['보고번호']) + ' \u00b7 ' + escapeHtml(h['원재료전문']) + '</div>';
+    }).join('');
+  }
+  return '<tr class="detail"><td colspan="9"><div class="detail-box">' +
+         '<div class="detail-raw">' + escapeHtml(r['원재료전문']) + '</div>' + extra + '</div></td></tr>';
+}
+
+function render() {
+  const rows = sortedRows(filtered());
+  const tbody = document.getElementById('tbody');
+  let html = '';
+  rows.forEach(function(r) {
+    html += rowHtml(r);
+    if (state.expanded.has(r['제품명'])) html += detailHtml(r);
+  });
+  tbody.innerHTML = html;
+  Array.from(tbody.querySelectorAll('tr.row')).forEach(function(tr) {
+    tr.addEventListener('click', function() {
+      const nm = tr.getAttribute('data-name');
+      if (state.expanded.has(nm)) state.expanded.delete(nm);
+      else state.expanded.add(nm);
+      render();
+    });
+  });
+  document.querySelectorAll('#badges .badge').forEach(function(b) {
+    b.classList.toggle('active', state.tierFilters.has(b.dataset.tier));
+  });
+  document.getElementById('clearTiers').disabled = state.tierFilters.size === 0;
+  document.getElementById('shownCount').textContent = rows.length.toLocaleString();
+  document.querySelectorAll('th[data-key]').forEach(function(th) {
+    th.classList.toggle('sorted', th.dataset.key === state.sortKey);
+    th.setAttribute('data-dir', state.sortDir === 1 ? '\u25b2' : '\u25bc');
+  });
+}
+
+document.getElementById('q').addEventListener('input', function(e) { state.q = norm(e.target.value); render(); });
+document.getElementById('fFake').addEventListener('change', function(e) { state.fFake = e.target.checked; render(); });
+document.getElementById('fAllulose').addEventListener('change', function(e) { state.fAllulose = e.target.checked; render(); });
+document.getElementById('fErythritol').addEventListener('change', function(e) { state.fErythritol = e.target.checked; render(); });
+document.getElementById('fNoCaffeine').addEventListener('change', function(e) { state.fNoCaffeine = e.target.checked; render(); });
+document.getElementById('fNoAspartame').addEventListener('change', function(e) { state.fNoAspartame = e.target.checked; render(); });
+document.getElementById('fHasKcal').addEventListener('change', function(e) { state.fHasKcal = e.target.checked; render(); });
+document.getElementById('fakeZeroBanner').addEventListener('click', function() { state.fFake = !state.fFake; render(); });
+document.getElementById('badges').addEventListener('click', function(e) {
+  const t = e.target.closest('.badge'); if (!t) return;
+  state.tierFilters.has(t.dataset.tier) ? state.tierFilters.delete(t.dataset.tier) : state.tierFilters.add(t.dataset.tier);
+  render();
+});
+document.getElementById('clearTiers').addEventListener('click', function() {
+  state.tierFilters.clear(); render();
+});
+document.querySelectorAll('th[data-key]').forEach(function(th) {
+  th.addEventListener('click', function() {
+    if (state.sortKey === th.dataset.key) state.sortDir *= -1;
+    else { state.sortKey = th.dataset.key; state.sortDir = 1; }
+    render();
+  });
+});
+
+renderMakers();
+render();
+</script>
+</body>
+</html>
+"""
+
+
+def write_html(records, meta, meta_info, path):
+    payload = [{
+        "티어": r["티어"], "조합": r["조합"], "제품명": r["제품명"],
+        "식품유형": r["식품유형"], "업소명": r["업소명"], "보고일자": r["보고일자"],
+        "감미료": r["감미료"], "열량": r["열량"], "기준량": r["기준량"],
+        "당류": r["당류"], "용량": r["용량"], "이력행수": r["이력행수"],
+        "배합변경": r["배합변경"], "티어불일치": r["티어불일치"],
+        "원재료전문": r["원재료전문"], "제로표기": r["제로표기"],
+        "제로사칭": r["제로사칭"], "카페인": r["카페인"], "아스파탐": r["아스파탐"],
+        "일반판": r["일반판"], "일반판티어": r["일반판티어"], "이력": r["이력"],
+    } for r in records]
+
+    data_json = json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
+    rank_json = json.dumps(TIER_RANK, ensure_ascii=False)
+    makers_json = json.dumps(meta.get("제조사", []), ensure_ascii=False).replace("</", "<\\/")
+
+    tier_counts = {}
+    for r in records:
+        tier_counts[r["티어"]] = tier_counts.get(r["티어"], 0) + 1
+    badge_order = ["무감미료", "S", "A", "B", "C", "D", "F", "?"]
+    badges_html = "".join(
+        f'<button class="badge" data-tier="{t}">'
+        f'<span class="dot"></span>{t}<span class="cnt">{tier_counts.get(t, 0)}</span>'
+        f'</button>'
+        for t in badge_order if tier_counts.get(t)
+    )
+
+    zero_total = sum(1 for r in records if r["제로표기"] == "Y")
+    fake_zero = sum(1 for r in records if r["제로사칭"] == "Y")
+
+    html = _HTML_TEMPLATE
+    html = html.replace("__GENERATED_AT__", meta_info["generated_at"])
+    html = html.replace("__TYPES__", ", ".join(meta_info["types"]) or "-")
+    html = html.replace("__TOTAL__", str(len(records)))
+    html = html.replace("__BADGES__", badges_html)
+    html = html.replace("__ZERO_TOTAL__", str(zero_total))
+    html = html.replace("__FAKE_ZERO__", str(fake_zero))
+    html = html.replace("__DATA_JSON__", data_json)
+    html = html.replace("__RANK_JSON__", rank_json)
+    html = html.replace("__MAKERS_JSON__", makers_json)
+
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(html)
+
+
+# ── build ─────────────────────────────────────────────────────
+def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False):
+    rows, types = load_raw_full(raw_path)
+
+    if os.path.exists(cache_path):
+        with open(cache_path, encoding="utf-8") as f:
+            nutrition = json.load(f).get("rows", {})
+    else:
+        nutrition = {}
+        print("[build] 영양 캐시가 없습니다. 열량/당류는 공란으로 채웁니다. "
+              "(--mode nutrition 을 먼저 실행하면 채울 수 있습니다)")
+
+    records = canonicalize(rows, nutrition)
+    if not keep_alcohol:
+        before = len(records)
+        records = [r for r in records
+                   if r["식품유형"] not in NON_BEVERAGE_TYPES
+                   and not is_alcoholic(r["제품명"], r["원재료전문"])]
+        print(f"[build] 주류·비음료 {before - len(records)}건 제외 "
+              f"(--keep-alcohol 로 유지 가능)")
+    meta = annotate(records)
+    records.sort(key=lambda r: (TIER_RANK.get(r["티어"], 99), r["제품명"]))
 
     with open(out_csv, "w", newline="", encoding="utf-8-sig") as f:
-        w = csv.DictWriter(f, fieldnames=list(records[0].keys()) if records else
-                           ["티어", "제품명", "식품유형", "업소명", "보고일자", "감미료", "원재료전문"])
+        w = csv.DictWriter(f, fieldnames=CSV_FIELDS, extrasaction="ignore")
         w.writeheader()
         w.writerows(records)
-    with open(out_json, "w", encoding="utf-8") as f:
-        json.dump(raw_all, f, ensure_ascii=False, indent=1)
 
-    print(f"\n완료: {len(records):,}건 -> {out_csv}")
-    counts = {}
-    for r in records:
-        counts[r["티어"]] = counts.get(r["티어"], 0) + 1
-    print("티어 분포:", ", ".join(f"{k}:{v}" for k, v in sorted(counts.items())))
+    meta_info = {
+        "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "types": types or sorted({r["식품유형"] for r in records if r["식품유형"]}),
+    }
+    write_html(records, meta, meta_info, out_html)
 
-    tops = [r for r in records if r["티어"] in ("S", "A", "무감미료?")]
+    print(f"\n완료: {len(records):,}개 제품 -> {out_csv}, {out_html}")
+    if records:
+        counts = {}
+        for r in records:
+            counts[r["티어"]] = counts.get(r["티어"], 0) + 1
+        print("티어 분포:", ", ".join(
+            f"{k}:{v}" for k, v in sorted(counts.items(), key=lambda kv: TIER_RANK.get(kv[0], 99))))
+        changed = sum(1 for r in records if r["배합변경"] == "Y")
+        mismatch = sum(1 for r in records if r["티어불일치"] == "Y")
+        with_kcal = sum(1 for r in records if r["열량"])
+        print(f"배합변경 Y: {changed}건 · 티어불일치 Y: {mismatch}건 · "
+              f"영양 조인: {with_kcal}/{len(records)} ({with_kcal / len(records):.0%})")
+        print('열량은 품목제조보고번호로 조인된 제품만 표시됩니다. '
+              '공란은 "0"이 아니라 "데이터 없음"입니다.')
+
+    tops = [r for r in records if TIER_RANK.get(r["티어"], 99) <= 2]
     if tops:
-        print(f"\n── S/A/무감미료 후보 {len(tops)}건 (상위 30) ──")
+        print(f"\n── 무감미료/S/A 후보 {len(tops)}건 (상위 30) ──")
         for r in tops[:30]:
             print(f"  [{r['티어']}] {r['제품명']} / {r['업소명']} / {r['감미료']}")
+
+    if meta.get("제조사"):
+        print(f"\n── 제조사별 제로 제품 티어 분포 상위 {min(15, len(meta['제조사']))} ──")
+        for name, tiers in meta["제조사"]:
+            tier_str = ", ".join(
+                f"{t}{c}" for t, c in sorted(tiers.items(), key=lambda kv: TIER_RANK.get(kv[0], 99)))
+            print(f"  {name}: {tier_str}")
+
+    if find_text:
+        find_products(records, find_text)
+
+
+# ── Step 7-a: --find ─────────────────────────────────────────
+def find_products(records, text):
+    q = text.replace(" ", "").lower()
+    hits = [r for r in records
+            if q in r["제품명"].replace(" ", "").lower()
+            or q in r["업소명"].replace(" ", "").lower()]
+    if not hits:
+        print(f"\n'{text}'에 해당하는 제품이 없습니다. (총 {len(records):,}개 제품 중 검색)")
+        return
+    shown = hits[:20]
+    print(f"\n=== '{text}' 검색 결과 {len(hits)}건 ===")
+    for r in shown:
+        print(f"\n[{r['티어']}] {r['제품명']}  (조합 {r['조합']})")
+        print(f"  업소   {r['업소명']}")
+        print(f"  보고   {r['보고일자']} (이력 {r['이력행수']}건, 배합변경 {r['배합변경'] or 'N'})")
+        if r["열량"]:
+            print(f"  열량   {r['열량']} kcal / {r['기준량']} · 당류 {r['당류']} g · 용량 {r['용량']}")
+        else:
+            print("  열량   데이터 없음 (영양DB 미조인)")
+        print(f"  감미료 {r['감미료'] or '-'}")
+        flags = [
+            "카페인 있음" if r["카페인"] == "Y" else "카페인 없음",
+            "아스파탐 있음" if r["아스파탐"] == "Y" else "아스파탐 없음",
+        ]
+        print(f"  플래그 {' · '.join(flags)}")
+        if r["일반판"]:
+            print(f"  대비   {r['일반판']} [{r['일반판티어']}] -> [{r['티어']}]")
+        print(f"  원재료 {r['원재료전문']}")
+    if len(hits) > 20:
+        print(f"\n... 외 {len(hits) - 20}건")
+
+
+# ── Step 7-b: diff ───────────────────────────────────────────
+def diff_mode(raw_path, diff_against):
+    if not os.path.exists(diff_against):
+        raise SystemExit(f"이전 스냅샷 파일이 없습니다: {diff_against}")
+
+    cur_records = canonicalize(load_raw(raw_path), {})
+    cur_records = [r for r in cur_records
+                    if r["식품유형"] not in NON_BEVERAGE_TYPES
+                    and not is_alcoholic(r["제품명"], r["원재료전문"])]
+    annotate(cur_records)
+    prev_records = canonicalize(load_raw(diff_against), {})
+    prev_records = [r for r in prev_records
+                     if r["식품유형"] not in NON_BEVERAGE_TYPES
+                     and not is_alcoholic(r["제품명"], r["원재료전문"])]
+    annotate(prev_records)
+
+    cur_by_name = {r["제품명"]: r for r in cur_records}
+    prev_by_name = {r["제품명"]: r for r in prev_records}
+
+    new_names = sorted(set(cur_by_name) - set(prev_by_name))
+    gone_names = sorted(set(prev_by_name) - set(cur_by_name))
+    common = sorted(set(cur_by_name) & set(prev_by_name))
+    changed = [(n, prev_by_name[n], cur_by_name[n]) for n in common
+               if prev_by_name[n]["원재료전문"] != cur_by_name[n]["원재료전문"]]
+
+    print(f"신규 제품 {len(new_names)}건")
+    for n in new_names:
+        r = cur_by_name[n]
+        print(f"  [{r['티어']}] {n} / {r['업소명']}")
+
+    print(f"\n배합 변경 {len(changed)}건")
+    for n, prev, cur in changed:
+        star = " ★" if prev["티어"] != cur["티어"] else ""
+        print(f"  {n} / {cur['업소명']}{star}")
+        print(f"    이전 {prev['보고일자']}: {prev['원재료전문']}")
+        print(f"    현행 {cur['보고일자']}: {cur['원재료전문']}")
+        print(f"    티어 {prev['티어']} -> {cur['티어']}")
+
+    print(f"\n사라진 제품 {len(gone_names)}건")
+    for n in gone_names:
+        r = prev_by_name[n]
+        print(f"  [{r['티어']}] {n} / {r['업소명']}")
 
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--key", required=True, help="식품안전나라 인증키")
-    p.add_argument("--mode", choices=["probe", "search"], default="probe")
-    p.add_argument("--keyword", action="append", default=[],
-                   help="제품명 검색어. 여러 번 지정 가능")
-    p.add_argument("--all-types", action="store_true",
-                   help="탄산음료 외 유형도 모두 포함")
-    p.add_argument("--out", default="zero_soda_result.csv")
+    p.add_argument("--key", help="식품안전나라 인증키 (probe/collect에만 필요)")
+    p.add_argument("--mode", choices=["probe", "collect", "nutrition", "build", "run", "diff"],
+                   default="build")
+    p.add_argument("--type", action="append", default=[],
+                   help="수집할 식품유형(PRDLST_DCNM). 여러 번 지정 가능. 기본: 탄산음료, 탄산수")
+    p.add_argument("--raw", default=DEFAULT_RAW)
+    p.add_argument("--nutrition-cache", default=DEFAULT_NUTRITION_CACHE)
+    p.add_argument("--out", default=DEFAULT_OUT_CSV)
+    p.add_argument("--out-html", default=DEFAULT_OUT_HTML)
+    p.add_argument("--refresh-nutrition", action="store_true",
+                   help="캐시가 있어도 영양 데이터를 재다운로드")
+    p.add_argument("--find", help="build 모드 전용: 산출 후 매칭 제품 상세를 콘솔에 출력")
+    p.add_argument("--diff-against", help="diff 모드 전용·필수: 비교할 이전 raw JSON 경로")
+    p.add_argument("--keep-alcohol", action="store_true",
+                    help="주류·비음료를 제외하지 않고 그대로 산출 (기본: 제외)")
     args = p.parse_args()
 
-    if args.mode == "probe":
-        probe(args.key)
-        return
+    if args.find and args.mode != "build":
+        p.error("--find 는 --mode build 에서만 사용할 수 있습니다.")
+    if args.keep_alcohol and args.mode not in ("build", "run"):
+        p.error("--keep-alcohol 은 --mode build 또는 run 에서만 사용할 수 있습니다.")
+    if args.mode == "diff" and not args.diff_against:
+        p.error("--mode diff 는 --diff-against 가 필요합니다.")
+    if args.diff_against and args.mode != "diff":
+        p.error("--diff-against 는 --mode diff 에서만 사용할 수 있습니다.")
 
-    kws = args.keyword or ["제로"]
-    search(args.key, kws, not args.all_types, args.out, "zero_soda_raw.json")
+    types = args.type or list(DEFAULT_TYPES)
+
+    if args.mode == "probe":
+        probe(load_key(args.key))
+    elif args.mode == "collect":
+        collect(load_key(args.key), types, args.raw)
+    elif args.mode == "nutrition":
+        nutrition_mode(args.raw, args.nutrition_cache, args.refresh_nutrition)
+    elif args.mode == "build":
+        build(args.raw, args.nutrition_cache, args.out, args.out_html, args.find, args.keep_alcohol)
+    elif args.mode == "diff":
+        diff_mode(args.raw, args.diff_against)
+    elif args.mode == "run":
+        key = load_key(args.key)
+        collect(key, types, args.raw)
+        nutrition_mode(args.raw, args.nutrition_cache, args.refresh_nutrition)
+        build(args.raw, args.nutrition_cache, args.out, args.out_html, args.find, args.keep_alcohol)
 
 
 if __name__ == "__main__":
@@ -226,3 +1124,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         sys.exit(130)
+    except ApiError as e:
+        sys.exit(f"API 오류: {e}")

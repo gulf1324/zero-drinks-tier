@@ -14,6 +14,13 @@
 - 엔드포인트: `http://openapi.foodsafetykorea.go.kr/api/{KEY}/C002/json/{start}/{end}[/{조건}]`
 - 조건은 경로에 `PRDLST_NM=제로` 형태로 붙임
 - 서비스 상세/키 발급: `https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002`
+- **공공데이터포털 표준데이터 `15100066`** (전국통합식품영양성분정보-가공식품) — 열량·당류 조인용.
+  **인증키·활용신청 불필요.** 엔드포인트: `https://www.data.go.kr/download/standard.json`
+  (파라미터: `publicDataPk=15100066`, `svcTableNm=tn_pubr_public_nutri_process_info_svc`,
+  `perPage`, `page`, 컬럼 목록은 `colNmList`를 반복). **요청 헤더에 `X-Requested-With: XMLHttpRequest`,
+  `Referer: https://www.data.go.kr/data/15100066/standard.do`, `Accept: application/json, ...`가
+  없으면 404/500을 반환한다.** 조인 키는 C002의 `PRDLST_REPORT_NO` ↔ 이쪽의 `ITEM_MNFTR_RPT_NO`.
+  I2790(식품영양성분DB)은 쓰지 않는다 — `~2023` 데이터의 레거시 서비스이고 활용신청이 별도로 필요하다.
 
 ### 중요: 웹 포털은 자동 접속이 차단됨
 
@@ -24,36 +31,53 @@
 
 | 파일 | 역할 |
 |---|---|
-| `zero_soda_scan.py` | 수집 + 티어 분류 CLI. 표준 라이브러리만 사용 |
+| `zero_soda_scan.py` | 수집·영양조인·산출 CLI. 표준 라이브러리만 사용 |
 | `zero_soda_result.csv` | 결과물 (UTF-8 BOM, 엑셀 호환) |
-| `zero_soda_raw.json` | 원본 응답 보관. 재분류 시 API 재호출 없이 사용 |
+| `zero_soda_report.html` | 검색·필터·정렬 가능한 단일 파일 리포트 (외부 리소스 0) |
+| `zero_soda_raw.json` | C002 원본 응답 보관. 재분류 시 API 재호출 없이 사용 |
+| `zero_soda_nutrition.json` | 영양(열량·당류) 조인 캐시. 재호출 없이 재사용 |
 
 ## 실행
 
 ```bash
 # 필드명 확인 — 새 환경에서는 항상 이것부터
-python zero_soda_scan.py --key "$FOOD_API_KEY" --mode probe
+python zero_soda_scan.py --mode probe
 
-# 수집
-python zero_soda_scan.py --key "$FOOD_API_KEY" --mode search \
-    --keyword 제로 --keyword 사이다 --keyword 콜라 --keyword 스파클링
+# 전수 수집 (기본: 탄산음료 + 탄산수). --type 으로 다른 식품유형 추가 가능
+python zero_soda_scan.py --mode collect
+
+# 열량·당류 조인 (인증키 불필요)
+python zero_soda_scan.py --mode nutrition
+
+# 산출 (오프라인, API 호출 없음) — CSV + HTML 리포트
+python zero_soda_scan.py --mode build
+
+# 위 세 단계를 한번에
+python zero_soda_scan.py --mode run
+
+# 특정 제품만 콘솔에서 조회
+python zero_soda_scan.py --mode build --find 밀키스제로
+
+# 이전 스냅샷과 비교 (신제품/배합변경/단종 탐지)
+python zero_soda_scan.py --mode diff --diff-against zero_soda_raw.20260101.json
 ```
 
 - Python 3.8+, **외부 의존성 없음**. 새 패키지를 추가하지 말 것
-- API 키는 `FOOD_API_KEY` 환경변수로 넘긴다. **소스나 커밋에 하드코딩 금지**
-- `.gitignore`에 `*.csv`, `*.json`, `.env` 유지
+- API 키(C002용)는 `--key` 인자, `FOOD_API_KEY` 환경변수, 또는 `.env` 파일(`FOOD_API_KEY=...` 또는
+  `API=...`) 중 하나로 넘긴다. `probe`/`collect`/`run` 모드에만 필요하고 **소스나 커밋에 하드코딩 금지**
+- `nutrition`/`build`/`diff` 모드는 인증키가 필요 없다 (영양 데이터는 키리스, `build`/`diff`는 오프라인)
+- `.gitignore`에 `*.csv`, `*.json`, `*.html`, `.env` 유지
 
-## 필드명이 확정되지 않았음 (최우선 확인 사항)
+## 필드명 (2026-08-07 probe로 검증됨)
 
-`zero_soda_scan.py`의 `FIELD_NAME` / `FIELD_RAW` / `FIELD_TYPE` / `FIELD_MAKER` /
-`FIELD_DATE` 상수는 **실제 응답으로 검증되지 않은 추정값**이다.
+`zero_soda_scan.py`의 `FIELD_NAME` / `FIELD_RAW` / `FIELD_TYPE` / `FIELD_MAKER` / `FIELD_DATE`
+상수는 **실제 응답으로 검증되었다** (각 리스트의 첫 후보가 정답). 응답 껍데기 구조도
+`{"C002": {"RESULT": {...}, "total_count": "...", "row": [...]}}`로 확인됨.
 
-작업을 시작하면 먼저 `--mode probe`를 돌려 실제 키 목록을 확인하고,
-맞지 않으면 해당 상수만 수정한다. `pick()`이 후보 리스트를 순회하므로
-후보를 추가하는 방식으로 고치면 된다.
-
-응답 껍데기 구조는 `{"C002": {"RESULT": {...}, "total_count": "...", "row": [...]}}`
-로 가정하고 있다. 이것도 probe로 확인할 것.
+API가 응답 스펙을 바꾸면 먼저 `--mode probe`를 돌려 실제 키 목록을 다시 확인하고,
+맞지 않으면 해당 상수만 수정한다. `pick()`이 후보 리스트를 순회하므로 후보를 추가하는
+방식으로 고치면 된다. `PRDLST_DCNM=탄산음료` 같은 식품유형 조건 검색도 동작 확인됨 —
+`collect()`는 키워드가 아니라 이 조건으로 전수 수집한다.
 
 ## 티어 판정 규칙 (도메인 로직 — 함부로 바꾸지 말 것)
 

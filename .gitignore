@@ -1,5 +1,8 @@
 .env
 *.csv
 *.json
+*.html
+!docs/*.html
 __pycache__/
 *.pyc
+*.log
