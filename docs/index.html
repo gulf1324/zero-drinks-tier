@@ -12,6 +12,33 @@
 <meta property="og:title" content="제로 탄산음료 감미료 티어 리포트">
 <meta property="og:description" content="식약처 원재료 데이터로 분류한 국내 제로 탄산음료 1699개의 감미료 티어(S~F). 알룰로스부터 아스파탐까지 성분별 근거를 확인하세요.">
 <meta property="og:url" content="https://gulf1324.github.io/zero-drinks-tier/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "대체당 제로 음료 티어",
+  "alternateName": "제로 탄산음료 감미료 티어 리포트",
+  "description": "국내 유통 탄산음료·탄산수 1699개 제품의 대체당(감미료) 구성을 식품의약품안전처 품목제조보고 원재료 전문으로 수집하고, 피어리뷰 메타분석 근거에 따라 S~F 티어로 분류한 데이터셋입니다. 알룰로스·스테비올배당체·수크랄로스·아스파탐·에리스리톨 등 감미료별 탐지 결과와 제로 표기 대비 실제 당류 포함 여부를 담고 있습니다.",
+  "url": "https://gulf1324.github.io/zero-drinks-tier/",
+  "inLanguage": "ko",
+  "dateModified": "2026-08-10",
+  "isAccessibleForFree": true,
+  "keywords": ["제로음료", "대체당", "감미료", "알룰로스", "스테비아", "수크랄로스", "아스파탐", "에리스리톨", "탄산음료", "식품영양", "오픈데이터"],
+  "variableMeasured": ["티어", "감미료 조합", "원재료 전문", "열량", "당류", "카페인 함유", "아스파탐 함유", "제로 표기 여부"],
+  "creator": {"@type": "Person", "name": "gulf1324", "url": "https://github.com/gulf1324"},
+  "sourceOrganization": {"@type": "GovernmentOrganization", "name": "식품의약품안전처", "url": "https://www.mfds.go.kr/"},
+  "isBasedOn": [
+    "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002",
+    "https://www.data.go.kr/data/15100066/standard.do"
+  ],
+  "creditText": "식품의약품안전처 식품(첨가물)품목제조보고(원재료), 공공데이터포털 전국통합식품영양성분정보",
+  "codeRepository": "https://github.com/gulf1324/zero-drinks-tier",
+  "distribution": [
+    {"@type": "DataDownload", "encodingFormat": "text/html", "contentUrl": "https://gulf1324.github.io/zero-drinks-tier/"},
+    {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": "https://raw.githubusercontent.com/gulf1324/zero-drinks-tier/main/zero_soda_raw.json"}
+  ]
+}
+</script>
 <style>
   :root{
     --bg:#f4f5f7; --surface:#fff; --border:#e4e7eb; --border-strong:#d3d8de;
@@ -150,7 +177,7 @@
 <div class="page">
 <header>
   <h1>제로 탄산음료 티어 리포트</h1>
-  <div class="meta">생성 2026-08-10 00:24:28 · 대상 식품유형 탄산음료, 탄산수 · 총 1699개 제품</div>
+  <div class="meta">생성 2026-08-10 01:21:23 · 대상 식품유형 탄산음료, 탄산수 · 총 1699개 제품</div>
   <div class="badges" id="badges"><button class="badge" data-tier="무감미료"><span class="dot"></span>무감미료<span class="cnt">420</span></button><button class="badge" data-tier="S"><span class="dot"></span>S<span class="cnt">3</span></button><button class="badge" data-tier="A"><span class="dot"></span>A<span class="cnt">25</span></button><button class="badge" data-tier="B"><span class="dot"></span>B<span class="cnt">288</span></button><button class="badge" data-tier="C"><span class="dot"></span>C<span class="cnt">257</span></button><button class="badge" data-tier="F"><span class="dot"></span>F<span class="cnt">706</span></button><button class="clear-tiers" id="clearTiers" disabled>전체 해제</button></div>
   <div class="warn" id="fakeZeroBanner">제로 표기 제품 325개 중 22개는 신고 원재료에 당류가 있습니다</div>
   <details class="panel tierlegend" open>

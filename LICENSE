@@ -1,0 +1,58 @@
+MIT License
+
+Copyright (c) 2026 gulf1324
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+NOTE ON DATA / 데이터에 관한 고지
+
+The MIT license above covers the SOURCE CODE of this repository only
+(zero_soda_scan.py, test_classify.py, build scripts and templates).
+
+위 MIT 라이선스는 이 저장소의 **소스 코드에만** 적용됩니다.
+
+It does NOT cover the underlying data. The collected data originates from
+Korean government open data services and remains subject to the terms of
+each providing organization:
+
+수집된 데이터의 권리는 제공 기관에 있으며, 각 기관의 이용약관을 따릅니다.
+
+  - 식품의약품안전처 / 식품안전나라 OpenAPI (C002, 식품(첨가물)품목제조보고 원재료)
+    https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002
+
+  - 공공데이터포털 표준데이터 15100066
+    (전국통합식품영양성분정보 - 가공식품)
+    https://www.data.go.kr/data/15100066/standard.do
+
+Cached snapshots in this repository (zero_soda_raw.json,
+zero_soda_nutrition.json) are copies of that source data, redistributed for
+reproducibility. If you reuse them, attribute the originating organizations
+and check their current terms.
+
+이 저장소에 포함된 스냅샷(zero_soda_raw.json, zero_soda_nutrition.json)은
+재현성을 위해 보관한 원본 데이터의 사본입니다. 재사용 시 원 제공 기관을
+출처로 밝히고, 해당 기관의 최신 이용약관을 확인하시기 바랍니다.
+
+The tier classification is an interpretation by this project based on the
+cited research, not an official assessment by any government body.
+
+티어 분류는 인용된 연구를 근거로 한 이 프로젝트의 해석이며, 정부 기관의
+공식 평가가 아닙니다.

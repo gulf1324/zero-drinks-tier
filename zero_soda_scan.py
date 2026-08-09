@@ -626,6 +626,33 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <meta property="og:title" content="제로 탄산음료 감미료 티어 리포트">
 <meta property="og:description" content="식약처 원재료 데이터로 분류한 국내 제로 탄산음료 __TOTAL__개의 감미료 티어(S~F). 알룰로스부터 아스파탐까지 성분별 근거를 확인하세요.">
 <meta property="og:url" content="__PAGE_URL__">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "대체당 제로 음료 티어",
+  "alternateName": "제로 탄산음료 감미료 티어 리포트",
+  "description": "국내 유통 탄산음료·탄산수 __TOTAL__개 제품의 대체당(감미료) 구성을 식품의약품안전처 품목제조보고 원재료 전문으로 수집하고, 피어리뷰 메타분석 근거에 따라 S~F 티어로 분류한 데이터셋입니다. 알룰로스·스테비올배당체·수크랄로스·아스파탐·에리스리톨 등 감미료별 탐지 결과와 제로 표기 대비 실제 당류 포함 여부를 담고 있습니다.",
+  "url": "__PAGE_URL__",
+  "inLanguage": "ko",
+  "dateModified": "__GENERATED_DATE__",
+  "isAccessibleForFree": true,
+  "keywords": ["제로음료", "대체당", "감미료", "알룰로스", "스테비아", "수크랄로스", "아스파탐", "에리스리톨", "탄산음료", "식품영양", "오픈데이터"],
+  "variableMeasured": ["티어", "감미료 조합", "원재료 전문", "열량", "당류", "카페인 함유", "아스파탐 함유", "제로 표기 여부"],
+  "creator": {"@type": "Person", "name": "gulf1324", "url": "https://github.com/gulf1324"},
+  "sourceOrganization": {"@type": "GovernmentOrganization", "name": "식품의약품안전처", "url": "https://www.mfds.go.kr/"},
+  "isBasedOn": [
+    "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002",
+    "https://www.data.go.kr/data/15100066/standard.do"
+  ],
+  "creditText": "식품의약품안전처 식품(첨가물)품목제조보고(원재료), 공공데이터포털 전국통합식품영양성분정보",
+  "codeRepository": "https://github.com/gulf1324/zero-drinks-tier",
+  "distribution": [
+    {"@type": "DataDownload", "encodingFormat": "text/html", "contentUrl": "__PAGE_URL__"},
+    {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": "https://raw.githubusercontent.com/gulf1324/zero-drinks-tier/main/zero_soda_raw.json"}
+  ]
+}
+</script>
 <style>
   :root{
     --bg:#f4f5f7; --surface:#fff; --border:#e4e7eb; --border-strong:#d3d8de;
@@ -1004,6 +1031,7 @@ def write_html(records, meta, meta_info, path):
     html = html.replace("__TYPES__", ", ".join(meta_info["types"]) or "-")
     html = html.replace("__TOTAL__", str(len(records)))
     html = html.replace("__PAGE_URL__", PAGE_URL)
+    html = html.replace("__GENERATED_DATE__", meta_info["generated_at"][:10])
     html = html.replace("__BADGES__", badges_html)
     html = html.replace("__ZERO_TOTAL__", str(zero_total))
     html = html.replace("__FAKE_ZERO__", str(fake_zero))
