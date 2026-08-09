@@ -646,7 +646,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     "https://www.data.go.kr/data/15100066/standard.do"
   ],
   "creditText": "식품의약품안전처 식품(첨가물)품목제조보고(원재료), 공공데이터포털 전국통합식품영양성분정보",
-  "codeRepository": "https://github.com/gulf1324/zero-drinks-tier",
+  "sameAs": "https://github.com/gulf1324/zero-drinks-tier",
   "distribution": [
     {"@type": "DataDownload", "encodingFormat": "text/html", "contentUrl": "__PAGE_URL__"},
     {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": "https://raw.githubusercontent.com/gulf1324/zero-drinks-tier/main/zero_soda_raw.json"}
