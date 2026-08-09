@@ -84,7 +84,7 @@
 ## 수집 현황
 
 <!-- STATS:START -->
-`2026-08-09` 수집 · `2026-08-09` 산출 기준 — 매월 1일 자동 갱신
+`2026-08-09` 수집 · `2026-08-09` 산출 기준 — 매월 `--mode sync`로 갱신
 
 | 항목 | 값 |
 |---|---:|
@@ -195,10 +195,14 @@ python zero_soda_scan.py --mode build --find 밀키스제로
 python zero_soda_scan.py --mode diff --diff-against zero_soda_raw.20260101.json
 ```
 
-### 자동 갱신
+### 월간 갱신
 
-매월 1일 09:00 KST에 [GitHub Actions](.github/workflows/monthly-sync.yml)가
-`--mode sync`를 실행합니다. 위 **수집 현황** 수치와 날짜도 이때 자동으로 다시 씌워집니다.
+```bash
+python zero_soda_scan.py --mode sync --push
+```
+
+한 번 실행으로 수집 → 변경 판정 → (필요할 때만) 영양 조회·재빌드 → 커밋·푸시까지 끝납니다.
+위 **수집 현황**의 수치와 날짜도 이때 자동으로 다시 씌워집니다.
 
 C002는 날짜 조건 검색을 지원하지 않아(`CHNG_DT` 조건은 404) 전수 조회 자체는 피할 수 없습니다.
 대신 **바뀐 게 없으면 그 뒤 작업을 전부 건너뜁니다.**
@@ -218,6 +222,11 @@ C002는 날짜 조건 검색을 지원하지 않아(`CHNG_DT` 조건은 404) 전
 영양DB에 매칭되지 않는 제품(절반가량)을 기록하지 않으면 매달 "신규"로 오인해
 수 분짜리 전수 조회를 반복하게 되기 때문입니다.
 
+> **왜 GitHub Actions가 아닌가** — 식약처 API의 식품유형 조건 검색이 해외 IP에서 사실상
+> 응답하지 않습니다. GitHub 호스티드 러너(미국 Azure)에서 실측한 결과, 조건 **없는** 호출은
+> 0.82초에 200 OK지만, `PRDLST_DCNM` 조건을 붙이면 1건만 요청해도 **5회 시도 전부 약 135초
+> 스톨 후 타임아웃**했습니다. 국내에서 실행하면 같은 호출이 약 4초입니다.
+
 ### 재현성
 
 `build`는 **API를 전혀 호출하지 않습니다.** `zero_soda_raw.json`만 있으면
@@ -235,7 +244,6 @@ python -m unittest test_classify -v    # 25 tests — 분류 로직 회귀 검�
 |---|---|
 | `zero_soda_scan.py` | 수집 · 영양조인 · 산출 CLI. 표준 라이브러리만 사용 |
 | `test_classify.py` | 분류/알코올판정/파생플래그 테스트 25개 |
-| `.github/workflows/monthly-sync.yml` | 매월 1일 증분 동기화 |
 | `docs/index.html` | GitHub Pages로 서빙되는 리포트 |
 | `zero_soda_report.html` | 로컬 산출 리포트 (단일 파일) |
 | `zero_soda_result.csv` | 결과 CSV (UTF-8 BOM, 엑셀 호환) |

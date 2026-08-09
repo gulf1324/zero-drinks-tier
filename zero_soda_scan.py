@@ -1210,7 +1210,7 @@ def render_stats_block(stats, fetched_at):
     lines = [
         STATS_START,
         f"`{d(fetched_at)}` 수집 · `{stats['generated_at'][:10]}` 산출 기준 "
-        f"— 매월 1일 자동 갱신",
+        f"— 매월 `--mode sync`로 갱신",
         "",
         "| 항목 | 값 |",
         "|---|---:|",
@@ -1313,6 +1313,34 @@ def sync(key, types, raw_path, cache_path, out_csv, out_html, docs_html, force=F
     return True
 
 
+# 커밋 대상. 재생성 산출물(CSV·로컬 HTML)은 .gitignore 대상이라 제외한다.
+PUSH_PATHS = [DEFAULT_RAW, DEFAULT_NUTRITION_CACHE, DEFAULT_DOCS_HTML, README_PATH]
+
+
+def git_push(message=None):
+    """sync가 실제로 바꾼 파일만 커밋·푸시한다. 변경이 없으면 아무것도 하지 않는다."""
+    import subprocess
+
+    def git(*args, check=True):
+        return subprocess.run(("git",) + args, capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", check=check)
+
+    paths = [p for p in PUSH_PATHS if os.path.exists(p)]
+    git("add", "--", *paths)
+    if git("diff", "--cached", "--quiet", check=False).returncode == 0:
+        print("[push] 커밋할 변경 없음")
+        return False
+
+    msg = message or f"데이터 동기화: {time.strftime('%Y-%m-%d')}"
+    git("commit", "-m", msg)
+    r = git("push", check=False)
+    if r.returncode != 0:
+        print(f"[push] 실패:\n{r.stderr.strip()}")
+        return False
+    print(f"[push] 완료 — {msg}")
+    return True
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--key", help="식품안전나라 인증키 (probe/collect에만 필요)")
@@ -1329,6 +1357,8 @@ def main():
                    help="sync 모드 전용: GitHub Pages가 서빙할 사본 경로")
     p.add_argument("--force", action="store_true",
                    help="sync 모드 전용: 변경이 없어도 재빌드")
+    p.add_argument("--push", action="store_true",
+                   help="sync 모드 전용: 변경이 있으면 커밋·푸시까지 수행")
     p.add_argument("--refresh-nutrition", action="store_true",
                    help="캐시가 있어도 영양 데이터를 재다운로드")
     p.add_argument("--find", help="build 모드 전용: 산출 후 매칭 제품 상세를 콘솔에 출력")
@@ -1361,10 +1391,8 @@ def main():
     elif args.mode == "sync":
         changed = sync(load_key(args.key), types, args.raw, args.nutrition_cache,
                        args.out, args.out_html, args.docs_html, args.force)
-        gh_out = os.environ.get("GITHUB_OUTPUT")
-        if gh_out:
-            with open(gh_out, "a", encoding="utf-8") as f:
-                f.write(f"changed={'true' if changed else 'false'}\n")
+        if changed and args.push:
+            git_push()
     elif args.mode == "run":
         key = load_key(args.key)
         collect(key, types, args.raw)

@@ -36,7 +36,6 @@
 | `zero_soda_report.html` | 검색·필터·정렬 가능한 단일 파일 리포트 (외부 리소스 0) |
 | `zero_soda_raw.json` | C002 원본 스냅샷. **git 추적 대상** — 증분 비교의 기준이자 오프라인 재현용 |
 | `zero_soda_nutrition.json` | 영양 조인 캐시. **git 추적 대상**. `rows`(매칭분)와 `checked`(조회 시도한 보고번호 전체)를 함께 보관 |
-| `.github/workflows/monthly-sync.yml` | 매월 1일 09:00 KST 증분 동기화 |
 
 ## 실행
 
@@ -64,6 +63,7 @@ python zero_soda_scan.py --mode diff --diff-against zero_soda_raw.20260101.json
 
 # 월간 증분 동기화 (자동화용). 변경이 없으면 영양조회·재빌드를 전부 생략한다
 python zero_soda_scan.py --mode sync
+python zero_soda_scan.py --mode sync --push    # 변경이 있으면 커밋·푸시까지
 python zero_soda_scan.py --mode sync --force   # 변경이 없어도 강제 재빌드
 ```
 
@@ -78,6 +78,10 @@ python zero_soda_scan.py --mode sync --force   # 변경이 없어도 강제 재�
 
 - **C002는 날짜 조건 검색을 지원하지 않는다.** `CHNG_DT`/`PRMS_DT`를 조건으로 넣으면 404다
   (2026-08-09 실측). 서버측 증분 필터를 다시 시도하지 말 것. 전수 조회는 불가피하다.
+- **CI(GitHub Actions)에서 수집하려 하지 말 것.** 식품유형 조건 검색이 해외 IP에서 응답하지
+  않는다. 미국 러너 실측(2026-08-09): 조건 없는 호출은 0.82초에 200, `PRDLST_DCNM` 조건을
+  붙이면 1건 요청도 5회 전부 약 135초 스톨 후 타임아웃. 국내 실행은 같은 호출이 약 4초다.
+  `sync`는 국내에서 로컬 실행하는 것을 전제로 한다.
 - 변경 판정 기준키는 `PRDLST_REPORT_NO`다. **행당 고유**임을 실측으로 확인했다(2,410행/2,410개).
 - `write_raw()`/`write_nutrition_cache()`는 정렬해서 저장한다. API 응답 순서가 흔들려도
   git diff가 최소로 유지되도록 하기 위함이니 **정렬을 제거하지 말 것.**
