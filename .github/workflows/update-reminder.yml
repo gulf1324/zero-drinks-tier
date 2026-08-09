@@ -1,0 +1,74 @@
+name: 갱신 알림
+
+# 매월 첫째 월요일 09:00 KST 에 갱신 알림 이슈를 만든다.
+# 데이터 수집 자체는 여기서 하지 않는다 — 식약처 API가 GitHub 러너 네트워크에서
+# 응답하지 않아(4회 중 1회만 성공) 국내 PC에서 update.cmd 로 직접 실행한다.
+#
+# cron 주의: day-of-month 와 day-of-week 를 동시에 지정하면 OR 로 동작해
+# "1~7일" 과 "월요일" 이 각각 발동한다. 그래서 매주 월요일로 걸고
+# 첫째 주인지는 잡 안에서 판별한다.
+on:
+  schedule:
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 첫째 월요일인지 확인
+        id: check
+        run: |
+          DAY=$(date -u +%d)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "수동 실행 — 날짜 검사 생략"
+            echo "go=true" >> $GITHUB_OUTPUT
+          elif [ "$DAY" -le 07 ]; then
+            echo "$DAY 일 → 첫째 월요일"
+            echo "go=true" >> $GITHUB_OUTPUT
+          else
+            echo "$DAY 일 → 첫째 월요일 아님, 건너뜀"
+            echo "go=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 알림 이슈 생성
+        if: steps.check.outputs.go == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toISOString().slice(0, 10);
+            const body = [
+              '@${{ github.repository_owner }} 월간 데이터 갱신할 시간입니다.',
+              '',
+              '## 실행 방법',
+              '',
+              '`E:\\agent_coding\\zero_drinks_tier\\update.cmd` 를 더블클릭하거나, 터미널에서:',
+              '',
+              '```',
+              'cd E:\\agent_coding\\zero_drinks_tier',
+              'update.cmd',
+              '```',
+              '',
+              '수집 → 이전 스냅샷과 비교 → 변경이 있을 때만 재빌드 → 커밋·푸시까지 자동으로 끝납니다.',
+              '변경이 없으면 약 100초 만에 아무것도 하지 않고 종료합니다.',
+              '',
+              '## 끝나고 확인',
+              '',
+              '- 리포트: https://gulf1324.github.io/zero-drinks-tier/',
+              '- 변경이 있었다면 커밋이 하나 올라오고, Pages 재배포까지 1~2분',
+              '',
+              '완료하면 이 이슈를 닫아 주세요.',
+              '',
+              '<sub>GitHub 러너에서는 식약처 API가 응답하지 않아 수집을 자동화할 수 없습니다. 그래서 알림만 보냅니다.</sub>',
+            ].join('\n');
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `데이터 갱신 (${today})`,
+              body,
+            });
+            core.info(`이슈 생성: ${issue.data.html_url}`);

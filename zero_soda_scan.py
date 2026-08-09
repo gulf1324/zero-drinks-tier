@@ -1341,11 +1341,63 @@ def git_push(message=None):
     return True
 
 
+def update_mode(args, types):
+    """update.cmd 가 부르는 로컬 정기 갱신 루틴.
+
+    사전점검 → git pull → sync → push 를 한 번에 처리하고, 사람이 읽을
+    요약을 남긴다. 한글 출력을 여기서 담당하는 이유는 .cmd 파일이
+    OEM 코드페이지로 파싱돼 UTF-8 한글이 깨지기 때문이다.
+    """
+    import subprocess
+
+    print("=" * 58)
+    print("  대체당 제로 음료 티어 — 데이터 갱신")
+    print(f"  {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print("=" * 58)
+
+    if not os.path.exists(ENV_FILE) and not os.environ.get(KEY_NAMES[0]):
+        print(f"\n[오류] {ENV_FILE} 파일이 없습니다.")
+        print(f"       이 폴더에 아래 내용으로 만들어 주세요.\n")
+        print(f"       {KEY_NAMES[0]}=발급받은키")
+        return 1
+
+    print("\n[1/3] 원격 저장소와 동기화...")
+    r = subprocess.run(["git", "pull", "--rebase", "--autostash"],
+                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+    print((r.stdout or r.stderr).strip()[:400])
+    if r.returncode != 0:
+        print("\n[오류] git pull 실패. 충돌이 있는지 확인하세요.")
+        return 1
+
+    print("\n[2/3] 데이터 수집 및 비교 (변경이 없으면 재빌드를 건너뜁니다)...")
+    try:
+        changed = sync(load_key(args.key), types, args.raw, args.nutrition_cache,
+                       args.out, args.out_html, args.docs_html, args.force)
+    except ApiError as e:
+        print(f"\n[오류] 수집 실패: {e}")
+        print("       일일 호출 한도를 넘었다면 다음 날 다시 실행하면 됩니다.")
+        print("       기존 데이터는 그대로 보존됩니다.")
+        return 1
+
+    pushed = git_push() if changed else False
+
+    print("\n[3/3] 완료.")
+    if pushed:
+        print("  변경분을 푸시했습니다. Pages 재배포까지 1~2분 걸립니다.")
+    elif changed:
+        print("  재빌드는 했지만 푸시하지 못했습니다. 위 메시지를 확인하세요.")
+    else:
+        print("  갱신할 내용이 없습니다. 아무것도 바꾸지 않았습니다.")
+    print(f"\n  리포트  {PAGE_URL}")
+    return 0
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--key", help="식품안전나라 인증키 (probe/collect에만 필요)")
     p.add_argument("--mode",
-                   choices=["probe", "collect", "nutrition", "build", "run", "diff", "sync"],
+                   choices=["probe", "collect", "nutrition", "build", "run", "diff",
+                            "sync", "update"],
                    default="build")
     p.add_argument("--type", action="append", default=[],
                    help="수집할 식품유형(PRDLST_DCNM). 여러 번 지정 가능. 기본: 탄산음료, 탄산수")
@@ -1393,6 +1445,8 @@ def main():
                        args.out, args.out_html, args.docs_html, args.force)
         if changed and args.push:
             git_push()
+    elif args.mode == "update":
+        return update_mode(args, types)
     elif args.mode == "run":
         key = load_key(args.key)
         collect(key, types, args.raw)
@@ -1402,7 +1456,7 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
+        sys.exit(main() or 0)
     except KeyboardInterrupt:
         sys.exit(130)
     except ApiError as e:
