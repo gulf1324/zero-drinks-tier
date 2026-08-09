@@ -188,11 +188,17 @@
   .detail-box{padding:11px 13px;border-left:3px solid var(--accent);margin:2px 0;white-space:pre-wrap;line-height:1.65}
   .detail-raw{color:var(--text);margin-bottom:6px}
   .detail-box div{color:var(--muted)}
-  tr.more td{text-align:center;padding:14px 10px;border-bottom:0;background:#fafbfc}
-  #moreBtn{border:1px solid var(--border-strong);background:var(--surface);border-radius:var(--pill);
-           padding:9px 20px;font-size:12.5px;font-weight:600;color:var(--text);cursor:pointer;
-           font-family:inherit;box-shadow:var(--shadow-sm)}
-  #moreBtn:hover{border-color:var(--accent);color:var(--accent)}
+  tr.empty td{text-align:center;padding:34px 10px;color:var(--muted);border-bottom:0}
+  .pager{margin:14px 0 0;display:flex;flex-direction:column;align-items:center;gap:7px}
+  .pager-btns{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+  .pg{min-width:34px;height:34px;padding:0 10px;border:1px solid var(--border-strong);
+      background:var(--surface);border-radius:var(--radius-sm);font-family:inherit;font-size:12.5px;
+      color:var(--text);cursor:pointer;box-shadow:var(--shadow-sm)}
+  .pg:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .pg.cur{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;cursor:default}
+  .pg:disabled{opacity:.4;cursor:default;box-shadow:none}
+  .pg-gap{color:var(--muted-2);align-self:center;padding:0 2px}
+  .pager-info{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
 
   footer{margin-top:18px;padding-top:13px;border-top:1px solid var(--border);font-size:11px;color:var(--muted-2);line-height:1.7}
   footer div+div{margin-top:3px}
@@ -245,8 +251,9 @@
                          background:var(--danger)}
     tr.detail td{padding:0}
     tr.detail td::before{display:none}
-    tr.more td{display:block;text-align:center;padding:13px 10px}
-    tr.more td::before{display:none}
+    tr.empty td{display:block;text-align:center;padding:28px 10px}
+    tr.empty td::before{display:none}
+    .pg{min-width:32px;height:32px;padding:0 8px;font-size:12px}
     .detail-box{padding:10px 12px;font-size:11.5px}
   }
 </style>
@@ -255,7 +262,7 @@
 <div class="page">
 <header>
   <h1>제로 탄산음료 티어 리포트</h1>
-  <div class="meta">생성 2026-08-10 03:42:05 · 대상 식품유형 탄산음료, 탄산수 · 총 1699개 제품</div>
+  <div class="meta">생성 2026-08-10 03:51:35 · 대상 식품유형 탄산음료, 탄산수 · 총 1699개 제품</div>
   <section class="searchbar">
     <div class="searchfield">
       <svg class="s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -265,7 +272,7 @@
     </div>
     <div class="searchmeta">
       <span class="count-pill"><b id="shownCount">0</b>개 검색됨</span>
-      <span class="hint">행을 누르면 원재료 전문이 열립니다 · 스크롤하면 계속 불러옵니다</span>
+      <span class="hint">행을 누르면 원재료 전문이 열립니다</span>
     </div>
   </section>
   <div class="badges" id="badges"><button class="badge" data-tier="무감미료"><span class="dot"></span>무감미료<span class="cnt">420</span></button><button class="badge" data-tier="S"><span class="dot"></span>S<span class="cnt">3</span></button><button class="badge" data-tier="A"><span class="dot"></span>A<span class="cnt">25</span></button><button class="badge" data-tier="B"><span class="dot"></span>B<span class="cnt">288</span></button><button class="badge" data-tier="C"><span class="dot"></span>C<span class="cnt">257</span></button><button class="badge" data-tier="F"><span class="dot"></span>F<span class="cnt">706</span></button><button class="clear-tiers" id="clearTiers" disabled>전체 해제</button></div>
@@ -319,6 +326,7 @@
   <tbody id="tbody"></tbody>
 </table>
 </div>
+<nav class="pager" id="pager" aria-label="페이지 이동"></nav>
 <footer>
   <div>출처: 식품의약품안전처 C002 품목제조보고(원재료). 표시된 배합은 각 제품의 최신 보고일자 기준이며 배합은 자주 바뀝니다.</div>
   <div>열량·당류: 전국통합식품영양성분정보(가공식품) 표준데이터(공공데이터포털 15100066). 품목제조보고번호로 조인되지 않은 제품은 공란이며 0을 의미하지 않습니다.</div>
@@ -334,10 +342,10 @@ const MAKERS = [["오케이에프음료 주식회사", {"B": 39, "F": 6, "무감
 const TIER_COLORS = {"무감미료":"#4caf50","S":"#8bc34a","A":"#cddc39","B":"#ffc107","C":"#ff9800","D":"#f4511e","F":"#c00","?":"#999"};
 
 // PAGE_SIZE: 1,699행을 한 번에 그리면 표 높이가 11만 px가 되어 강제 레이아웃에만
-// 216ms가 든다(실측). 화면에 필요한 만큼만 그리고 스크롤에 따라 이어붙인다.
-const PAGE_SIZE = 60;
+// 216ms가 든다(실측). 한 페이지 분량만 그린다.
+const PAGE_SIZE = 50;
 let state = { q: "", fFake:false, fAllulose:false, fErythritol:false, fNoCaffeine:false, fNoAspartame:false, fHasKcal:false,
-              tierFilters: new Set(), sortKey: "티어", sortDir: 1, expanded: new Set(), limit: PAGE_SIZE };
+              tierFilters: new Set(), sortKey: "티어", sortDir: 1, expanded: new Set(), page: 1 };
 
 function norm(s) { return (s||"").replace(/\s+/g, "").toLowerCase(); }
 
@@ -428,35 +436,55 @@ function detailHtml(r) {
          '<div class="detail-raw">' + escapeHtml(r['원재료전문']) + '</div>' + extra + '</div></td></tr>';
 }
 
-let moreObserver = null;
+function pagerHtml(total, page, pages) {
+  if (pages <= 1) return '';
+  const btn = function(p, label, cls) {
+    if (p === page) return '<button class="pg cur" disabled>' + label + '</button>';
+    if (p < 1 || p > pages) return '<button class="pg" disabled>' + label + '</button>';
+    return '<button class="pg' + (cls ? ' ' + cls : '') + '" data-page="' + p + '">' + label + '</button>';
+  };
+  // 현재 페이지 주변 최대 5개만 노출한다. 34페이지를 전부 그리면 모바일에서 넘친다.
+  let start = Math.max(1, page - 2);
+  let end = Math.min(pages, start + 4);
+  start = Math.max(1, Math.min(start, end - 4));
+
+  let out = '<div class="pager-btns">' + btn(page - 1, '\u2039 이전');
+  if (start > 1) {
+    out += btn(1, '1');
+    if (start > 2) out += '<span class="pg-gap">\u2026</span>';
+  }
+  for (let p = start; p <= end; p++) out += btn(p, String(p));
+  if (end < pages) {
+    if (end < pages - 1) out += '<span class="pg-gap">\u2026</span>';
+    out += btn(pages, String(pages));
+  }
+  out += btn(page + 1, '다음 \u203a') + '</div>';
+
+  const from = (page - 1) * PAGE_SIZE + 1;
+  const to = Math.min(page * PAGE_SIZE, total);
+  out += '<div class="pager-info">' + from.toLocaleString() + '\u2013' + to.toLocaleString() +
+         ' / ' + total.toLocaleString() + '개 · ' + page + '/' + pages + ' 페이지</div>';
+  return out;
+}
 
 function render() {
   const rows = sortedRows(filtered());
-  const tbody = document.getElementById('tbody');
-  const slice = rows.slice(0, state.limit);
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  if (state.page > pages) state.page = pages;
+  if (state.page < 1) state.page = 1;
+
+  const begin = (state.page - 1) * PAGE_SIZE;
+  const slice = rows.slice(begin, begin + PAGE_SIZE);
   let html = '';
   slice.forEach(function(r) {
     html += rowHtml(r);
     if (state.expanded.has(r['제품명'])) html += detailHtml(r);
   });
-  const rest = rows.length - slice.length;
-  if (rest > 0) {
-    html += '<tr class="more"><td colspan="9">' +
-            '<button type="button" id="moreBtn">남은 ' + rest.toLocaleString() + '개 더 보기</button>' +
-            '</td></tr>';
+  if (!slice.length) {
+    html = '<tr class="empty"><td colspan="9">조건에 맞는 제품이 없습니다.</td></tr>';
   }
-  tbody.innerHTML = html;
-
-  // 행 클릭은 tbody 하나에 위임한다(아래 최초 1회 등록). 렌더마다 리스너를
-  // 다시 붙이지 않으므로 누수도 없다.
-  if (moreObserver) moreObserver.disconnect();
-  const moreBtn = document.getElementById('moreBtn');
-  if (moreBtn && 'IntersectionObserver' in window) {
-    moreObserver = new IntersectionObserver(function(entries) {
-      if (entries.some(function(e){ return e.isIntersecting; })) showMore();
-    }, {rootMargin: '400px'});
-    moreObserver.observe(moreBtn);
-  }
+  document.getElementById('tbody').innerHTML = html;
+  document.getElementById('pager').innerHTML = pagerHtml(rows.length, state.page, pages);
 
   document.querySelectorAll('#badges .badge').forEach(function(b) {
     b.classList.toggle('active', state.tierFilters.has(b.dataset.tier));
@@ -472,19 +500,26 @@ function render() {
   });
 }
 
-function showMore() {
-  state.limit += PAGE_SIZE;
+function goPage(p) {
+  state.page = p;
+  render();
+  const card = document.querySelector('.tablecard');
+  const top = card.getBoundingClientRect().top + window.scrollY - 12;
+  window.scrollTo({top: top, behavior: 'smooth'});
+}
+
+// 필터·검색·정렬이 바뀌면 1페이지로 돌아간다. 행 펼치기는 페이지를 유지한다.
+function update() {
+  state.page = 1;
   render();
 }
 
-// 필터·검색·정렬이 바뀌면 처음부터 다시 보여준다. 행 펼치기는 limit 을 건드리지 않는다.
-function update() {
-  state.limit = PAGE_SIZE;
-  render();
-}
+document.getElementById('pager').addEventListener('click', function(e) {
+  const b = e.target.closest('button[data-page]');
+  if (b) goPage(parseInt(b.dataset.page, 10));
+});
 
 document.getElementById('tbody').addEventListener('click', function(e) {
-  if (e.target.closest('#moreBtn')) { showMore(); return; }
   const tr = e.target.closest('tr.row');
   if (!tr) return;
   const nm = tr.getAttribute('data-name');
