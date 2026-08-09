@@ -64,6 +64,7 @@ DEFAULT_RAW = "zero_soda_raw.json"
 DEFAULT_NUTRITION_CACHE = "zero_soda_nutrition.json"
 DEFAULT_OUT_CSV = "zero_soda_result.csv"
 DEFAULT_OUT_HTML = "zero_soda_report.html"
+PAGE_URL = "https://gulf1324.github.io/zero-drinks-tier/"   # GitHub Pages 배포 주소 (canonical/OG용)
 
 
 # ── 감미료 사전 ────────────────────────────────────────────────
@@ -541,7 +542,16 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>제로 탄산음료 티어 리포트</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제로 탄산음료 감미료 티어 리포트 | 식약처 원재료 데이터 기반 __TOTAL__개 제품 분석</title>
+<meta name="description" content="국내 유통 제로 탄산음료 __TOTAL__개의 감미료 구성을 식약처 품목제조보고 원재료 데이터로 분석해 S~F 티어로 분류합니다. 알룰로스·스테비아·수크랄로스·아스파탐·에리스리톨 등 성분별 연구 근거와 제로 표기 사칭 여부까지 확인하세요.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="__PAGE_URL__">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:title" content="제로 탄산음료 감미료 티어 리포트">
+<meta property="og:description" content="식약처 원재료 데이터로 분류한 국내 제로 탄산음료 __TOTAL__개의 감미료 티어(S~F). 알룰로스부터 아스파탐까지 성분별 근거를 확인하세요.">
+<meta property="og:url" content="__PAGE_URL__">
 <style>
   :root{
     --bg:#f4f5f7; --surface:#fff; --border:#e4e7eb; --border-strong:#d3d8de;
@@ -919,6 +929,7 @@ def write_html(records, meta, meta_info, path):
     html = html.replace("__GENERATED_AT__", meta_info["generated_at"])
     html = html.replace("__TYPES__", ", ".join(meta_info["types"]) or "-")
     html = html.replace("__TOTAL__", str(len(records)))
+    html = html.replace("__PAGE_URL__", PAGE_URL)
     html = html.replace("__BADGES__", badges_html)
     html = html.replace("__ZERO_TOTAL__", str(zero_total))
     html = html.replace("__FAKE_ZERO__", str(fake_zero))
