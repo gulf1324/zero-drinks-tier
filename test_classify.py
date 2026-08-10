@@ -45,6 +45,22 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual(r["tier"], "무감미료")
         self.assertEqual(r["combo"], "-")
 
+    def test_opaque_ingredients_are_unknown_not_sweetener_free(self):
+        # 코카콜라 제로의 실제 신고 원재료. 감미료가 '없는' 게 아니라 '안 보이는'
+        # 것이라 무감미료로 표시하면 사실과 다르다.
+        r = z.classify("이산화탄소, 향료, 식품첨가물혼합제제, 정제수")
+        self.assertEqual(r["tier"], "?")
+        self.assertEqual(r["combo"], "-")
+
+    def test_opaque_with_detected_sweetener_keeps_real_tier(self):
+        # 감미료가 하나라도 명시돼 있으면 판정을 보류하지 않는다.
+        r = z.classify("정제수, 식품첨가물혼합제제, 수크랄로스")
+        self.assertEqual(r["tier"], "B")
+
+    def test_mixed_beverage_base_is_unknown(self):
+        r = z.classify("혼합음료, 이산화탄소, 합성향료, 정제수")
+        self.assertEqual(r["tier"], "?")
+
     def test_negation_no_sugar_gum_base(self):
         r = z.classify("정제수, 무설탕껌베이스, 향료")
         self.assertEqual(r["tier"], "무감미료")
