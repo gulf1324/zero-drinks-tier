@@ -618,13 +618,13 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>제로 탄산음료 감미료 티어 리포트 | 식약처 원재료 데이터 기반 __TOTAL__개 제품 분석</title>
-<meta name="description" content="국내 유통 제로 탄산음료 __TOTAL__개의 감미료 구성을 식약처 품목제조보고 원재료 데이터로 분석해 S~F 티어로 분류합니다. 알룰로스·스테비아·수크랄로스·아스파탐·에리스리톨 등 성분별 연구 근거와 제로 표기 사칭 여부까지 확인하세요.">
+<meta name="description" content="국내 유통 제로·무당류 탄산음료 __TOTAL__개의 감미료 구성을 식약처 품목제조보고 원재료 데이터로 분석해 S~F 티어로 분류합니다. 알룰로스·스테비아·수크랄로스·아스파탐·에리스리톨 등 성분별 연구 근거와 제로 표기 사칭 여부까지 확인하세요.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="__PAGE_URL__">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:title" content="제로 탄산음료 감미료 티어 리포트">
-<meta property="og:description" content="식약처 원재료 데이터로 분류한 국내 제로 탄산음료 __TOTAL__개의 감미료 티어(S~F). 알룰로스부터 아스파탐까지 성분별 근거를 확인하세요.">
+<meta property="og:description" content="식약처 원재료 데이터로 분류한 국내 제로·무당류 탄산음료 __TOTAL__개의 감미료 티어(S~F). 알룰로스부터 아스파탐까지 성분별 근거를 확인하세요.">
 <meta property="og:url" content="__PAGE_URL__">
 <script type="application/ld+json">
 {
@@ -632,7 +632,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   "@type": "Dataset",
   "name": "대체당 제로 음료 티어",
   "alternateName": "제로 탄산음료 감미료 티어 리포트",
-  "description": "국내 유통 탄산음료·탄산수 __TOTAL__개 제품의 대체당(감미료) 구성을 식품의약품안전처 품목제조보고 원재료 전문으로 수집하고, 피어리뷰 메타분석 근거에 따라 S~F 티어로 분류한 데이터셋입니다. 알룰로스·스테비올배당체·수크랄로스·아스파탐·에리스리톨 등 감미료별 탐지 결과와 제로 표기 대비 실제 당류 포함 여부를 담고 있습니다.",
+  "description": "국내 유통 제로·무당류 탄산음료와 탄산수 __TOTAL__개 제품의 대체당(감미료) 구성을 식품의약품안전처 품목제조보고 원재료 전문으로 수집하고, 피어리뷰 메타분석 근거에 따라 S~F 티어로 분류한 데이터셋입니다. 알룰로스·스테비올배당체·수크랄로스·아스파탐·에리스리톨 등 감미료별 탐지 결과와 제로 표기 대비 실제 당류 포함 여부를 담고 있습니다.",
   "url": "__PAGE_URL__",
   "inLanguage": "ko",
   "dateModified": "__GENERATED_DATE__",
@@ -682,6 +682,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   header{margin-bottom:14px}
   h1{font-size:22px;line-height:1.25;letter-spacing:-.01em;margin:0 0 5px;font-weight:700}
   .meta{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+  .meta-note{color:var(--muted-2);font-size:11.5px}
 
   .tier-chip{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:20px;padding:0 7px;
              border-radius:var(--radius-sm);font-size:11.5px;font-weight:700;white-space:nowrap;
@@ -876,7 +877,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <div class="page">
 <header>
   <h1>제로 탄산음료 티어 리포트</h1>
-  <div class="meta">생성 __GENERATED_AT__ · 대상 식품유형 __TYPES__ · 총 __TOTAL__개 제품</div>
+  <div class="meta">생성 __GENERATED_AT__ · 대상 식품유형 __TYPES__ · 당류 없는 음료와 제로 표기 제품 __TOTAL__개<br><span class="meta-note">설탕이 들어간 일반 음료는 제외했습니다. 단, 제로를 표방하면서 당류가 있는 제품은 F 티어로 남겼습니다.</span></div>
   <section class="searchbar">
     <div class="searchfield">
       <svg class="s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -900,8 +901,8 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
       <div class="tier-row"><span class="tier-chip" data-tier="B">B</span><b>B</b><span class="tier-ing">수크랄로스, 아세설팜칼륨, 아스파탐, 사카린</span><span class="tier-why">0 kcal이나 공복 인슐린·HbA1c 상승 신호 (2026 Tufts 메타분석)</span></div>
       <div class="tier-row"><span class="tier-chip" data-tier="C">C</span><b>C</b><span class="tier-ing">에리스리톨, 자일리톨</span><span class="tier-why">혈당은 무해하나 혈소판 반응성·심혈관 사건 신호 (Cleveland Clinic). 인과관계는 확정되지 않음</span></div>
       <div class="tier-row"><span class="tier-chip" data-tier="D">D</span><b>D</b><span class="tier-ing">말티톨, 소르비톨, 락티톨 등 당알코올</span><span class="tier-why">실제 2~2.6 kcal/g, 말티톨은 GI 35~52로 혈당 상승</span></div>
-      <div class="tier-row"><span class="tier-chip" data-tier="F">F</span><b>F</b><span class="tier-ing">설탕, 액상과당, 농축과즙 등</span><span class="tier-why">제로가 아님</span></div>
-      <div class="tier-note">한 제품에 여러 감미료가 있으면 가장 나쁜 등급이 최종 티어가 됩니다. 전체 구성은 '조합' 열에서 볼 수 있습니다.</div>
+      <div class="tier-row"><span class="tier-chip" data-tier="F">F</span><b>F</b><span class="tier-ing">설탕, 액상과당, 농축과즙 등</span><span class="tier-why">제로를 표방하지만 신고 원재료에 당류가 있음</span></div>
+      <div class="tier-note">한 제품에 여러 감미료가 있으면 가장 나쁜 등급이 최종 티어가 됩니다. 전체 구성은 '조합' 열에서 볼 수 있습니다.<br>이 리포트는 <b>당류가 없는 음료</b>와 <b>제로를 표방한 제품</b>만 다룹니다. 제로 표기가 없는 일반 당류 음료는 수집 대상에서 제외됩니다.</div>
     </div>
   </details>
   <details class="panel makers">
@@ -1236,7 +1237,8 @@ def write_html(records, meta, meta_info, path):
 
 
 # ── build ─────────────────────────────────────────────────────
-def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False):
+def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False,
+          keep_sugar=False):
     rows, types = load_raw_full(raw_path)
 
     if os.path.exists(cache_path):
@@ -1258,6 +1260,22 @@ def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False
         print(f"[build] 주류·비음료 {excluded}건 제외 "
               f"(--keep-alcohol 로 유지 가능)")
     meta = annotate(records)
+
+    # 이 리포트는 '제로 음료' 티어다. 설탕이 든 데다 제로 표기도 없는 제품은
+    # 애초에 대상이 아니다. 제로 표기가 있는 F 티어(= 제로 사칭)만 남긴다.
+    #
+    # annotate() 를 다시 부르지 않는 이유: 제로↔일반판 짝의 '일반판'이 바로 여기서
+    # 지워지는 당류 음료라, 재실행하면 짝이 전부 사라진다. 제조사 집계도 이미
+    # 제로 표기 제품만 세므로 이 제외의 영향을 받지 않는다.
+    sugar_dropped = 0
+    if not keep_sugar:
+        before = len(records)
+        records = [r for r in records
+                   if r["티어"] != "F" or r["제로표기"] == "Y"]
+        sugar_dropped = before - len(records)
+        print(f"[build] 제로 표기 없는 당류 음료 {sugar_dropped}건 제외 "
+              f"(--keep-sugar 로 유지 가능)")
+
     records.sort(key=lambda r: (TIER_RANK.get(r["티어"], 99), r["제품명"]))
 
     with open(out_csv, "w", newline="", encoding="utf-8-sig") as f:
@@ -1309,6 +1327,7 @@ def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False
         "records": records,
         "raw_rows": len(rows),
         "excluded": excluded,
+        "sugar_dropped": sugar_dropped,
         "total": len(records),
         "tier_counts": tier_counts,
         "with_kcal": sum(1 for r in records if r["열량"]),
@@ -1436,6 +1455,7 @@ def render_stats_block(stats, fetched_at):
         "|---|---:|",
         f"| C002 원본 응답 행 | {stats['raw_rows']:,}건 |",
         f"| 주류·무알콜맥주 등 비대상 제외 | −{stats['excluded']:,}건 |",
+        f"| 제로 표기 없는 당류 음료 제외 | −{stats['sugar_dropped']:,}건 |",
         f"| 제품 단위로 통합한 최종 레코드 | **{total:,}개** |",
         f"| 열량·당류 조인 성공 | {stats['with_kcal']:,}개 ({kcal_pct:.1f}%) |",
         f"| 제품명에 제로 표기 | {stats['zero_total']:,}개 |",
@@ -1674,12 +1694,16 @@ def main():
     p.add_argument("--diff-against", help="diff 모드 전용·필수: 비교할 이전 raw JSON 경로")
     p.add_argument("--keep-alcohol", action="store_true",
                     help="주류·비음료를 제외하지 않고 그대로 산출 (기본: 제외)")
+    p.add_argument("--keep-sugar", action="store_true",
+                    help="제로 표기 없는 당류 음료도 그대로 산출 (기본: 제외)")
     args = p.parse_args()
 
     if args.find and args.mode != "build":
         p.error("--find 는 --mode build 에서만 사용할 수 있습니다.")
     if args.keep_alcohol and args.mode not in ("build", "run"):
         p.error("--keep-alcohol 은 --mode build 또는 run 에서만 사용할 수 있습니다.")
+    if args.keep_sugar and args.mode not in ("build", "run"):
+        p.error("--keep-sugar 는 --mode build 또는 run 에서만 사용할 수 있습니다.")
     if args.mode == "diff" and not args.diff_against:
         p.error("--mode diff 는 --diff-against 가 필요합니다.")
     if args.diff_against and args.mode != "diff":
@@ -1694,7 +1718,8 @@ def main():
     elif args.mode == "nutrition":
         nutrition_mode(args.raw, args.nutrition_cache, args.refresh_nutrition)
     elif args.mode == "build":
-        build(args.raw, args.nutrition_cache, args.out, args.out_html, args.find, args.keep_alcohol)
+        build(args.raw, args.nutrition_cache, args.out, args.out_html, args.find, args.keep_alcohol,
+              args.keep_sugar)
     elif args.mode == "diff":
         diff_mode(args.raw, args.diff_against)
     elif args.mode == "sync":
@@ -1708,7 +1733,8 @@ def main():
         key = load_key(args.key)
         collect(key, types, args.raw)
         nutrition_mode(args.raw, args.nutrition_cache, args.refresh_nutrition)
-        build(args.raw, args.nutrition_cache, args.out, args.out_html, args.find, args.keep_alcohol)
+        build(args.raw, args.nutrition_cache, args.out, args.out_html, args.find, args.keep_alcohol,
+              args.keep_sugar)
 
 
 if __name__ == "__main__":
