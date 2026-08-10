@@ -515,123 +515,131 @@ def nutrition_mode(raw_path, cache_path, refresh):
     fetch_nutrition(wanted, cache_path, refresh)
 
 
-# ── Step 3: 유통명·바코드·생산중단 보강 ──────────────────────
-# C002가 주는 제품명은 유통명이 아니라 품목제조보고 등록명이다. 아래 세 서비스가
-# 같은 PRDLST_REPORT_NO 로 조인되므로 이걸로 등록명을 유통명으로 바로잡고,
-# 이미 단종된 제품을 걸러낸다. 전부 2026-08-10 에 활용신청을 마쳤다.
+# ── Step 3: 생산중단 제품 걸러내기 (I2852) ───────────────────
+# 단종된 제품을 현행처럼 보여주지 않기 위한 확인. 보고번호로 하나씩 물어본다.
 #
-# 주의 - I2570/C005 는 대한상공회의소 유통물류진흥원 자료라 **2018년 이후 갱신이
-# 중단**되어 있다(서비스 상세 페이지가 명시). 2018년 이후 출시·리브랜딩된 제품은
-# 여기에 없을 수 있으니, 조인되지 않는다고 오류로 보지 말 것.
-ENRICH_SERVICES = {
-    # 서비스: (조건, 조인키 필드, 페이지 크기)
-    "I2570": ({}, "PRDLST_REPORT_NO", 1000),          # 유통바코드: PRDT_NM(유통 제품명)
-    "C005": ({}, "PRDLST_REPORT_NO", 1000),           # 바코드연계: END_DT(생산중단일)
-    "I2852": ({"FOOD_HF_LS_CL_CD": "001"}, "PRDLST_REPORT_NO", 1000),  # 생산중단제품
-}
+# 왜 하나씩인가 - I2852 는 조건 없이 페이징하면 **1,000행에서 잘린다**
+# (total_count 가 "1" 같은 엉뚱한 값으로 오고 1,001행부터는 빈 응답이다.
+#  2026-08-10 실측). 전수 스캔이 불가능하니 개별 조회 외에 방법이 없다.
+# 일일 호출 제한은 1,000회라 현행 제품 수(약 620개) 정도는 감당된다.
+#
+# I2570(유통바코드)·C005(바코드연계제품정보)는 쓰지 않는다. 2018년에 멈춘
+# 자료라 커버리지가 1.3%(32/2,410)였고, 주는 제품명도 소매명이 아니라
+# `동아오츠카 나랑드 사이다 250G x 6EA` 같은 도매 팩 단위 표기라 등록명보다
+# 나빴다. 자세한 실측은 AGENTS.md 참고.
 DEFAULT_ENRICH_CACHE = "zero_soda_enrich.json"
-ENRICH_MAX_CALLS = 400   # 서비스당 일일 호출 제한이 500이라 여유를 둔다
+ENRICH_MAX_CALLS = 900   # 일일 제한 1,000회. 여유를 둔다
 
 
-def fetch_service_rows(key, service, cond, page, wanted, keep_fields, max_calls=ENRICH_MAX_CALLS):
-    """서비스를 전수 페이징하되 우리 보고번호에 해당하는 행만 남긴다.
+def fetch_discontinued(key, wanted, max_calls=ENRICH_MAX_CALLS):
+    """보고번호별로 I2852 를 조회한다. (단종정보, 실제로 확인된 보고번호) 반환.
 
-    I2570/C005 는 식품유형 조건을 지원하지 않아 전수 조회 외에 방법이 없다.
-    보고번호별로 하나씩 물어보면 2,410 콜이라 일일 제한(500)을 넘긴다.
+    실패한 번호는 `confirmed` 에 넣지 않는다. 넣으면 다음 실행에서 영영
+    다시 묻지 않게 되어, 조회하지 못한 것이 '단종 아님'으로 굳어버린다.
     """
-    found = {}
-    start, total, calls = 1, None, 0
-    while calls < max_calls:
-        end = start + page - 1
-        payload = call(key, start, end, cond or None, service=service)
-        total_now, rows = unwrap(payload, service=service)
-        calls += 1
-        if total is None:
-            total = total_now
-            print(f"  [{service}] 전체 {total:,}건")
+    found, confirmed = {}, set()
+    todo = sorted(wanted)[:max_calls]
+    if len(wanted) > max_calls:
+        print(f"  ! 대상 {len(wanted):,}개가 호출 상한 {max_calls}회를 넘어 앞에서부터만 조회")
+    for i, no in enumerate(todo, 1):
+        try:
+            _, rows = unwrap(call(key, 1, 5, {"PRDLST_REPORT_NO": no}, service="I2852"),
+                             service="I2852")
+        except ApiError as e:
+            if "INFO-300" in str(e):
+                # 일일 호출건수 초과. 더 두드려봐야 전부 실패하니 여기서 멈춘다.
+                print(f"  ! 일일 호출 한도 초과 - {i - 1:,}개까지만 확인하고 중단합니다. "
+                      f"내일 다시 실행하면 남은 것부터 이어서 조회합니다.")
+                break
+            print(f"  ! {no} 조회 실패: {e}")
+            continue
+        confirmed.add(no)
         for row in rows:
-            no = str(row.get("PRDLST_REPORT_NO", "")).strip()
-            if no and no in wanted:
-                cur = found.setdefault(no, {})
-                for f in keep_fields:
-                    v = str(row.get(f, "")).strip()
-                    if v and not cur.get(f):
-                        cur[f] = v
-        print(f"  [{service}] {min(end, total):,}/{total:,} · 매칭 {len(found):,}건")
-        if end >= total or not rows:
-            break
-        start = end + 1
+            end = str(row.get("END_DT", "")).strip()
+            if end:
+                found[no] = {"생산중단일": end}
+                why = str(row.get("ARTCL_END_WHY", "")).strip()
+                if why:
+                    found[no]["사유"] = why
+                break
+        if i % 100 == 0 or i == len(todo):
+            print(f"  [I2852] {i:,}/{len(todo):,} · 단종 {len(found):,}건")
         time.sleep(SLEEP)
-    else:
-        print(f"  [{service}] ! 호출 상한 {max_calls}회 도달 - 부분 수집")
-    return found
+    return found, confirmed
 
 
-def fetch_enrich(key, wanted, cache_path):
-    """세 서비스를 훑어 유통명·바코드·생산중단일을 모은다."""
-    barcode, discontinued = {}, {}
+def write_enrich_cache(discontinued, checked, cache_path):
+    """정렬해서 저장한다 - API 응답 순서가 흔들려도 git diff가 최소가 되도록.
 
-    i2570 = fetch_service_rows(key, "I2570", ENRICH_SERVICES["I2570"][0], 1000,
-                               wanted, ["PRDT_NM", "BRCD_NO", "CMPNY_NM"])
-    for no, v in i2570.items():
-        rec = barcode.setdefault(no, {})
-        if v.get("PRDT_NM"):
-            rec["유통명"] = v["PRDT_NM"]
-        if v.get("BRCD_NO"):
-            rec["바코드"] = v["BRCD_NO"]
-
-    c005 = fetch_service_rows(key, "C005", ENRICH_SERVICES["C005"][0], 1000,
-                              wanted, ["PRDLST_NM", "BAR_CD", "END_DT", "CLSBIZ_DT"])
-    for no, v in c005.items():
-        rec = barcode.setdefault(no, {})
-        if v.get("PRDLST_NM") and not rec.get("유통명"):
-            rec["유통명"] = v["PRDLST_NM"]
-        if v.get("BAR_CD") and not rec.get("바코드"):
-            rec["바코드"] = v["BAR_CD"]
-        if v.get("END_DT"):
-            discontinued.setdefault(no, {})["생산중단일"] = v["END_DT"]
-
-    i2852 = fetch_service_rows(key, "I2852", ENRICH_SERVICES["I2852"][0], 1000,
-                               wanted, ["END_DT", "ARTCL_END_WHY"])
-    for no, v in i2852.items():
-        rec = discontinued.setdefault(no, {})
-        if v.get("END_DT"):
-            rec["생산중단일"] = v["END_DT"]
-        if v.get("ARTCL_END_WHY"):
-            rec["사유"] = v["ARTCL_END_WHY"]
-
-    barcode = {k: v for k, v in barcode.items() if v}
-    write_enrich_cache(barcode, discontinued, cache_path)
-    print(f"\n[enrich] 유통명·바코드 {len(barcode):,}건 / 생산중단 {len(discontinued):,}건 -> {cache_path}")
-    return barcode, discontinued
-
-
-def write_enrich_cache(barcode, discontinued, cache_path):
-    """정렬해서 저장한다 - API 응답 순서가 흔들려도 git diff가 최소가 되도록."""
+    `checked` 를 함께 남긴다. 단종이 아닌 보고번호를 기록해 두지 않으면
+    매달 전부 다시 물어보게 된다 (영양 캐시와 같은 이유).
+    """
     data = {
         "fetched_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        "barcode": {k: barcode[k] for k in sorted(barcode)},
         "discontinued": {k: discontinued[k] for k in sorted(discontinued)},
+        "checked": sorted(checked),
     }
     with open(cache_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=1, sort_keys=True)
 
 
 def load_enrich_cache(cache_path):
-    """(barcode, discontinued). 캐시가 없으면 빈 dict - 보강은 선택 사항이다."""
+    """(discontinued, checked). 캐시가 없으면 비어 있다 - 보강은 선택 사항이다."""
     if not cache_path or not os.path.exists(cache_path):
-        return {}, {}
+        return {}, set()
     with open(cache_path, encoding="utf-8") as f:
         data = json.load(f)
-    return data.get("barcode", {}), data.get("discontinued", {})
+    return data.get("discontinued", {}), set(data.get("checked", []))
 
 
-def enrich_mode(key, raw_path, cache_path):
+def enrich_targets(rows, nutrition):
+    """확인할 보고번호 = **실제로 게시되는 제품**의 현행 행 보고번호만.
+
+    build 와 같은 순서로 걸러낸다. 원본 2,410행을 전부 물으면 일일 제한(1,000회)을
+    그냥 넘긴다 - 실제로 넘겨서 INFO-300 을 받았다. 주류·비음료만 걸러도 1,646개라
+    여전히 모자라므로, 제로 표기 없는 일반 음료까지 걸러 게시 대상만 남긴다.
+    제품별 최신 보고번호 하나씩이면 충분하다 - 현행 보고가 살아 있으면 생산 중이다.
+    """
+    records = [r for r in canonicalize(rows, nutrition)
+               if r["식품유형"] not in NON_BEVERAGE_TYPES
+               and not is_alcoholic(r["제품명"], r["원재료전문"])]
+    annotate(records)
+    targets = set()
+    for rec in records:
+        if rec["티어"] in ("F", "무감미료") and rec["제로표기"] != "Y":
+            continue
+        no = rec["이력"][0]["보고번호"].strip()
+        if no:
+            targets.add(no)
+    return targets
+
+
+def enrich_mode(key, raw_path, cache_path, nutrition_path=DEFAULT_NUTRITION_CACHE,
+                recheck=False):
     rows = load_raw(raw_path)
-    wanted = {pick(r, FIELD_REPORT_NO).strip() for r in rows}
-    wanted.discard("")
-    print(f"보강 대상 보고번호 {len(wanted):,}개")
-    fetch_enrich(key, wanted, cache_path)
+    nutrition = {}
+    if os.path.exists(nutrition_path):
+        with open(nutrition_path, encoding="utf-8") as f:
+            nutrition = json.load(f).get("rows", {})
+    wanted = enrich_targets(rows, nutrition)
+
+    known, checked = load_enrich_cache(cache_path)
+    todo = wanted if recheck else (wanted - checked)
+    print(f"확인 대상 {len(wanted):,}개 중 미확인 {len(todo):,}개 조회 "
+          f"(기확인 {len(checked & wanted):,}개 생략)")
+    if not todo:
+        return known, checked
+
+    fresh, confirmed = fetch_discontinued(key, todo)
+    merged = {k: v for k, v in known.items() if k in wanted}
+    merged.update(fresh)
+    now_checked = (checked & wanted) | confirmed
+    write_enrich_cache(merged, now_checked, cache_path)
+    print(f"\n[enrich] 생산중단 {len(merged):,}건 · 확인 완료 {len(now_checked):,}/{len(wanted):,}"
+          f" -> {cache_path}")
+    if len(now_checked) < len(wanted):
+        print(f"[enrich] 남은 {len(wanted) - len(now_checked):,}개는 다음 실행에서 이어서 조회합니다.")
+    return merged, now_checked
 
 
 # ── Step 4: 제품 통합과 배합 이력 ────────────────────────────
@@ -640,7 +648,7 @@ def recency(row):
             pick(row, FIELD_REPORT_NO) or "")
 
 
-CSV_FIELDS = ["티어", "조합", "제품명", "등록명", "바코드", "식품유형", "업소명", "보고일자", "감미료",
+CSV_FIELDS = ["티어", "조합", "제품명", "식품유형", "업소명", "보고일자", "감미료",
               "열량", "기준량", "당류", "용량", "감미료미표기", "이력행수", "배합변경", "티어불일치",
               "원재료전문", "제로표기", "실측제로", "제로사칭", "카페인", "아스파탐",
               "생산중단일", "일반판", "일반판티어"]
@@ -719,8 +727,7 @@ def display_name(names):
     return min(freq, key=lambda n: (len(_ODD_CHARS.findall(n)), -freq[n], len(n), n))
 
 
-def canonicalize(rows, nutrition, barcode=None, discontinued=None):
-    barcode = barcode or {}
+def canonicalize(rows, nutrition, discontinued=None):
     discontinued = discontinued or {}
     groups = {}
     for row in rows:
@@ -758,25 +765,16 @@ def canonicalize(rows, nutrition, barcode=None, discontinued=None):
             "원재료전문": pick(r, FIELD_RAW),
         } for r in group]
 
-        # 유통명·바코드·생산중단은 보고번호로 조인한다. 현행 행부터 훑되,
-        # 유통명은 이력 어디에 있든 쓴다 - 등록명보다 유통명이 항상 낫다.
-        nos = [pick(r, FIELD_REPORT_NO).strip() for r in group]
-        retail = next((barcode[n]["유통명"] for n in nos
-                       if n in barcode and barcode[n].get("유통명")), "")
-        code = next((barcode[n]["바코드"] for n in nos
-                     if n in barcode and barcode[n].get("바코드")), "")
-        # 이력 행 전부가 단종이어야 단종으로 본다. 구버전만 단종된 제품은 현행이다.
-        ended = [discontinued[n].get("생산중단일", "") for n in nos if n in discontinued]
-        end_dt = max(ended) if ended and len(ended) == len(nos) else ""
+        # 현행(최신) 보고가 단종이면 단종. 구버전 보고번호만 끝난 제품은 현행 판매품이라
+        # 건드리지 않는다. 확인 대상도 현행 행 하나뿐이다(enrich_targets 참고).
+        end_dt = discontinued.get(pick(cur, FIELD_REPORT_NO).strip(), {}).get("생산중단일", "")
 
         tier, combo, hidden = resolve_by_nutrition(cls, nut)
 
         records.append({
             "티어": tier,
             "조합": combo,
-            "제품명": retail or name,
-            "등록명": name if retail and retail != name else "",
-            "바코드": code,
+            "제품명": name,
             "생산중단일": end_dt,
             "식품유형": pick(cur, FIELD_TYPE),
             "업소명": display_maker,
@@ -1450,7 +1448,6 @@ def write_html(records, meta, meta_info, path):
         "배합변경": r["배합변경"], "티어불일치": r["티어불일치"],
         "감미료미표기": r["감미료미표기"],
         "원재료전문": r["원재료전문"], "제로표기": r["제로표기"], "실측제로": r["실측제로"],
-        "등록명": r["등록명"], "바코드": r["바코드"],
         "제로사칭": r["제로사칭"], "카페인": r["카페인"], "아스파탐": r["아스파탐"],
         "일반판": r["일반판"], "일반판티어": r["일반판티어"], "이력": r["이력"],
     } for r in records]
@@ -1504,11 +1501,8 @@ def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False
               "(--mode nutrition 을 먼저 실행하면 채울 수 있습니다)")
 
 
-    barcode, discontinued = load_enrich_cache(enrich_cache)
-    if barcode or discontinued:
-        print(f"[build] 보강 데이터: 유통명·바코드 {len(barcode):,}건 / "
-              f"생산중단 {len(discontinued):,}건")
-    records = canonicalize(rows, nutrition, barcode, discontinued)
+    discontinued, _checked = load_enrich_cache(enrich_cache)
+    records = canonicalize(rows, nutrition, discontinued)
     if not keep_discontinued:
         before = len(records)
         records = [r for r in records if not r["생산중단일"]]
@@ -1992,7 +1986,8 @@ def main():
     elif args.mode == "nutrition":
         nutrition_mode(args.raw, args.nutrition_cache, args.refresh_nutrition)
     elif args.mode == "enrich":
-        enrich_mode(load_key(args.key), args.raw, args.enrich_cache)
+        enrich_mode(load_key(args.key), args.raw, args.enrich_cache,
+                    args.nutrition_cache)
     elif args.mode == "build":
         build(args.raw, args.nutrition_cache, args.out, args.out_html, args.find, args.keep_alcohol,
               args.keep_sugar, args.enrich_cache, args.keep_discontinued)
@@ -2009,7 +2004,7 @@ def main():
         key = load_key(args.key)
         collect(key, types, args.raw)
         nutrition_mode(args.raw, args.nutrition_cache, args.refresh_nutrition)
-        enrich_mode(key, args.raw, args.enrich_cache)
+        enrich_mode(key, args.raw, args.enrich_cache, args.nutrition_cache)
         build(args.raw, args.nutrition_cache, args.out, args.out_html, args.find, args.keep_alcohol,
               args.keep_sugar, args.enrich_cache, args.keep_discontinued)
 

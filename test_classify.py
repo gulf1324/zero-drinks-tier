@@ -258,59 +258,49 @@ class MeasuredZeroTests(unittest.TestCase):
         self.assertEqual(recs[0]["실측제로"], "")
 
 
-class EnrichJoinTests(unittest.TestCase):
-    """I2570/C005/I2852 조인. 필드명은 서비스 상세 페이지 스펙 그대로다."""
+class DiscontinuedJoinTests(unittest.TestCase):
+    """I2852 생산중단 조인. 필드명은 서비스 상세 페이지 스펙 그대로다."""
 
-    def setUp(self):
-        self.rows = [
-            mk_row("나랑드사이다", "정제수, 수크랄로스", prms_dt="20240304", report_no="A1"),
-            mk_row("킨사이다", "정제수, 설탕", prms_dt="20200101", report_no="B1"),
-        ]
-
-    def test_retail_name_replaces_registered_name(self):
-        barcode = {"A1": {"유통명": "나랑드 사이다 제로", "바코드": "8801069415014"}}
-        recs = z.canonicalize(self.rows, {}, barcode, {})
-        r = next(r for r in recs if r["바코드"])
-        self.assertEqual(r["제품명"], "나랑드 사이다 제로")
-        self.assertEqual(r["등록명"], "나랑드사이다")
-
-    def test_registered_name_kept_when_no_retail_name(self):
-        recs = z.canonicalize(self.rows, {}, {}, {})
-        r = next(r for r in recs if r["제품명"] == "나랑드사이다")
-        self.assertEqual(r["등록명"], "")
-        self.assertEqual(r["바코드"], "")
-
-    def test_identical_retail_name_leaves_registered_blank(self):
-        recs = z.canonicalize(self.rows, {}, {"A1": {"유통명": "나랑드사이다"}}, {})
-        r = next(r for r in recs if r["제품명"] == "나랑드사이다")
-        self.assertEqual(r["등록명"], "")
-
-    def test_discontinued_only_when_every_report_no_ended(self):
+    def test_only_current_report_decides_discontinuation(self):
         rows = [mk_row("옛사이다", "정제수, 설탕", prms_dt="20100101", report_no="C1"),
                 mk_row("옛사이다", "정제수, 설탕", prms_dt="20200101", report_no="C2")]
-        # 구버전만 단종 -> 현행 제품이므로 살아 있어야 한다
-        recs = z.canonicalize(rows, {}, {}, {"C1": {"생산중단일": "20150101"}})
+        # 구버전(C1)만 단종 -> 현행 보고(C2)가 살아 있으므로 판매 중이다
+        recs = z.canonicalize(rows, {}, {"C1": {"생산중단일": "20150101"}})
         self.assertEqual(recs[0]["생산중단일"], "")
-        # 전부 단종 -> 단종
-        recs = z.canonicalize(rows, {}, {},
+        # 현행 보고(C2)가 단종 -> 단종
+        recs = z.canonicalize(rows, {},
                               {"C1": {"생산중단일": "20150101"}, "C2": {"생산중단일": "20230101"}})
         self.assertEqual(recs[0]["생산중단일"], "20230101")
 
-    def test_retail_name_found_on_any_history_row(self):
-        rows = [mk_row("코카콜라 제로", "정제수", prms_dt="20240101", report_no="D2"),
-                mk_row("코카·콜라 제로", "정제수", prms_dt="20100101", report_no="D1")]
-        recs = z.canonicalize(rows, {}, {"D1": {"유통명": "코카콜라 제로 250ml"}}, {})
-        self.assertEqual(recs[0]["제품명"], "코카콜라 제로 250ml")
+    def test_enrich_targets_are_current_rows_of_beverages_only(self):
+        rows = [mk_row("옛사이다", "정제수, 설탕", prms_dt="20100101", report_no="C1"),
+                mk_row("옛사이다", "정제수, 설탕", prms_dt="20200101", report_no="C2"),
+                mk_row("테라 맥주", "정제수, 맥아, 호프", report_no="BEER1"),
+                mk_row("베이킹소다", "탄산수소나트륨", report_no="ADD1",
+                       ftype="탄산수소나트륨")]
+        # 옛사이다는 설탕+제로 표기 없음이라 게시 대상이 아니다 -> 전부 제외
+        self.assertEqual(z.enrich_targets(rows, {}), set())
+
+    def test_enrich_targets_keep_current_row_of_published_product(self):
+        rows = [mk_row("제로사이다", "정제수, 수크랄로스", prms_dt="20100101", report_no="Z1"),
+                mk_row("제로사이다", "정제수, 수크랄로스", prms_dt="20200101", report_no="Z2"),
+                mk_row("테라 맥주", "정제수, 맥아, 호프", report_no="BEER1")]
+        # 제품당 현행 보고번호 하나만, 주류는 제외
+        self.assertEqual(z.enrich_targets(rows, {}), {"Z2"})
+
+    def test_no_cache_means_nothing_discontinued(self):
+        rows = [mk_row("킨사이다", "정제수, 설탕", report_no="B1")]
+        self.assertEqual(z.canonicalize(rows, {})[0]["생산중단일"], "")
 
     def test_unwrap_treats_no_data_as_empty(self):
-        payload = {"I2570": {"total_count": "0",
+        payload = {"I2852": {"total_count": "0",
                              "RESULT": {"CODE": "INFO-200", "MSG": "해당하는 데이터가 없습니다."}}}
-        self.assertEqual(z.unwrap(payload, service="I2570"), (0, []))
+        self.assertEqual(z.unwrap(payload, service="I2852"), (0, []))
 
     def test_unwrap_raises_on_real_error(self):
-        payload = {"C005": {"RESULT": {"CODE": "ERROR-503", "MSG": "09시~19시에는..."}}}
+        payload = {"I2852": {"RESULT": {"CODE": "ERROR-503", "MSG": "09시~19시에는..."}}}
         with self.assertRaises(z.ApiError):
-            z.unwrap(payload, service="C005")
+            z.unwrap(payload, service="I2852")
 
     def test_unwrap_reads_rows_for_other_service(self):
         payload = {"I2852": {"total_count": "1", "RESULT": {"CODE": "INFO-000"},
@@ -318,71 +308,92 @@ class EnrichJoinTests(unittest.TestCase):
         total, rows = z.unwrap(payload, service="I2852")
         self.assertEqual((total, rows[0]["END_DT"]), (1, "20240101"))
 
-    def test_enrich_cache_roundtrip_is_sorted(self):
+    def test_cache_roundtrip_is_sorted_and_keeps_checked(self):
         import tempfile, os, json as _json
         fd, path = tempfile.mkstemp(suffix=".json"); os.close(fd)
         try:
-            z.write_enrich_cache({"B9": {"유통명": "나"}, "A1": {"유통명": "가"}},
-                                 {"C3": {"생산중단일": "20200101"}}, path)
+            z.write_enrich_cache({"B9": {"생산중단일": "20240101"}, "A1": {"생산중단일": "20200101"}},
+                                 {"A1", "B9", "C3"}, path)
             with open(path, encoding="utf-8") as f:
                 raw = _json.load(f)
-            self.assertEqual(list(raw["barcode"]), ["A1", "B9"])
-            bc, dc = z.load_enrich_cache(path)
-            self.assertEqual(bc["A1"]["유통명"], "가")
-            self.assertEqual(dc["C3"]["생산중단일"], "20200101")
+            self.assertEqual(list(raw["discontinued"]), ["A1", "B9"])
+            dc, checked = z.load_enrich_cache(path)
+            self.assertEqual(dc["A1"]["생산중단일"], "20200101")
+            # 단종이 아닌 C3 도 기록해 둬야 매달 다시 묻지 않는다
+            self.assertIn("C3", checked)
         finally:
             os.unlink(path)
 
     def test_missing_cache_is_not_an_error(self):
-        self.assertEqual(z.load_enrich_cache("없는파일.json"), ({}, {}))
+        self.assertEqual(z.load_enrich_cache("없는파일.json"), ({}, set()))
 
 
-class EnrichPagingTests(unittest.TestCase):
-    """fetch_service_rows: 전수 페이징 + 우리 보고번호만 남기기."""
+class DiscontinuedFetchTests(unittest.TestCase):
+    """fetch_discontinued: 보고번호별 개별 조회. I2852는 전수 페이징이 1,000행에서 잘린다."""
 
-    def _stub(self, total, page_size=2):
-        rows = [{"PRDLST_REPORT_NO": f"R{i}", "PRDT_NM": f"제품{i}", "BRCD_NO": f"88{i:05d}"}
-                for i in range(1, total + 1)]
+    def _stub(self, ended):
         calls = []
 
         def fake_call(key, start, end, cond=None, service=None):
-            calls.append((start, end))
-            page = rows[start - 1:end]
-            return {service: {"total_count": str(total),
-                              "RESULT": {"CODE": "INFO-000"}, "row": page}}
+            no = (cond or {}).get("PRDLST_REPORT_NO")
+            calls.append(no)
+            row = [{"PRDLST_REPORT_NO": no, "END_DT": ended[no], "ARTCL_END_WHY": "사유"}] \
+                if no in ended else []
+            return {service: {"total_count": str(len(row)),
+                              "RESULT": {"CODE": "INFO-000"}, "row": row}}
         return fake_call, calls
 
-    def test_pages_until_total_and_filters_to_wanted(self):
-        fake, calls = self._stub(5)
+    def test_queries_each_report_no_and_keeps_only_ended(self):
+        fake, calls = self._stub({"R2": "20240101"})
         orig, z.call = z.call, fake
         try:
-            found = z.fetch_service_rows("k", "I2570", {}, 2, {"R2", "R5"},
-                                         ["PRDT_NM", "BRCD_NO"])
+            found, confirmed = z.fetch_discontinued("k", {"R1", "R2", "R3"})
         finally:
             z.call = orig
-        self.assertEqual(set(found), {"R2", "R5"})
-        self.assertEqual(found["R2"]["PRDT_NM"], "제품2")
-        self.assertEqual(calls, [(1, 2), (3, 4), (5, 6)])
+        self.assertEqual(sorted(calls), ["R1", "R2", "R3"])
+        self.assertEqual(set(found), {"R2"})
+        self.assertEqual(found["R2"], {"생산중단일": "20240101", "사유": "사유"})
+        # 단종이 아닌 것도 '확인함'에 들어가야 다음 달에 다시 묻지 않는다
+        self.assertEqual(confirmed, {"R1", "R2", "R3"})
 
-    def test_stops_at_call_cap(self):
-        fake, calls = self._stub(100)
-        orig, z.call = z.call, fake
-        try:
-            z.fetch_service_rows("k", "I2570", {}, 2, {"R99"}, ["PRDT_NM"], max_calls=3)
-        finally:
-            z.call = orig
-        self.assertEqual(len(calls), 3)
-
-    def test_first_non_empty_value_wins(self):
-        rows = [{"PRDLST_REPORT_NO": "R1", "PRDT_NM": "", "BRCD_NO": "880001"},
-                {"PRDLST_REPORT_NO": "R1", "PRDT_NM": "진짜이름", "BRCD_NO": "880002"}]
+    def test_quota_error_stops_and_does_not_mark_checked(self):
+        seen = []
 
         def fake_call(key, start, end, cond=None, service=None):
-            return {service: {"total_count": "2", "RESULT": {"CODE": "INFO-000"}, "row": rows}}
+            no = (cond or {}).get("PRDLST_REPORT_NO")
+            seen.append(no)
+            if len(seen) > 2:
+                raise z.ApiError("API 오류 INFO-300: 유효 호출건수를 이미 초과하셨습니다.")
+            return {service: {"total_count": "0", "RESULT": {"CODE": "INFO-000"}, "row": []}}
         orig, z.call = z.call, fake_call
         try:
-            found = z.fetch_service_rows("k", "I2570", {}, 10, {"R1"}, ["PRDT_NM", "BRCD_NO"])
+            found, confirmed = z.fetch_discontinued("k", {f"R{i}" for i in range(9)})
         finally:
             z.call = orig
-        self.assertEqual(found["R1"]["PRDT_NM"], "진짜이름")
-        self.assertEqual(found["R1"]["BRCD_NO"], "880001")
+        self.assertEqual(found, {})
+        self.assertEqual(len(confirmed), 2)      # 성공한 2개만
+        self.assertEqual(len(seen), 3)           # 한도 감지 즉시 중단
+
+    def test_respects_call_cap(self):
+        fake, calls = self._stub({})
+        orig, z.call = z.call, fake
+        try:
+            z.fetch_discontinued("k", {f"R{i}" for i in range(10)}, max_calls=4)
+        finally:
+            z.call = orig
+        self.assertEqual(len(calls), 4)
+
+    def test_one_failure_does_not_abort_the_rest(self):
+        def fake_call(key, start, end, cond=None, service=None):
+            no = (cond or {}).get("PRDLST_REPORT_NO")
+            if no == "R1":
+                raise z.ApiError("일시 오류")
+            return {service: {"total_count": "1", "RESULT": {"CODE": "INFO-000"},
+                              "row": [{"END_DT": "20240101"}]}}
+        orig, z.call = z.call, fake_call
+        try:
+            found, confirmed = z.fetch_discontinued("k", {"R1", "R2"})
+        finally:
+            z.call = orig
+        self.assertEqual(set(found), {"R2"})
+        self.assertEqual(confirmed, {"R2"})      # 실패한 R1 은 확인함에 안 들어간다
