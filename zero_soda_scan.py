@@ -519,9 +519,53 @@ def recency(row):
 
 
 CSV_FIELDS = ["티어", "조합", "제품명", "식품유형", "업소명", "보고일자", "감미료",
-              "열량", "기준량", "당류", "용량", "이력행수", "배합변경", "티어불일치",
+              "열량", "기준량", "당류", "용량", "감미료미표기", "이력행수", "배합변경", "티어불일치",
               "원재료전문", "제로표기", "제로사칭", "카페인", "아스파탐",
               "일반판", "일반판티어"]
+
+
+def _sugar_g(nut):
+    """영양DB의 당류(g). 값이 없으면 None — '0'과 '데이터 없음'을 구분한다."""
+    if not nut:
+        return None
+    try:
+        return float(str(nut.get("SUGAR", "")).strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def resolve_by_nutrition(cls, nut):
+    """원재료 표기만으로는 틀리는 두 경우를 영양 실측으로 바로잡는다.
+
+    1) 당류 토큰이 잡혔는데 실제 당류가 0g
+       레몬농축과즙·올리고당이 착향·미량으로 들어간 경우다. 나랑드사이다가
+       레몬농축과즙 때문에 F로 떨어지던 것이 실제로는 0kcal/0g 제품이었다.
+       -> 당류를 빼고 남은 감미료로 다시 판정한다.
+
+    2) 감미료가 하나도 안 보이는데(원재료가 혼합제제로 뭉뚱그려짐) 실제 당류가 있음
+       -> 당류가 있으니 F.
+
+    반환: (tier, combo, 감미료미표기)
+    """
+    tier, combo, hits = cls["tier"], cls["combo"], cls["hits"]
+    hidden = "Y" if tier == "?" else ""
+    sugar = _sugar_g(nut)
+
+    if tier == "?":
+        # 확인 불가를 그대로 노출하면 쓰기 어려우므로 당류 실측으로 자리를 정한다.
+        if sugar is not None and sugar > 0:
+            return "F", "F", hidden
+        return "무감미료", "-", hidden
+
+    if tier == "F" and sugar == 0:
+        rest = [h for h in hits if h["티어"] != "SUGAR"]
+        if not rest:
+            return "무감미료", "-", hidden
+        worst = max({h["티어"] for h in rest}, key=TIER_ORDER.index)
+        kept = {h["티어"] for h in rest}
+        return worst, "+".join(t for t in TIER_ORDER if t in kept), hidden
+
+    return tier, combo, hidden
 
 
 def canonicalize(rows, nutrition):
@@ -560,9 +604,11 @@ def canonicalize(rows, nutrition):
             "원재료전문": pick(r, FIELD_RAW),
         } for r in group]
 
+        tier, combo, hidden = resolve_by_nutrition(cls, nut)
+
         records.append({
-            "티어": cls["tier"],
-            "조합": cls["combo"],
+            "티어": tier,
+            "조합": combo,
             "제품명": name,
             "식품유형": pick(cur, FIELD_TYPE),
             "업소명": display_maker,
@@ -572,6 +618,7 @@ def canonicalize(rows, nutrition):
             "기준량": nut.get("NUT_CON_SRTR_QUA", "") if nut else "",
             "당류": nut.get("SUGAR", "") if nut else "",
             "용량": nut.get("FOOD_SIZE", "") if nut else "",
+            "감미료미표기": hidden,
             "이력행수": len(group),
             "배합변경": "Y" if changed else "",
             "티어불일치": mismatch,
@@ -810,6 +857,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   .na{color:#c3c8cf}
   .chip{display:inline-block;background:#eef0f2;color:var(--muted);border-radius:var(--pill);padding:1px 7px;
         font-size:10.5px;font-weight:600;margin-left:5px;vertical-align:1px}
+  .chip.warn-chip{background:#fff4e5;color:#8a5300;cursor:help}
   tr.detail td{background:#fafbfc;font-size:12px;padding:0}
   .detail-box{padding:11px 13px;border-left:3px solid var(--accent);margin:2px 0;white-space:pre-wrap;line-height:1.65}
   .detail-raw{color:var(--text);margin-bottom:6px}
@@ -906,15 +954,14 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   <details class="panel tierlegend" open>
     <summary>티어 기준</summary>
     <div class="panel-body">
-      <div class="tier-row"><span class="tier-chip" data-tier="무감미료">무</span><b>무감미료</b><span class="tier-ing">감미료 표기 없음</span><span class="tier-why">원재료 전문이 투명하고 감미료가 실제로 없음</span></div>
+      <div class="tier-row"><span class="tier-chip" data-tier="무감미료">무</span><b>무감미료</b><span class="tier-ing">감미료 표기 없음</span><span class="tier-why">신고 원재료에 감미료가 없음. 코카콜라 제로처럼 <b>식품첨가물혼합제제</b>로 뭉뚱그려져 감미료를 확인할 수 없는 제품도 여기 들어가며, 이때는 <b>감미료 미표기</b> 표시가 붙습니다 (열량·당류 0 확인 기준)</span></div>
       <div class="tier-row"><span class="tier-chip" data-tier="S">S</span><b>S</b><span class="tier-ing">알룰로스, 타가토스</span><span class="tier-why">0.2~0.4 kcal/g. 식후 혈당을 오히려 낮춤 (2026 AJCN 메타분석)</span></div>
       <div class="tier-row"><span class="tier-chip" data-tier="A">A</span><b>A</b><span class="tier-ing">스테비올배당체, 나한과(모그로사이드)</span><span class="tier-why">0 kcal, 혈당 영향 없음, 장기 안전성 양호</span></div>
       <div class="tier-row"><span class="tier-chip" data-tier="B">B</span><b>B</b><span class="tier-ing">수크랄로스, 아세설팜칼륨, 아스파탐, 사카린</span><span class="tier-why">0 kcal이나 공복 인슐린·HbA1c 상승 신호 (2026 Tufts 메타분석)</span></div>
       <div class="tier-row"><span class="tier-chip" data-tier="C">C</span><b>C</b><span class="tier-ing">에리스리톨, 자일리톨</span><span class="tier-why">혈당은 무해하나 혈소판 반응성·심혈관 사건 신호 (Cleveland Clinic). 인과관계는 확정되지 않음</span></div>
       <div class="tier-row"><span class="tier-chip" data-tier="D">D</span><b>D</b><span class="tier-ing">말티톨, 소르비톨, 락티톨 등 당알코올</span><span class="tier-why">실제 2~2.6 kcal/g, 말티톨은 GI 35~52로 혈당 상승</span></div>
       <div class="tier-row"><span class="tier-chip" data-tier="F">F</span><b>F</b><span class="tier-ing">설탕, 액상과당, 농축과즙 등</span><span class="tier-why">제로를 표방하지만 신고 원재료에 당류가 있음</span></div>
-      <div class="tier-row"><span class="tier-chip" data-tier="?">?</span><b>확인 불가</b><span class="tier-ing">식품첨가물혼합제제 등</span><span class="tier-why">감미료가 없는 것이 아니라, 신고 원재료가 뭉뚱그려져 무엇을 썼는지 확인할 수 없음 (예: 코카콜라 제로)</span></div>
-      <div class="tier-note">한 제품에 여러 감미료가 있으면 가장 나쁜 등급이 최종 티어가 됩니다. 전체 구성은 '조합' 열에서 볼 수 있습니다.<br>이 리포트는 <b>당류가 없는 음료</b>와 <b>제로를 표방한 제품</b>만 다룹니다. 제로 표기가 없는 일반 당류 음료는 수집 대상에서 제외됩니다.</div>
+      <div class="tier-note">한 제품에 여러 감미료가 있으면 가장 나쁜 등급이 최종 티어가 됩니다. 전체 구성은 '조합' 열에서 볼 수 있습니다.<br>이 리포트는 <b>당류가 없는 음료</b>와 <b>제로를 표방한 제품</b>만 다룹니다. 제로 표기가 없는 일반 당류 음료는 수집 대상에서 제외됩니다.<br>원재료에 농축과즙·올리고당이 <b>착향 목적으로 미량</b> 들어간 경우, 실측 당류가 0g이면 F로 보지 않습니다. 반대로 감미료가 표기되지 않아도 당류가 검출되면 F입니다.</div>
     </div>
   </details>
   <details class="panel makers">
@@ -1037,7 +1084,8 @@ function comboChips(c) {
 
 function rowHtml(r) {
   const cls = ['row']; if (r['제로사칭']==='Y') cls.push('fake-zero');
-  const chips = (r['카페인']==='Y' ? '<span class="chip">카페인</span>':'') + (r['아스파탐']==='Y' ? '<span class="chip">아스파탐</span>':'');
+  const chips = (r['감미료미표기']==='Y' ? '<span class="chip warn-chip" title="신고 원재료가 식품첨가물혼합제제 등으로 뭉뚱그려져 어떤 감미료를 썼는지 확인할 수 없습니다. 티어는 열량·당류 실측으로 배치했습니다.">감미료 미표기</span>':'')
+    + (r['카페인']==='Y' ? '<span class="chip">카페인</span>':'') + (r['아스파탐']==='Y' ? '<span class="chip">아스파탐</span>':'');
   const na = function(v){ return v ? escapeHtml(v) : '<span class="na">\u2014</span>'; };
   return '<tr class="' + cls.join(' ') + '" data-name="' + escapeHtml(r['제품명']) + '">' +
     '<td class="c-tier">' + tierChip(r['티어']) + '</td>' +
@@ -1208,6 +1256,7 @@ def write_html(records, meta, meta_info, path):
         "감미료": r["감미료"], "열량": r["열량"], "기준량": r["기준량"],
         "당류": r["당류"], "용량": r["용량"], "이력행수": r["이력행수"],
         "배합변경": r["배합변경"], "티어불일치": r["티어불일치"],
+        "감미료미표기": r["감미료미표기"],
         "원재료전문": r["원재료전문"], "제로표기": r["제로표기"],
         "제로사칭": r["제로사칭"], "카페인": r["카페인"], "아스파탐": r["아스파탐"],
         "일반판": r["일반판"], "일반판티어": r["일반판티어"], "이력": r["이력"],
@@ -1287,7 +1336,7 @@ def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False
         #  - 그 외(F·무감미료·?) → 제로를 표방한 경우에만 유지
         #    탄산수·일반 음료는 애초에 '어떤 대체당이 들었나' 묻는 대상이 아니다.
         records = [r for r in records
-                   if r["티어"] not in ("F", "무감미료", "?") or r["제로표기"] == "Y"]
+                   if r["티어"] not in ("F", "무감미료") or r["제로표기"] == "Y"]
         sugar_dropped = before - len(records)
         print(f"[build] 제로 표기 없는 일반 음료 {sugar_dropped}건 제외 "
               f"(--keep-sugar 로 유지 가능)")
@@ -1452,7 +1501,7 @@ def diff_raw(old_rows, new_rows):
 def render_stats_block(stats, fetched_at):
     total = stats["total"]
     tc = stats["tier_counts"]
-    order = ["무감미료", "S", "A", "B", "C", "D", "F", "?"]
+    order = ["무감미료", "S", "A", "B", "C", "D", "F"]
     kcal_pct = stats["with_kcal"] / total * 100 if total else 0
 
     s_rows = sorted((r for r in stats["records"] if r["티어"] == "S"),
