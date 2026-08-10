@@ -1207,10 +1207,18 @@ const TIER_COLORS = {"무감미료":"#4caf50","S":"#8bc34a","A":"#cddc39","B":"#
 // PAGE_SIZE: 1,699행을 한 번에 그리면 표 높이가 11만 px가 되어 강제 레이아웃에만
 // 216ms가 든다(실측). 한 페이지 분량만 그린다.
 const PAGE_SIZE = 50;
-let state = { q: "", fFake:false, fAllulose:false, fErythritol:false, fNoCaffeine:false, fNoAspartame:false, fHasKcal:false,
+let state = { q: "", qz: "", fFake:false, fAllulose:false, fErythritol:false, fNoCaffeine:false, fNoAspartame:false, fHasKcal:false,
               tierFilters: new Set(), sortKey: "티어", sortDir: 1, expanded: new Set(), page: 1 };
 
-function norm(s) { return (s||"").replace(/\s+/g, "").toLowerCase(); }
+// 공백·하이픈·가운뎃점류를 지운다. 산출 쪽 norm_name() 과 같은 기준이라
+// `코카·콜라 제로`로 검색해도 `코카콜라 제로`가 잡힌다.
+function norm(s) { return (s||"").replace(/[\s\-_·ㆍ•●‧∙⋅]/g, "").toLowerCase(); }
+
+// 품목제조보고에 등록된 이름은 유통명이 아니다. 실제로는 `나랑드 사이다 제로`로
+// 팔리는 제품이 `나랑드사이다`로 신고돼 있다. 그래서 검색어에서 제로 표기를
+// 떼고 한 번 더 맞춰보되, 실제로 제로인 제품에만 허용한다 - 그러지 않으면
+// `킨사이다 제로`로 검색했을 때 설탕이 든 `킨사이다`가 잡힌다.
+function dropZero(s) { return s.replace(/제로|zero|0kcal/g, ""); }
 
 function renderMakers() {
   const el = document.getElementById('makerList');
@@ -1229,7 +1237,13 @@ function renderMakers() {
 function filtered() {
   return DATA.filter(function(r) {
     if (state.tierFilters.size && !state.tierFilters.has(r['티어'])) return false;
-    if (state.q && !norm(r['제품명']).includes(state.q) && !norm(r['업소명']).includes(state.q)) return false;
+    if (state.q) {
+      const hay = norm(r['제품명']) + '\u0000' + norm(r['업소명']);
+      if (!hay.includes(state.q)) {
+        const isZero = r['실측제로'] === 'Y' || r['제로표기'] === 'Y';
+        if (!isZero || state.qz.length < 2 || !dropZero(hay).includes(state.qz)) return false;
+      }
+    }
     if (state.fFake && r['제로사칭'] !== 'Y') return false;
     if (state.fAllulose && !(r['조합']||'').split('+').includes('S')) return false;
     if (state.fErythritol && !(r['감미료']||'').includes('에리스')) return false;
@@ -1393,10 +1407,12 @@ document.getElementById('tbody').addEventListener('click', function(e) {
   render();
 });
 
-document.getElementById('q').addEventListener('input', function(e) { state.q = norm(e.target.value); update(); });
+document.getElementById('q').addEventListener('input', function(e) {
+  state.q = norm(e.target.value); state.qz = dropZero(state.q); update();
+});
 document.getElementById('qClear').addEventListener('click', function() {
   const q = document.getElementById('q');
-  q.value = ''; state.q = ''; q.focus(); update();
+  q.value = ''; state.q = ''; state.qz = ''; q.focus(); update();
 });
 document.getElementById('sortSel').addEventListener('change', function(e) {
   state.sortKey = e.target.value; state.sortDir = 1; update();
