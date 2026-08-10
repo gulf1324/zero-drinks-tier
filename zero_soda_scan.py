@@ -528,6 +528,7 @@ def nutrition_mode(raw_path, cache_path, refresh):
 # `동아오츠카 나랑드 사이다 250G x 6EA` 같은 도매 팩 단위 표기라 등록명보다
 # 나빴다. 자세한 실측은 AGENTS.md 참고.
 DEFAULT_ENRICH_CACHE = "zero_soda_enrich.json"
+DEFAULT_LABEL_FILE = "zero_soda_label.json"
 ENRICH_MAX_CALLS = 900   # 일일 제한 1,000회. 여유를 둔다
 
 
@@ -592,6 +593,22 @@ def load_enrich_cache(cache_path):
     return data.get("discontinued", {}), set(data.get("checked", []))
 
 
+def load_labels(path=DEFAULT_LABEL_FILE):
+    """제조사 공식몰의 고시·라벨에서 확인한 유통명. 품목제조보고번호로 조인한다.
+
+    C002 의 제품명은 품목제조보고 등록명이라 유통명과 다르다 (`나랑드사이다` 대 실제
+    판매명 `나랑드사이다 제로`). 라벨 사진에 품목제조보고번호가 함께 찍혀 있어
+    이름 추측 없이 정확히 붙일 수 있다 - 실제로 12개 중 10개가 예상 레코드로 맞았다.
+
+    **손으로 검증해 넣는 파일이다.** 자동 수집하지 말 것. 쇼핑몰 대부분이 크롤링을
+    막고 있고(AGENTS.md 참고), 위키·블로그는 「작성 원칙」이 금지하는 출처다.
+    """
+    if not path or not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8") as f:
+        return json.load(f).get("labels", {})
+
+
 def enrich_targets(rows, nutrition):
     """확인할 보고번호 = **실제로 게시되는 제품**의 현행 행 보고번호만.
 
@@ -648,10 +665,10 @@ def recency(row):
             pick(row, FIELD_REPORT_NO) or "")
 
 
-CSV_FIELDS = ["티어", "조합", "제품명", "식품유형", "업소명", "보고일자", "감미료",
+CSV_FIELDS = ["티어", "조합", "제품명", "등록명", "식품유형", "업소명", "보고일자", "감미료",
               "열량", "기준량", "당류", "용량", "감미료미표기", "이력행수", "배합변경", "티어불일치",
               "원재료전문", "제로표기", "실측제로", "제로사칭", "카페인", "아스파탐",
-              "생산중단일", "일반판", "일반판티어"]
+              "생산중단일", "유통명출처", "일반판", "일반판티어"]
 
 
 def _sugar_g(nut):
@@ -727,20 +744,32 @@ def display_name(names):
     return min(freq, key=lambda n: (len(_ODD_CHARS.findall(n)), -freq[n], len(n), n))
 
 
-def canonicalize(rows, nutrition, discontinued=None):
+def canonicalize(rows, nutrition, discontinued=None, labels=None):
     discontinued = discontinued or {}
-    groups = {}
+    labels = labels or {}
+    # 1차: 등록명으로 묶는다.
+    by_registered = {}
     for row in rows:
         name = pick(row, FIELD_NAME).strip()
         if not name:
             continue
-        groups.setdefault(norm_name(name), []).append(row)
+        by_registered.setdefault(norm_name(name), []).append(row)
+
+    # 2차: 한 행이라도 유통명이 확인되면 그룹 전체를 유통명으로 다시 묶는다.
+    # 같은 제품이 등록명과 유통명 양쪽으로 신고돼 있으면(`나랑드사이다 그린애플` 과
+    # `나랑드사이다 제로 그린애플`) 여기서 한 제품으로 합쳐진다. 1차 키를 바로
+    # 유통명으로 잡으면, 공장 일부만 라벨에 실린 제품이 오히려 둘로 쪼개진다.
+    groups = {}
+    for key, group in by_registered.items():
+        label = next((labels[n] for n in
+                      (pick(r, FIELD_REPORT_NO).strip() for r in group) if n in labels), None)
+        groups.setdefault(norm_name(label["유통명"]) if label else key, []).extend(group)
 
     records = []
     for group in groups.values():
         group.sort(key=recency, reverse=True)
         cur = group[0]
-        name = display_name([pick(r, FIELD_NAME).strip() for r in group])
+        registered = display_name([pick(r, FIELD_NAME).strip() for r in group])
         raw = pick(cur, FIELD_RAW)
         cls = classify(raw)
 
@@ -768,13 +797,21 @@ def canonicalize(rows, nutrition, discontinued=None):
         # 현행(최신) 보고가 단종이면 단종. 구버전 보고번호만 끝난 제품은 현행 판매품이라
         # 건드리지 않는다. 확인 대상도 현행 행 하나뿐이다(enrich_targets 참고).
         end_dt = discontinued.get(pick(cur, FIELD_REPORT_NO).strip(), {}).get("생산중단일", "")
+        nos = [pick(r, FIELD_REPORT_NO).strip() for r in group]
+
+        # 공식몰 고시에서 확인된 유통명이 있으면 그걸 쓴다. 등록명은 따로 남긴다 -
+        # 출처를 밝히지 않고 이름만 바꾸면 이 프로젝트의 근거 원칙이 깨진다.
+        label = next((labels[n] for n in nos if n in labels), None)
+        retail = (label or {}).get("유통명", "")
 
         tier, combo, hidden = resolve_by_nutrition(cls, nut)
 
         records.append({
             "티어": tier,
             "조합": combo,
-            "제품명": name,
+            "제품명": retail or registered,
+            "등록명": registered if retail and retail != registered else "",
+            "유통명출처": (label or {}).get("출처", "") if retail else "",
             "생산중단일": end_dt,
             "식품유형": pick(cur, FIELD_TYPE),
             "업소명": display_maker,
@@ -1050,6 +1087,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   tr.detail td{background:#fafbfc;font-size:12px;padding:0}
   .detail-box{padding:11px 13px;border-left:3px solid var(--accent);margin:2px 0;white-space:pre-wrap;line-height:1.65}
   .detail-raw{color:var(--text);margin-bottom:6px}
+  .detail-box a{color:var(--accent)}
   .detail-box div{color:var(--muted)}
   tr.empty td{text-align:center;padding:34px 10px;color:var(--muted);border-bottom:0}
   .pager{margin:14px 0 0;display:flex;flex-direction:column;align-items:center;gap:7px}
@@ -1305,6 +1343,13 @@ function rowHtml(r) {
 
 function detailHtml(r) {
   let extra = '';
+  if (r['등록명']) {
+    // 표시한 이름이 품목제조보고 등록명과 다르면 반드시 출처를 함께 밝힌다.
+    extra += '<div>품목제조보고 등록명: ' + escapeHtml(r['등록명']) +
+             (r['유통명출처'] ? ' \u00b7 유통명 출처: <a href="' + escapeHtml(r['유통명출처']) +
+                              '" target="_blank" rel="noopener">제조사 공식몰 상품정보제공 고시</a>' : '') +
+             '</div>';
+  }
   if (r['일반판']) extra += '<div>일반판 대비: ' + escapeHtml(r['일반판']) + ' [' + escapeHtml(r['일반판티어']) + '] \u2192 [' + escapeHtml(r['티어']) + ']</div>';
   if (r['배합변경'] === 'Y') {
     extra += '<div>배합 이력:</div>' + (r['이력']||[]).map(function(h){
@@ -1464,6 +1509,7 @@ def write_html(records, meta, meta_info, path):
         "배합변경": r["배합변경"], "티어불일치": r["티어불일치"],
         "감미료미표기": r["감미료미표기"],
         "원재료전문": r["원재료전문"], "제로표기": r["제로표기"], "실측제로": r["실측제로"],
+        "등록명": r["등록명"], "유통명출처": r["유통명출처"],
         "제로사칭": r["제로사칭"], "카페인": r["카페인"], "아스파탐": r["아스파탐"],
         "일반판": r["일반판"], "일반판티어": r["일반판티어"], "이력": r["이력"],
     } for r in records]
@@ -1518,7 +1564,10 @@ def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False
 
 
     discontinued, _checked = load_enrich_cache(enrich_cache)
-    records = canonicalize(rows, nutrition, discontinued)
+    labels = load_labels()
+    if labels:
+        print(f"[build] 공식몰 고시에서 확인된 유통명 {len(labels):,}건 반영")
+    records = canonicalize(rows, nutrition, discontinued, labels)
     if not keep_discontinued:
         before = len(records)
         records = [r for r in records if not r["생산중단일"]]

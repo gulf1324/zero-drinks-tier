@@ -397,3 +397,43 @@ class DiscontinuedFetchTests(unittest.TestCase):
             z.call = orig
         self.assertEqual(set(found), {"R2"})
         self.assertEqual(confirmed, {"R2"})      # 실패한 R1 은 확인함에 안 들어간다
+
+
+class RetailLabelTests(unittest.TestCase):
+    """공식몰 고시에서 확인한 유통명 반영. 품목제조보고번호로 조인한다."""
+
+    LBL = {"R2": {"유통명": "나랑드사이다 제로", "출처": "https://example.com/p", "확인일": "2026-08-10"}}
+
+    def test_retail_name_replaces_registered_and_keeps_source(self):
+        rows = [mk_row("나랑드사이다", "정제수, 수크랄로스", prms_dt="20240101", report_no="R2")]
+        r = z.canonicalize(rows, {}, {}, self.LBL)[0]
+        self.assertEqual(r["제품명"], "나랑드사이다 제로")
+        self.assertEqual(r["등록명"], "나랑드사이다")
+        self.assertEqual(r["유통명출처"], "https://example.com/p")
+
+    def test_without_label_registered_name_is_used(self):
+        rows = [mk_row("나랑드사이다", "정제수, 수크랄로스", report_no="R9")]
+        r = z.canonicalize(rows, {}, {}, self.LBL)[0]
+        self.assertEqual(r["제품명"], "나랑드사이다")
+        self.assertEqual((r["등록명"], r["유통명출처"]), ("", ""))
+
+    def test_duplicate_registrations_merge_into_one_product(self):
+        # 같은 제품이 등록명과 유통명 양쪽으로 신고된 경우
+        rows = [mk_row("나랑드사이다 그린애플", "정제수, 알룰로오스", prms_dt="20200101", report_no="G1"),
+                mk_row("나랑드사이다 제로 그린애플", "정제수, 알룰로오스", prms_dt="20240101", report_no="G2")]
+        labels = {"G1": {"유통명": "나랑드사이다 제로 그린애플", "출처": "u", "확인일": "d"}}
+        recs = z.canonicalize(rows, {}, {}, labels)
+        self.assertEqual(len(recs), 1)
+        self.assertEqual(recs[0]["제품명"], "나랑드사이다 제로 그린애플")
+        self.assertEqual(recs[0]["이력행수"], 2)
+
+    def test_partial_labelling_does_not_split_a_product(self):
+        # 여러 공장 중 하나만 라벨에 실려도 제품이 쪼개지면 안 된다
+        rows = [mk_row("나랑드사이다", "정제수, 수크랄로스", prms_dt="20200101", report_no="R2"),
+                mk_row("나랑드사이다", "정제수, 수크랄로스", prms_dt="20100101", report_no="R7")]
+        recs = z.canonicalize(rows, {}, {}, self.LBL)
+        self.assertEqual(len(recs), 1)
+        self.assertEqual(recs[0]["이력행수"], 2)
+
+    def test_missing_label_file_is_not_an_error(self):
+        self.assertEqual(z.load_labels("없는파일.json"), {})

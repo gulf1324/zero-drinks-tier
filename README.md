@@ -15,7 +15,7 @@
 ![영양](https://img.shields.io/badge/nutrition-%EA%B3%B5%EA%B3%B5%EB%8D%B0%EC%9D%B4%ED%84%B0%ED%8F%AC%ED%84%B8%2015100066-0B5FA5)
 ![python](https://img.shields.io/badge/python-3.8%2B-3776AB?logo=python&logoColor=white)
 ![dependencies](https://img.shields.io/badge/dependencies-0-success)
-![tests](https://img.shields.io/badge/tests-53%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-58%20passing-brightgreen)
 ![last commit](https://img.shields.io/github/last-commit/gulf1324/zero-drinks-tier)
 
 </div>
@@ -293,7 +293,7 @@ C002는 날짜 조건 검색을 지원하지 않아(`CHNG_DT` 조건은 404) 전
 누구나 같은 입력으로 같은 결과를 재현할 수 있습니다.
 
 ```bash
-python -m unittest test_classify -v    # 53 tests — 분류 로직 회귀 검증
+python -m unittest test_classify -v    # 58 tests — 분류 로직 회귀 검증
 ```
 
 ---
@@ -304,11 +304,12 @@ python -m unittest test_classify -v    # 53 tests — 분류 로직 회귀 검�
 | 파일                         | 역할                                    |
 | -------------------------- | ------------------------------------- |
 | `zero_soda_scan.py`        | 수집 · 영양조인 · 산출 CLI. 표준 라이브러리만 사용      |
-| `test_classify.py`         | 분류/알코올판정/표기정규화/단종조인 테스트 53개          |
+| `test_classify.py`         | 분류/알코올판정/표기정규화/유통명조인 테스트 58개         |
 | `LICENSE` · `NOTICE.md`    | 코드 MIT / 데이터 출처·이용조건                  |
 | `docs/index.html`          | GitHub Pages로 서빙되는 리포트                |
 | `zero_soda_report.html`    | 로컬 산출 리포트 (단일 파일)                     |
 | `zero_soda_result.csv`     | 결과 CSV (UTF-8 BOM, 엑셀 호환)             |
+| `zero_soda_label.json`     | 제조사 공식몰 고시에서 확인한 유통명 (출처 URL 포함)       |
 | `zero_soda_raw.json`       | C002 원본 스냅샷 — 증분 비교의 기준이자 오프라인 재현용    |
 | `zero_soda_nutrition.json` | 영양 조인 캐시 (`checked` 2,410 / 매칭 1,203) |
 
