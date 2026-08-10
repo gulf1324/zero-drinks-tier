@@ -9,3 +9,6 @@
 __pycache__/
 *.pyc
 *.log
+
+# 임시 작업 디렉터리
+_scratch/
