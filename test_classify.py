@@ -197,3 +197,62 @@ class AnnotateTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NameNormalizationTests(unittest.TestCase):
+    def test_separator_variants_collapse(self):
+        for variant in ["코카·콜라 제로", "코카●콜라 제로", "코카 - 콜라 제로", "코카•콜라 제로"]:
+            self.assertEqual(z.norm_name(variant), z.norm_name("코카콜라 제로"))
+
+    def test_parentheses_kept_so_flavors_stay_distinct(self):
+        self.assertNotEqual(z.norm_name("콜앤비(트로피칼)"),
+                            z.norm_name("콜앤비(핑크 그레이프프룻)"))
+
+    def test_period_kept(self):
+        self.assertNotEqual(z.norm_name("1.5 스파클링"), z.norm_name("15 스파클링"))
+
+    def test_display_name_prefers_fewest_symbols(self):
+        self.assertEqual(z.display_name(["코카●콜라 제로", "코카·콜라 제로", "코카콜라 제로"]),
+                         "코카콜라 제로")
+
+    def test_display_name_breaks_tie_by_frequency(self):
+        self.assertEqual(z.display_name(["나랑드사이다", "나랑드사이다", "나랑드 사이다"]),
+                         "나랑드사이다")
+
+    def test_canonicalize_merges_spacing_variants(self):
+        rows = [mk_row("나랑드 사이다", "정제수, 수크랄로스", prms_dt="20200101", report_no="1"),
+                mk_row("나랑드사이다", "정제수, 수크랄로스", prms_dt="20240101", report_no="2")]
+        recs = z.canonicalize(rows, {})
+        self.assertEqual(len(recs), 1)
+        self.assertEqual(recs[0]["제품명"], "나랑드사이다")
+        self.assertEqual(recs[0]["이력행수"], 2)
+
+
+class MeasuredZeroTests(unittest.TestCase):
+    def test_below_threshold_is_zero(self):
+        self.assertEqual(z.kcal_per_100({"열량": "1", "기준량": "100ml"}), 1.0)
+
+    def test_scales_to_100ml(self):
+        self.assertAlmostEqual(z.kcal_per_100({"열량": "16", "기준량": "500ml"}), 3.2)
+
+    def test_missing_energy_is_none(self):
+        self.assertIsNone(z.kcal_per_100({"열량": "", "기준량": "100ml"}))
+
+    def test_annotate_flags_unlabelled_zero_drink(self):
+        recs = [{"제품명": "나랑드사이다", "티어": "B", "원재료전문": "정제수, 수크랄로스",
+                 "열량": "0", "기준량": "100ml"}]
+        z.annotate(recs)
+        self.assertEqual(recs[0]["제로표기"], "N")
+        self.assertEqual(recs[0]["실측제로"], "Y")
+
+    def test_annotate_marks_non_zero_when_measured_high(self):
+        recs = [{"제품명": "일반사이다", "티어": "F", "원재료전문": "정제수, 설탕",
+                 "열량": "40", "기준량": "100ml"}]
+        z.annotate(recs)
+        self.assertEqual(recs[0]["실측제로"], "N")
+
+    def test_annotate_leaves_blank_without_nutrition(self):
+        recs = [{"제품명": "무명사이다", "티어": "B", "원재료전문": "정제수, 수크랄로스",
+                 "열량": "", "기준량": ""}]
+        z.annotate(recs)
+        self.assertEqual(recs[0]["실측제로"], "")

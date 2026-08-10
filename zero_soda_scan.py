@@ -41,6 +41,7 @@
 
 import argparse
 import csv
+import collections
 import json
 import os
 import re
@@ -520,7 +521,7 @@ def recency(row):
 
 CSV_FIELDS = ["티어", "조합", "제품명", "식품유형", "업소명", "보고일자", "감미료",
               "열량", "기준량", "당류", "용량", "감미료미표기", "이력행수", "배합변경", "티어불일치",
-              "원재료전문", "제로표기", "제로사칭", "카페인", "아스파탐",
+              "원재료전문", "제로표기", "실측제로", "제로사칭", "카페인", "아스파탐",
               "일반판", "일반판티어"]
 
 
@@ -568,18 +569,48 @@ def resolve_by_nutrition(cls, nut):
     return tier, combo, hidden
 
 
+def norm_name(name):
+    """제품명 표기 정규화. 공백·하이픈·가운뎃점류·대소문자만 통일한다.
+
+    `코카콜라 제로`/`코카·콜라 제로`/`코카●콜라 제로`/`코카 - 콜라 제로`는 같은
+    제품이지만 C002에는 별개 행으로 등록되어 있다. 코카콜라 하나가 가운뎃점만
+    U+00B7·U+2022·U+25CF 세 가지를 섞어 쓰므로 유사 기호를 한꺼번에 지운다.
+
+    괄호 내용과 용량은 건드리지 않는다 - `콜앤비(트로피칼)`과
+    `콜앤비(핑크 그레이프프룻)`은 서로 다른 제품이기 때문이다. 마침표·`&`·`+`도
+    남긴다: `1.5 스파클링`처럼 의미가 있는 자리에 쓰인다.
+    """
+    return re.sub(r"[\s_\-\u2010-\u2015\u2212"
+                  r"\u00b7\u2022\u2027\u2219\u22c5\u25cf\u25cb\u318d\u30fb]", "", name).upper()
+
+
+_ODD_CHARS = re.compile(r"[^\w\s()]", re.UNICODE)
+
+
+def display_name(names):
+    """같은 제품의 표기 변형 중 가장 깔끔한 것을 대표로 고른다.
+
+    코카콜라는 `코카콜라 제로`·`코카·콜라 제로`·`코카●콜라 제로`를 모두 신고해 두었다.
+    최신 보고 행의 표기를 쓰면 `코카●콜라 제로`가 뽑히므로, 기호가 가장 적은 표기를
+    우선하고 같으면 더 자주 쓰인 표기를 택한다.
+    """
+    freq = collections.Counter(names)
+    return min(freq, key=lambda n: (len(_ODD_CHARS.findall(n)), -freq[n], len(n), n))
+
+
 def canonicalize(rows, nutrition):
     groups = {}
     for row in rows:
         name = pick(row, FIELD_NAME).strip()
         if not name:
             continue
-        groups.setdefault(name, []).append(row)
+        groups.setdefault(norm_name(name), []).append(row)
 
     records = []
-    for name, group in groups.items():
+    for group in groups.values():
         group.sort(key=recency, reverse=True)
         cur = group[0]
+        name = display_name([pick(r, FIELD_NAME).strip() for r in group])
         raw = pick(cur, FIELD_RAW)
         cls = classify(raw)
 
@@ -629,11 +660,33 @@ def canonicalize(rows, nutrition):
     return records
 
 
+def kcal_per_100(rec):
+    """100ml(g)당 열량. 영양DB의 기준량이 100이 아닌 제품이 있어 환산한다.
+
+    값이 없으면 None - '0kcal'과 '데이터 없음'을 구분한다.
+    """
+    try:
+        energy = float(str(rec.get("열량", "")).strip())
+    except (TypeError, ValueError):
+        return None
+    qty = re.sub(r"[^\d.]", "", str(rec.get("기준량", "")))
+    try:
+        qty = float(qty) if qty else 100.0
+    except ValueError:
+        qty = 100.0
+    return energy * 100.0 / qty if qty else None
+
+
 # ── Step 4b: 파생 플래그와 제로↔일반판 짝 매칭 ─────────────────
 def annotate(records):
     for rec in records:
         name = rec["제품명"]
         rec["제로표기"] = "Y" if ZERO_TOKEN.search(name) else "N"
+        # 제로칼로리 표시 기준은 100ml당 4kcal 미만 (식약처 표시광고 기준).
+        # 제품명이 아니라 실측 열량으로 판정하므로, 등록명에 '제로'가 없는
+        # 나랑드사이다 같은 제품도 제로 음료로 잡힌다.
+        k = kcal_per_100(rec)
+        rec["실측제로"] = "" if k is None else ("Y" if k < 4.0 else "N")
         rec["제로사칭"] = "Y" if rec["제로표기"] == "Y" and rec["티어"] == "F" else ""
         text = rec["원재료전문"].replace(" ", "")
         rec["카페인"] = "Y" if any(tok in text for tok in CAFFEINE_TOKENS) else ""
@@ -858,6 +911,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   .chip{display:inline-block;background:#eef0f2;color:var(--muted);border-radius:var(--pill);padding:1px 7px;
         font-size:10.5px;font-weight:600;margin-left:5px;vertical-align:1px}
   .chip.warn-chip{background:#fff4e5;color:#8a5300;cursor:help}
+  .chip.ok-chip{background:#e8f5ec;color:#1c6b3c;cursor:help}
   tr.detail td{background:#fafbfc;font-size:12px;padding:0}
   .detail-box{padding:11px 13px;border-left:3px solid var(--accent);margin:2px 0;white-space:pre-wrap;line-height:1.65}
   .detail-raw{color:var(--text);margin-bottom:6px}
@@ -1084,7 +1138,8 @@ function comboChips(c) {
 
 function rowHtml(r) {
   const cls = ['row']; if (r['제로사칭']==='Y') cls.push('fake-zero');
-  const chips = (r['감미료미표기']==='Y' ? '<span class="chip warn-chip" title="신고 원재료가 식품첨가물혼합제제 등으로 뭉뚱그려져 어떤 감미료를 썼는지 확인할 수 없습니다. 티어는 열량·당류 실측으로 배치했습니다.">감미료 미표기</span>':'')
+  const chips = (r['실측제로']==='Y' && r['제로표기']==='N' ? '<span class="chip ok-chip" title="제품명에 제로 표기가 없지만 신고 영양성분상 100ml당 4kcal 미만입니다. 식약처 기준으로 제로칼로리에 해당합니다.">0kcal 확인</span>':'')
+    + (r['감미료미표기']==='Y' ? '<span class="chip warn-chip" title="신고 원재료가 식품첨가물혼합제제 등으로 뭉뚱그려져 어떤 감미료를 썼는지 확인할 수 없습니다. 티어는 열량·당류 실측으로 배치했습니다.">감미료 미표기</span>':'')
     + (r['카페인']==='Y' ? '<span class="chip">카페인</span>':'') + (r['아스파탐']==='Y' ? '<span class="chip">아스파탐</span>':'');
   const na = function(v){ return v ? escapeHtml(v) : '<span class="na">\u2014</span>'; };
   return '<tr class="' + cls.join(' ') + '" data-name="' + escapeHtml(r['제품명']) + '">' +
@@ -1257,7 +1312,7 @@ def write_html(records, meta, meta_info, path):
         "당류": r["당류"], "용량": r["용량"], "이력행수": r["이력행수"],
         "배합변경": r["배합변경"], "티어불일치": r["티어불일치"],
         "감미료미표기": r["감미료미표기"],
-        "원재료전문": r["원재료전문"], "제로표기": r["제로표기"],
+        "원재료전문": r["원재료전문"], "제로표기": r["제로표기"], "실측제로": r["실측제로"],
         "제로사칭": r["제로사칭"], "카페인": r["카페인"], "아스파탐": r["아스파탐"],
         "일반판": r["일반판"], "일반판티어": r["일반판티어"], "이력": r["이력"],
     } for r in records]
