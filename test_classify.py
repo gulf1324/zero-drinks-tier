@@ -256,3 +256,133 @@ class MeasuredZeroTests(unittest.TestCase):
                  "열량": "", "기준량": ""}]
         z.annotate(recs)
         self.assertEqual(recs[0]["실측제로"], "")
+
+
+class EnrichJoinTests(unittest.TestCase):
+    """I2570/C005/I2852 조인. 필드명은 서비스 상세 페이지 스펙 그대로다."""
+
+    def setUp(self):
+        self.rows = [
+            mk_row("나랑드사이다", "정제수, 수크랄로스", prms_dt="20240304", report_no="A1"),
+            mk_row("킨사이다", "정제수, 설탕", prms_dt="20200101", report_no="B1"),
+        ]
+
+    def test_retail_name_replaces_registered_name(self):
+        barcode = {"A1": {"유통명": "나랑드 사이다 제로", "바코드": "8801069415014"}}
+        recs = z.canonicalize(self.rows, {}, barcode, {})
+        r = next(r for r in recs if r["바코드"])
+        self.assertEqual(r["제품명"], "나랑드 사이다 제로")
+        self.assertEqual(r["등록명"], "나랑드사이다")
+
+    def test_registered_name_kept_when_no_retail_name(self):
+        recs = z.canonicalize(self.rows, {}, {}, {})
+        r = next(r for r in recs if r["제품명"] == "나랑드사이다")
+        self.assertEqual(r["등록명"], "")
+        self.assertEqual(r["바코드"], "")
+
+    def test_identical_retail_name_leaves_registered_blank(self):
+        recs = z.canonicalize(self.rows, {}, {"A1": {"유통명": "나랑드사이다"}}, {})
+        r = next(r for r in recs if r["제품명"] == "나랑드사이다")
+        self.assertEqual(r["등록명"], "")
+
+    def test_discontinued_only_when_every_report_no_ended(self):
+        rows = [mk_row("옛사이다", "정제수, 설탕", prms_dt="20100101", report_no="C1"),
+                mk_row("옛사이다", "정제수, 설탕", prms_dt="20200101", report_no="C2")]
+        # 구버전만 단종 -> 현행 제품이므로 살아 있어야 한다
+        recs = z.canonicalize(rows, {}, {}, {"C1": {"생산중단일": "20150101"}})
+        self.assertEqual(recs[0]["생산중단일"], "")
+        # 전부 단종 -> 단종
+        recs = z.canonicalize(rows, {}, {},
+                              {"C1": {"생산중단일": "20150101"}, "C2": {"생산중단일": "20230101"}})
+        self.assertEqual(recs[0]["생산중단일"], "20230101")
+
+    def test_retail_name_found_on_any_history_row(self):
+        rows = [mk_row("코카콜라 제로", "정제수", prms_dt="20240101", report_no="D2"),
+                mk_row("코카·콜라 제로", "정제수", prms_dt="20100101", report_no="D1")]
+        recs = z.canonicalize(rows, {}, {"D1": {"유통명": "코카콜라 제로 250ml"}}, {})
+        self.assertEqual(recs[0]["제품명"], "코카콜라 제로 250ml")
+
+    def test_unwrap_treats_no_data_as_empty(self):
+        payload = {"I2570": {"total_count": "0",
+                             "RESULT": {"CODE": "INFO-200", "MSG": "해당하는 데이터가 없습니다."}}}
+        self.assertEqual(z.unwrap(payload, service="I2570"), (0, []))
+
+    def test_unwrap_raises_on_real_error(self):
+        payload = {"C005": {"RESULT": {"CODE": "ERROR-503", "MSG": "09시~19시에는..."}}}
+        with self.assertRaises(z.ApiError):
+            z.unwrap(payload, service="C005")
+
+    def test_unwrap_reads_rows_for_other_service(self):
+        payload = {"I2852": {"total_count": "1", "RESULT": {"CODE": "INFO-000"},
+                             "row": [{"PRDLST_REPORT_NO": "X1", "END_DT": "20240101"}]}}
+        total, rows = z.unwrap(payload, service="I2852")
+        self.assertEqual((total, rows[0]["END_DT"]), (1, "20240101"))
+
+    def test_enrich_cache_roundtrip_is_sorted(self):
+        import tempfile, os, json as _json
+        fd, path = tempfile.mkstemp(suffix=".json"); os.close(fd)
+        try:
+            z.write_enrich_cache({"B9": {"유통명": "나"}, "A1": {"유통명": "가"}},
+                                 {"C3": {"생산중단일": "20200101"}}, path)
+            with open(path, encoding="utf-8") as f:
+                raw = _json.load(f)
+            self.assertEqual(list(raw["barcode"]), ["A1", "B9"])
+            bc, dc = z.load_enrich_cache(path)
+            self.assertEqual(bc["A1"]["유통명"], "가")
+            self.assertEqual(dc["C3"]["생산중단일"], "20200101")
+        finally:
+            os.unlink(path)
+
+    def test_missing_cache_is_not_an_error(self):
+        self.assertEqual(z.load_enrich_cache("없는파일.json"), ({}, {}))
+
+
+class EnrichPagingTests(unittest.TestCase):
+    """fetch_service_rows: 전수 페이징 + 우리 보고번호만 남기기."""
+
+    def _stub(self, total, page_size=2):
+        rows = [{"PRDLST_REPORT_NO": f"R{i}", "PRDT_NM": f"제품{i}", "BRCD_NO": f"88{i:05d}"}
+                for i in range(1, total + 1)]
+        calls = []
+
+        def fake_call(key, start, end, cond=None, service=None):
+            calls.append((start, end))
+            page = rows[start - 1:end]
+            return {service: {"total_count": str(total),
+                              "RESULT": {"CODE": "INFO-000"}, "row": page}}
+        return fake_call, calls
+
+    def test_pages_until_total_and_filters_to_wanted(self):
+        fake, calls = self._stub(5)
+        orig, z.call = z.call, fake
+        try:
+            found = z.fetch_service_rows("k", "I2570", {}, 2, {"R2", "R5"},
+                                         ["PRDT_NM", "BRCD_NO"])
+        finally:
+            z.call = orig
+        self.assertEqual(set(found), {"R2", "R5"})
+        self.assertEqual(found["R2"]["PRDT_NM"], "제품2")
+        self.assertEqual(calls, [(1, 2), (3, 4), (5, 6)])
+
+    def test_stops_at_call_cap(self):
+        fake, calls = self._stub(100)
+        orig, z.call = z.call, fake
+        try:
+            z.fetch_service_rows("k", "I2570", {}, 2, {"R99"}, ["PRDT_NM"], max_calls=3)
+        finally:
+            z.call = orig
+        self.assertEqual(len(calls), 3)
+
+    def test_first_non_empty_value_wins(self):
+        rows = [{"PRDLST_REPORT_NO": "R1", "PRDT_NM": "", "BRCD_NO": "880001"},
+                {"PRDLST_REPORT_NO": "R1", "PRDT_NM": "진짜이름", "BRCD_NO": "880002"}]
+
+        def fake_call(key, start, end, cond=None, service=None):
+            return {service: {"total_count": "2", "RESULT": {"CODE": "INFO-000"}, "row": rows}}
+        orig, z.call = z.call, fake_call
+        try:
+            found = z.fetch_service_rows("k", "I2570", {}, 10, {"R1"}, ["PRDT_NM", "BRCD_NO"])
+        finally:
+            z.call = orig
+        self.assertEqual(found["R1"]["PRDT_NM"], "진짜이름")
+        self.assertEqual(found["R1"]["BRCD_NO"], "880001")

@@ -15,7 +15,7 @@
 ![영양](https://img.shields.io/badge/nutrition-%EA%B3%B5%EA%B3%B5%EB%8D%B0%EC%9D%B4%ED%84%B0%ED%8F%AC%ED%84%B8%2015100066-0B5FA5)
 ![python](https://img.shields.io/badge/python-3.8%2B-3776AB?logo=python&logoColor=white)
 ![dependencies](https://img.shields.io/badge/dependencies-0-success)
-![tests](https://img.shields.io/badge/tests-40%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-53%20passing-brightgreen)
 ![last commit](https://img.shields.io/github/last-commit/gulf1324/zero-drinks-tier)
 
 </div>
@@ -237,6 +237,7 @@ echo "FOOD_API_KEY=발급받은키" > .env
 python zero_soda_scan.py --mode probe       # 응답 필드명 확인 (새 환경에선 항상 이것부터)
 python zero_soda_scan.py --mode collect     # C002 전수 수집       [키 필요]
 python zero_soda_scan.py --mode nutrition   # 열량·당류 조인       [키 불필요]
+python zero_soda_scan.py --mode enrich      # 유통명·바코드·단종   [키 필요]
 python zero_soda_scan.py --mode build       # CSV + HTML 산출      [오프라인]
 python zero_soda_scan.py --mode run         # 위 3단계 일괄 실행
 python zero_soda_scan.py --mode sync        # 증분 동기화 (자동화용, 아래 참고)
@@ -290,7 +291,7 @@ C002는 날짜 조건 검색을 지원하지 않아(`CHNG_DT` 조건은 404) 전
 누구나 같은 입력으로 같은 결과를 재현할 수 있습니다.
 
 ```bash
-python -m unittest test_classify -v    # 40 tests — 분류 로직 회귀 검증
+python -m unittest test_classify -v    # 53 tests — 분류 로직 회귀 검증
 ```
 
 ---
@@ -301,7 +302,7 @@ python -m unittest test_classify -v    # 40 tests — 분류 로직 회귀 검�
 | 파일                         | 역할                                    |
 | -------------------------- | ------------------------------------- |
 | `zero_soda_scan.py`        | 수집 · 영양조인 · 산출 CLI. 표준 라이브러리만 사용      |
-| `test_classify.py`         | 분류/알코올판정/표기정규화 테스트 40개                |
+| `test_classify.py`         | 분류/알코올판정/표기정규화/보강조인 테스트 53개          |
 | `LICENSE` · `NOTICE.md`    | 코드 MIT / 데이터 출처·이용조건                  |
 | `docs/index.html`          | GitHub Pages로 서빙되는 리포트                |
 | `zero_soda_report.html`    | 로컬 산출 리포트 (단일 파일)                     |

@@ -12,3 +12,5 @@ __pycache__/
 
 # 임시 작업 디렉터리
 _scratch/
+_enrich_runner.py
+_enrich_runner.log

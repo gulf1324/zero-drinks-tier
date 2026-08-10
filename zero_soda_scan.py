@@ -239,22 +239,24 @@ def _get_json(url, timeout=30, retries=3, headers=None):
     raise ApiError(f"요청 실패: {last}")
 
 
-def call(key, start, end, cond=None):
+def call(key, start, end, cond=None, service=SERVICE):
     """cond: dict 형태의 검색조건. 예: {'PRDLST_DCNM': '탄산음료'}"""
-    url = f"{BASE}/{key}/{SERVICE}/json/{start}/{end}"
+    url = f"{BASE}/{key}/{service}/json/{start}/{end}"
     if cond:
         for k, v in cond.items():
             url += "/" + urllib.parse.quote(f"{k}={v}", safe="=")
     return _get_json(url)
 
 
-def unwrap(payload):
+def unwrap(payload, service=SERVICE):
     """{'C002': {'RESULT': {...}, 'total_count': '..', 'row': [...]}} 구조를 벗김"""
-    body = payload.get(SERVICE)
+    body = payload.get(service)
     if body is None:
         raise ApiError(f"예상과 다른 응답: {json.dumps(payload, ensure_ascii=False)[:400]}")
     result = body.get("RESULT", {})
     code = result.get("CODE", "")
+    if code == "INFO-200":          # 해당하는 데이터가 없습니다 - 오류가 아니다
+        return 0, []
     if code and not code.startswith("INFO-000"):
         raise ApiError(f"API 오류 {code}: {result.get('MSG')}")
     total = int(body.get("total_count", 0))
@@ -513,16 +515,135 @@ def nutrition_mode(raw_path, cache_path, refresh):
     fetch_nutrition(wanted, cache_path, refresh)
 
 
+# ── Step 3: 유통명·바코드·생산중단 보강 ──────────────────────
+# C002가 주는 제품명은 유통명이 아니라 품목제조보고 등록명이다. 아래 세 서비스가
+# 같은 PRDLST_REPORT_NO 로 조인되므로 이걸로 등록명을 유통명으로 바로잡고,
+# 이미 단종된 제품을 걸러낸다. 전부 2026-08-10 에 활용신청을 마쳤다.
+#
+# 주의 - I2570/C005 는 대한상공회의소 유통물류진흥원 자료라 **2018년 이후 갱신이
+# 중단**되어 있다(서비스 상세 페이지가 명시). 2018년 이후 출시·리브랜딩된 제품은
+# 여기에 없을 수 있으니, 조인되지 않는다고 오류로 보지 말 것.
+ENRICH_SERVICES = {
+    # 서비스: (조건, 조인키 필드, 페이지 크기)
+    "I2570": ({}, "PRDLST_REPORT_NO", 1000),          # 유통바코드: PRDT_NM(유통 제품명)
+    "C005": ({}, "PRDLST_REPORT_NO", 1000),           # 바코드연계: END_DT(생산중단일)
+    "I2852": ({"FOOD_HF_LS_CL_CD": "001"}, "PRDLST_REPORT_NO", 1000),  # 생산중단제품
+}
+DEFAULT_ENRICH_CACHE = "zero_soda_enrich.json"
+ENRICH_MAX_CALLS = 400   # 서비스당 일일 호출 제한이 500이라 여유를 둔다
+
+
+def fetch_service_rows(key, service, cond, page, wanted, keep_fields, max_calls=ENRICH_MAX_CALLS):
+    """서비스를 전수 페이징하되 우리 보고번호에 해당하는 행만 남긴다.
+
+    I2570/C005 는 식품유형 조건을 지원하지 않아 전수 조회 외에 방법이 없다.
+    보고번호별로 하나씩 물어보면 2,410 콜이라 일일 제한(500)을 넘긴다.
+    """
+    found = {}
+    start, total, calls = 1, None, 0
+    while calls < max_calls:
+        end = start + page - 1
+        payload = call(key, start, end, cond or None, service=service)
+        total_now, rows = unwrap(payload, service=service)
+        calls += 1
+        if total is None:
+            total = total_now
+            print(f"  [{service}] 전체 {total:,}건")
+        for row in rows:
+            no = str(row.get("PRDLST_REPORT_NO", "")).strip()
+            if no and no in wanted:
+                cur = found.setdefault(no, {})
+                for f in keep_fields:
+                    v = str(row.get(f, "")).strip()
+                    if v and not cur.get(f):
+                        cur[f] = v
+        print(f"  [{service}] {min(end, total):,}/{total:,} · 매칭 {len(found):,}건")
+        if end >= total or not rows:
+            break
+        start = end + 1
+        time.sleep(SLEEP)
+    else:
+        print(f"  [{service}] ! 호출 상한 {max_calls}회 도달 - 부분 수집")
+    return found
+
+
+def fetch_enrich(key, wanted, cache_path):
+    """세 서비스를 훑어 유통명·바코드·생산중단일을 모은다."""
+    barcode, discontinued = {}, {}
+
+    i2570 = fetch_service_rows(key, "I2570", ENRICH_SERVICES["I2570"][0], 1000,
+                               wanted, ["PRDT_NM", "BRCD_NO", "CMPNY_NM"])
+    for no, v in i2570.items():
+        rec = barcode.setdefault(no, {})
+        if v.get("PRDT_NM"):
+            rec["유통명"] = v["PRDT_NM"]
+        if v.get("BRCD_NO"):
+            rec["바코드"] = v["BRCD_NO"]
+
+    c005 = fetch_service_rows(key, "C005", ENRICH_SERVICES["C005"][0], 1000,
+                              wanted, ["PRDLST_NM", "BAR_CD", "END_DT", "CLSBIZ_DT"])
+    for no, v in c005.items():
+        rec = barcode.setdefault(no, {})
+        if v.get("PRDLST_NM") and not rec.get("유통명"):
+            rec["유통명"] = v["PRDLST_NM"]
+        if v.get("BAR_CD") and not rec.get("바코드"):
+            rec["바코드"] = v["BAR_CD"]
+        if v.get("END_DT"):
+            discontinued.setdefault(no, {})["생산중단일"] = v["END_DT"]
+
+    i2852 = fetch_service_rows(key, "I2852", ENRICH_SERVICES["I2852"][0], 1000,
+                               wanted, ["END_DT", "ARTCL_END_WHY"])
+    for no, v in i2852.items():
+        rec = discontinued.setdefault(no, {})
+        if v.get("END_DT"):
+            rec["생산중단일"] = v["END_DT"]
+        if v.get("ARTCL_END_WHY"):
+            rec["사유"] = v["ARTCL_END_WHY"]
+
+    barcode = {k: v for k, v in barcode.items() if v}
+    write_enrich_cache(barcode, discontinued, cache_path)
+    print(f"\n[enrich] 유통명·바코드 {len(barcode):,}건 / 생산중단 {len(discontinued):,}건 -> {cache_path}")
+    return barcode, discontinued
+
+
+def write_enrich_cache(barcode, discontinued, cache_path):
+    """정렬해서 저장한다 - API 응답 순서가 흔들려도 git diff가 최소가 되도록."""
+    data = {
+        "fetched_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "barcode": {k: barcode[k] for k in sorted(barcode)},
+        "discontinued": {k: discontinued[k] for k in sorted(discontinued)},
+    }
+    with open(cache_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=1, sort_keys=True)
+
+
+def load_enrich_cache(cache_path):
+    """(barcode, discontinued). 캐시가 없으면 빈 dict - 보강은 선택 사항이다."""
+    if not cache_path or not os.path.exists(cache_path):
+        return {}, {}
+    with open(cache_path, encoding="utf-8") as f:
+        data = json.load(f)
+    return data.get("barcode", {}), data.get("discontinued", {})
+
+
+def enrich_mode(key, raw_path, cache_path):
+    rows = load_raw(raw_path)
+    wanted = {pick(r, FIELD_REPORT_NO).strip() for r in rows}
+    wanted.discard("")
+    print(f"보강 대상 보고번호 {len(wanted):,}개")
+    fetch_enrich(key, wanted, cache_path)
+
+
 # ── Step 4: 제품 통합과 배합 이력 ────────────────────────────
 def recency(row):
     return (max(pick(row, FIELD_DATE) or "", pick(row, FIELD_CHNG) or ""),
             pick(row, FIELD_REPORT_NO) or "")
 
 
-CSV_FIELDS = ["티어", "조합", "제품명", "식품유형", "업소명", "보고일자", "감미료",
+CSV_FIELDS = ["티어", "조합", "제품명", "등록명", "바코드", "식품유형", "업소명", "보고일자", "감미료",
               "열량", "기준량", "당류", "용량", "감미료미표기", "이력행수", "배합변경", "티어불일치",
               "원재료전문", "제로표기", "실측제로", "제로사칭", "카페인", "아스파탐",
-              "일반판", "일반판티어"]
+              "생산중단일", "일반판", "일반판티어"]
 
 
 def _sugar_g(nut):
@@ -598,7 +719,9 @@ def display_name(names):
     return min(freq, key=lambda n: (len(_ODD_CHARS.findall(n)), -freq[n], len(n), n))
 
 
-def canonicalize(rows, nutrition):
+def canonicalize(rows, nutrition, barcode=None, discontinued=None):
+    barcode = barcode or {}
+    discontinued = discontinued or {}
     groups = {}
     for row in rows:
         name = pick(row, FIELD_NAME).strip()
@@ -635,12 +758,26 @@ def canonicalize(rows, nutrition):
             "원재료전문": pick(r, FIELD_RAW),
         } for r in group]
 
+        # 유통명·바코드·생산중단은 보고번호로 조인한다. 현행 행부터 훑되,
+        # 유통명은 이력 어디에 있든 쓴다 - 등록명보다 유통명이 항상 낫다.
+        nos = [pick(r, FIELD_REPORT_NO).strip() for r in group]
+        retail = next((barcode[n]["유통명"] for n in nos
+                       if n in barcode and barcode[n].get("유통명")), "")
+        code = next((barcode[n]["바코드"] for n in nos
+                     if n in barcode and barcode[n].get("바코드")), "")
+        # 이력 행 전부가 단종이어야 단종으로 본다. 구버전만 단종된 제품은 현행이다.
+        ended = [discontinued[n].get("생산중단일", "") for n in nos if n in discontinued]
+        end_dt = max(ended) if ended and len(ended) == len(nos) else ""
+
         tier, combo, hidden = resolve_by_nutrition(cls, nut)
 
         records.append({
             "티어": tier,
             "조합": combo,
-            "제품명": name,
+            "제품명": retail or name,
+            "등록명": name if retail and retail != name else "",
+            "바코드": code,
+            "생산중단일": end_dt,
             "식품유형": pick(cur, FIELD_TYPE),
             "업소명": display_maker,
             "보고일자": recency(cur)[0],
@@ -1313,6 +1450,7 @@ def write_html(records, meta, meta_info, path):
         "배합변경": r["배합변경"], "티어불일치": r["티어불일치"],
         "감미료미표기": r["감미료미표기"],
         "원재료전문": r["원재료전문"], "제로표기": r["제로표기"], "실측제로": r["실측제로"],
+        "등록명": r["등록명"], "바코드": r["바코드"],
         "제로사칭": r["제로사칭"], "카페인": r["카페인"], "아스파탐": r["아스파탐"],
         "일반판": r["일반판"], "일반판티어": r["일반판티어"], "이력": r["이력"],
     } for r in records]
@@ -1354,7 +1492,7 @@ def write_html(records, meta, meta_info, path):
 
 # ── build ─────────────────────────────────────────────────────
 def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False,
-          keep_sugar=False):
+          keep_sugar=False, enrich_cache=DEFAULT_ENRICH_CACHE, keep_discontinued=False):
     rows, types = load_raw_full(raw_path)
 
     if os.path.exists(cache_path):
@@ -1365,7 +1503,18 @@ def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False
         print("[build] 영양 캐시가 없습니다. 열량/당류는 공란으로 채웁니다. "
               "(--mode nutrition 을 먼저 실행하면 채울 수 있습니다)")
 
-    records = canonicalize(rows, nutrition)
+
+    barcode, discontinued = load_enrich_cache(enrich_cache)
+    if barcode or discontinued:
+        print(f"[build] 보강 데이터: 유통명·바코드 {len(barcode):,}건 / "
+              f"생산중단 {len(discontinued):,}건")
+    records = canonicalize(rows, nutrition, barcode, discontinued)
+    if not keep_discontinued:
+        before = len(records)
+        records = [r for r in records if not r["생산중단일"]]
+        if before != len(records):
+            print(f"[build] 생산중단 제품 {before - len(records)}건 제외 "
+                  f"(--keep-discontinued 로 유지 가능)")
     excluded = 0
     if not keep_alcohol:
         before = len(records)
@@ -1793,13 +1942,14 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--key", help="식품안전나라 인증키 (probe/collect에만 필요)")
     p.add_argument("--mode",
-                   choices=["probe", "collect", "nutrition", "build", "run", "diff",
-                            "sync", "update"],
+                   choices=["probe", "collect", "nutrition", "enrich", "build", "run",
+                            "diff", "sync", "update"],
                    default="build")
     p.add_argument("--type", action="append", default=[],
                    help="수집할 식품유형(PRDLST_DCNM). 여러 번 지정 가능. 기본: 탄산음료, 탄산수")
     p.add_argument("--raw", default=DEFAULT_RAW)
     p.add_argument("--nutrition-cache", default=DEFAULT_NUTRITION_CACHE)
+    p.add_argument("--enrich-cache", default=DEFAULT_ENRICH_CACHE)
     p.add_argument("--out", default=DEFAULT_OUT_CSV)
     p.add_argument("--out-html", default=DEFAULT_OUT_HTML)
     p.add_argument("--docs-html", default=DEFAULT_DOCS_HTML,
@@ -1816,6 +1966,8 @@ def main():
                     help="주류·비음료를 제외하지 않고 그대로 산출 (기본: 제외)")
     p.add_argument("--keep-sugar", action="store_true",
                     help="제로 표기 없는 당류 음료도 그대로 산출 (기본: 제외)")
+    p.add_argument("--keep-discontinued", action="store_true",
+                    help="생산이 중단된 제품도 그대로 산출 (기본: 제외)")
     args = p.parse_args()
 
     if args.find and args.mode != "build":
@@ -1824,6 +1976,8 @@ def main():
         p.error("--keep-alcohol 은 --mode build 또는 run 에서만 사용할 수 있습니다.")
     if args.keep_sugar and args.mode not in ("build", "run"):
         p.error("--keep-sugar 는 --mode build 또는 run 에서만 사용할 수 있습니다.")
+    if args.keep_discontinued and args.mode not in ("build", "run"):
+        p.error("--keep-discontinued 는 --mode build 또는 run 에서만 사용할 수 있습니다.")
     if args.mode == "diff" and not args.diff_against:
         p.error("--mode diff 는 --diff-against 가 필요합니다.")
     if args.diff_against and args.mode != "diff":
@@ -1837,9 +1991,11 @@ def main():
         collect(load_key(args.key), types, args.raw)
     elif args.mode == "nutrition":
         nutrition_mode(args.raw, args.nutrition_cache, args.refresh_nutrition)
+    elif args.mode == "enrich":
+        enrich_mode(load_key(args.key), args.raw, args.enrich_cache)
     elif args.mode == "build":
         build(args.raw, args.nutrition_cache, args.out, args.out_html, args.find, args.keep_alcohol,
-              args.keep_sugar)
+              args.keep_sugar, args.enrich_cache, args.keep_discontinued)
     elif args.mode == "diff":
         diff_mode(args.raw, args.diff_against)
     elif args.mode == "sync":
@@ -1853,8 +2009,9 @@ def main():
         key = load_key(args.key)
         collect(key, types, args.raw)
         nutrition_mode(args.raw, args.nutrition_cache, args.refresh_nutrition)
+        enrich_mode(key, args.raw, args.enrich_cache)
         build(args.raw, args.nutrition_cache, args.out, args.out_html, args.find, args.keep_alcohol,
-              args.keep_sugar)
+              args.keep_sugar, args.enrich_cache, args.keep_discontinued)
 
 
 if __name__ == "__main__":
