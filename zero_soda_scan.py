@@ -1223,6 +1223,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <div class="toolbar">
   <div class="chks">
     <label class="chk"><input type="checkbox" id="fFake"> 제로사칭만</label>
+    <label class="chk" title="제품명에 제로 표기가 없지만 신고 영양성분상 100ml당 4kcal 미만인 제품. 실제로는 제로인데 이름으로 알리지 않습니다."><input type="checkbox" id="fHidden"> 숨은 제로</label>
     <label class="chk"><input type="checkbox" id="fAllulose"> 알룰로스 함유</label>
     <label class="chk"><input type="checkbox" id="fErythritol"> 에리스리톨 함유</label>
     <label class="chk"><input type="checkbox" id="fNoCaffeine"> 카페인 없음</label>
@@ -1272,7 +1273,7 @@ const TIER_COLORS = {"무감미료":"#4caf50","S":"#8bc34a","A":"#cddc39","B":"#
 // PAGE_SIZE: 1,699행을 한 번에 그리면 표 높이가 11만 px가 되어 강제 레이아웃에만
 // 216ms가 든다(실측). 한 페이지 분량만 그린다.
 const PAGE_SIZE = 50;
-let state = { q: "", qz: "", fFake:false, fAllulose:false, fErythritol:false, fNoCaffeine:false, fNoAspartame:false, fHasKcal:false,
+let state = { q: "", qz: "", fFake:false, fHidden:false, fAllulose:false, fErythritol:false, fNoCaffeine:false, fNoAspartame:false, fHasKcal:false,
               tierFilters: new Set(), sortKey: "티어", sortDir: 1, expanded: new Set(), page: 1 };
 
 // 공백·하이픈·가운뎃점류를 지운다. 산출 쪽 norm_name() 과 같은 기준이라
@@ -1310,6 +1311,7 @@ function filtered() {
       }
     }
     if (state.fFake && r['제로사칭'] !== 'Y') return false;
+    if (state.fHidden && !(r['제로표기'] !== 'Y' && r['실측제로'] === 'Y')) return false;
     if (state.fAllulose && !(r['조합']||'').split('+').includes('S')) return false;
     if (state.fErythritol && !(r['감미료']||'').includes('에리스')) return false;
     if (state.fNoCaffeine && r['카페인'] === 'Y') return false;
@@ -1534,6 +1536,7 @@ document.getElementById('sortDir').addEventListener('click', function() {
   state.sortDir *= -1; update();
 });
 document.getElementById('fFake').addEventListener('change', function(e) { state.fFake = e.target.checked; update(); });
+document.getElementById('fHidden').addEventListener('change', function(e) { state.fHidden = e.target.checked; update(); });
 document.getElementById('fAllulose').addEventListener('change', function(e) { state.fAllulose = e.target.checked; update(); });
 document.getElementById('fErythritol').addEventListener('change', function(e) { state.fErythritol = e.target.checked; update(); });
 document.getElementById('fNoCaffeine').addEventListener('change', function(e) { state.fNoCaffeine = e.target.checked; update(); });
