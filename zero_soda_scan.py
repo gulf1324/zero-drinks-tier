@@ -1086,6 +1086,9 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   tr.row{cursor:pointer}
   tr.row:hover td{background:#f7f9fc}
   tr.fake-zero td:first-child{box-shadow:inset 3px 0 0 var(--danger)}
+  tr.row.expanded td{background:#f4f8fd}
+  tr.row.expanded:hover td{background:#eef4fb}
+  tr.row.expanded td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
   td.c-name .pname{font-weight:600}
   td.c-maker{color:var(--muted)}
   td.c-date,td.c-vol{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -1099,10 +1102,13 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   .chip.warn-chip{background:#fff4e5;color:#8a5300;cursor:help}
   .chip.ok-chip{background:#e8f5ec;color:#1c6b3c;cursor:help}
   tr.detail td{background:#fafbfc;font-size:12px;padding:0}
-  .detail-box{padding:11px 13px;border-left:3px solid var(--accent);margin:2px 0;white-space:pre-wrap;line-height:1.65}
+  .detail-box{padding:11px 13px;border-left:3px solid var(--accent);margin:2px 0;white-space:pre-wrap;line-height:1.65;
+              animation:detailIn .14s cubic-bezier(.16,1,.3,1)}
   .detail-raw{color:var(--text);margin-bottom:6px}
   .detail-box a{color:var(--accent)}
   .detail-box div{color:var(--muted)}
+  @keyframes detailIn{from{opacity:0}to{opacity:1}}
+  @media (prefers-reduced-motion: reduce){.detail-box{animation:none}}
   tr.empty td{text-align:center;padding:34px 10px;color:var(--muted);border-bottom:0}
   .pager{margin:14px 0 0;display:flex;flex-direction:column;align-items:center;gap:7px}
   .pager-btns{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
@@ -1164,6 +1170,10 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
     tr.fake-zero td:first-child{box-shadow:none}
     tr.fake-zero::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
                          background:var(--danger)}
+    tr.row.expanded{background:#f4f8fd}
+    tr.row.expanded td:first-child{box-shadow:none}
+    tr.row.expanded::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+                            background:var(--accent)}
     tr.detail td{padding:0}
     tr.detail td::before{display:none}
     tr.empty td{display:block;text-align:center;padding:28px 10px}
@@ -1252,6 +1262,9 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <script id="data" type="application/json">__DATA_JSON__</script>
 <script>
 const DATA = JSON.parse(document.getElementById('data').textContent);
+// 클릭마다 DATA를 선형 탐색하지 않도록 제품명 -> 레코드 조회용 Map을 한 번만 만든다.
+// canonicalize()가 제품명을 그룹 키로 쓰므로 고유하다.
+const BY_NAME = new Map(DATA.map(function(r) { return [r['제품명'], r]; }));
 const RANK = __RANK_JSON__;
 const MAKERS = __MAKERS_JSON__;
 const TIER_COLORS = {"무감미료":"#4caf50","S":"#8bc34a","A":"#cddc39","B":"#ffc107","C":"#ff9800","D":"#f4511e","F":"#c00","?":"#999"};
@@ -1338,7 +1351,7 @@ function comboChips(c) {
 }
 
 function rowHtml(r) {
-  const cls = ['row']; if (r['제로사칭']==='Y') cls.push('fake-zero');
+  const cls = ['row']; if (r['제로사칭']==='Y') cls.push('fake-zero'); if (state.expanded.has(r['제품명'])) cls.push('expanded');
   const chips = (r['실측제로']==='Y' && r['제로표기']==='N' ? '<span class="chip ok-chip" title="제품명에 제로 표기가 없지만 신고 영양성분상 100ml당 4kcal 미만입니다. 식약처 기준으로 제로칼로리에 해당합니다.">0kcal 확인</span>':'')
     + (r['감미료미표기']==='Y' ? '<span class="chip warn-chip" title="신고 원재료가 식품첨가물혼합제제 등으로 뭉뚱그려져 어떤 감미료를 썼는지 확인할 수 없습니다. 티어는 열량·당류 실측으로 배치했습니다.">감미료 미표기</span>':'')
     + (r['카페인']==='Y' ? '<span class="chip">카페인</span>':'') + (r['아스파탐']==='Y' ? '<span class="chip">아스파탐</span>':'');
@@ -1468,9 +1481,43 @@ document.getElementById('tbody').addEventListener('click', function(e) {
   const tr = e.target.closest('tr.row');
   if (!tr) return;
   const nm = tr.getAttribute('data-name');
-  if (state.expanded.has(nm)) state.expanded.delete(nm);
-  else state.expanded.add(nm);
-  render();
+  const next = tr.nextElementSibling;
+  const anchor = tr.getBoundingClientRect().top;
+
+  if (next && next.classList.contains('detail')) {
+    // 접기: 상세 행만 제거한다. tbody 전체를 다시 그리지 않는다.
+    next.remove();
+    tr.classList.remove('expanded');
+    state.expanded.delete(nm);
+    const delta = tr.getBoundingClientRect().top - anchor;
+    if (delta) window.scrollBy(0, delta);
+    return;
+  }
+
+  // 펼치기: 상세 행을 클릭한 행 바로 뒤에만 삽입한다.
+  const r = BY_NAME.get(nm);
+  if (!r) return;
+  tr.insertAdjacentHTML('afterend', detailHtml(r));
+  tr.classList.add('expanded');
+  state.expanded.add(nm);
+
+  // 클릭한 행이 삽입 전후로 화면에서 움직이지 않도록 보정한다
+  // (sticky 헤더·마진 상쇄·모바일 카드 레이아웃 때문에 이론과 다르게 어긋날 수 있다).
+  const delta = tr.getBoundingClientRect().top - anchor;
+  if (delta) window.scrollBy(0, delta);
+
+  // 펼친 상세가 화면 아래로 넘치면 넘친 만큼만 스크롤한다. 중앙 정렬은 그 자체가
+  // 큰 점프라 쓰지 않는다. tr이 화면 위로 밀려나거나 sticky 헤더 밑으로 들어가지
+  // 않는 한도 안에서만 움직인다.
+  const detail = tr.nextElementSibling;
+  const overflow = detail.getBoundingClientRect().bottom - window.innerHeight;
+  if (overflow > 0) {
+    const theadEl = document.querySelector('table thead');
+    const safeTop = (theadEl && theadEl.offsetParent) ? theadEl.getBoundingClientRect().bottom : 0;
+    const headroom = Math.max(0, tr.getBoundingClientRect().top - safeTop);
+    const scrollAmt = Math.min(overflow, headroom);
+    if (scrollAmt > 0) window.scrollBy({top: scrollAmt, behavior: 'smooth'});
+  }
 });
 
 document.getElementById('q').addEventListener('input', function(e) {
