@@ -648,6 +648,10 @@ def enrich_mode(key, raw_path, cache_path, nutrition_path=DEFAULT_NUTRITION_CACH
         return known, checked
 
     fresh, confirmed = fetch_discontinued(key, todo)
+    if not confirmed:
+        # 한 건도 확인하지 못했다 (대개 일일 호출 한도 초과). 캐시를 건드리지 않는다.
+        print("[enrich] 확인된 건이 없어 캐시를 그대로 둡니다.")
+        return known, checked
     merged = {k: v for k, v in known.items() if k in wanted}
     merged.update(fresh)
     now_checked = (checked & wanted) | confirmed
@@ -668,7 +672,7 @@ def recency(row):
 CSV_FIELDS = ["티어", "조합", "제품명", "등록명", "식품유형", "업소명", "보고일자", "감미료",
               "열량", "기준량", "당류", "용량", "감미료미표기", "이력행수", "배합변경", "티어불일치",
               "원재료전문", "제로표기", "실측제로", "제로사칭", "카페인", "아스파탐",
-              "생산중단일", "유통명출처", "일반판", "일반판티어"]
+              "생산중단일", "표시원재료", "유통명출처", "일반판", "일반판티어"]
 
 
 def _sugar_g(nut):
@@ -804,6 +808,13 @@ def canonicalize(rows, nutrition, discontinued=None, labels=None):
         label = next((labels[n] for n in nos if n in labels), None)
         retail = (label or {}).get("유통명", "")
 
+        # C002 원재료가 식품첨가물혼합제제로 가려져 감미료를 알 수 없는 제품은,
+        # 고시에 실린 표시 원재료로 다시 판정한다. 코카콜라 제로가 '무감미료'(최상위)로
+        # 표시되던 것이 이 경로로 바로잡힌다. 티어를 바꾸는 만큼 출처를 반드시 남긴다.
+        label_raw = (label or {}).get("원재료", "")
+        if label_raw and cls["tier"] == "?":
+            cls = classify(label_raw)
+
         tier, combo, hidden = resolve_by_nutrition(cls, nut)
 
         records.append({
@@ -811,7 +822,8 @@ def canonicalize(rows, nutrition, discontinued=None, labels=None):
             "조합": combo,
             "제품명": retail or registered,
             "등록명": registered if retail and retail != registered else "",
-            "유통명출처": (label or {}).get("출처", "") if retail else "",
+            "유통명출처": (label or {}).get("출처", "") if (retail or label_raw) else "",
+            "표시원재료": label_raw,
             "생산중단일": end_dt,
             "식품유형": pick(cur, FIELD_TYPE),
             "업소명": display_maker,
@@ -860,7 +872,9 @@ def annotate(records):
         k = kcal_per_100(rec)
         rec["실측제로"] = "" if k is None else ("Y" if k < 4.0 else "N")
         rec["제로사칭"] = "Y" if rec["제로표기"] == "Y" and rec["티어"] == "F" else ""
-        text = rec["원재료전문"].replace(" ", "")
+        # 고시에 실린 표시 원재료가 있으면 그걸로 판단한다. C002 원문이
+        # 식품첨가물혼합제제로 뭉뚱그려진 제품은 카페인·아스파탐도 안 보인다.
+        text = (rec.get("표시원재료") or rec["원재료전문"]).replace(" ", "")
         rec["카페인"] = "Y" if any(tok in text for tok in CAFFEINE_TOKENS) else ""
         rec["아스파탐"] = "Y" if any(tok in text for tok in ASPARTAME_TOKENS) else ""
         rec["일반판"] = ""
@@ -1343,6 +1357,13 @@ function rowHtml(r) {
 
 function detailHtml(r) {
   let extra = '';
+  if (r['표시원재료']) {
+    // C002 원재료가 혼합제제로 가려진 제품이다. 무엇으로 판정했는지 그대로 보여준다.
+    extra += '<div><b>표시 원재료</b> (' +
+             (r['유통명출처'] ? '<a href="' + escapeHtml(r['유통명출처']) + '" target="_blank" rel="noopener">상품정보제공 고시</a>' : '고시') +
+             '): ' + escapeHtml(r['표시원재료']) + '</div>' +
+             '<div>위 신고 원재료는 식품첨가물혼합제제로 뭉뚱그려져 감미료가 보이지 않습니다. 티어는 고시 표시 원재료로 판정했습니다.</div>';
+  }
   if (r['등록명']) {
     // 표시한 이름이 품목제조보고 등록명과 다르면 반드시 출처를 함께 밝힌다.
     extra += '<div>품목제조보고 등록명: ' + escapeHtml(r['등록명']) +
@@ -1510,6 +1531,7 @@ def write_html(records, meta, meta_info, path):
         "감미료미표기": r["감미료미표기"],
         "원재료전문": r["원재료전문"], "제로표기": r["제로표기"], "실측제로": r["실측제로"],
         "등록명": r["등록명"], "유통명출처": r["유통명출처"],
+        "표시원재료": r["표시원재료"],
         "제로사칭": r["제로사칭"], "카페인": r["카페인"], "아스파탐": r["아스파탐"],
         "일반판": r["일반판"], "일반판티어": r["일반판티어"], "이력": r["이력"],
     } for r in records]

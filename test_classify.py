@@ -437,3 +437,41 @@ class RetailLabelTests(unittest.TestCase):
 
     def test_missing_label_file_is_not_an_error(self):
         self.assertEqual(z.load_labels("없는파일.json"), {})
+
+
+class LabelIngredientTests(unittest.TestCase):
+    """고시 표시 원재료로 '확인 불가'를 해소한다. 코카콜라 제로가 이 경로로 교정된다."""
+
+    OPAQUE = "정제수, 식품첨가물혼합제제, 향료, 이산화탄소"
+    LBL = {"K1": {"유통명": "코카콜라 제로",
+                  "원재료": "정제수, 탄산가스, 카라멜색소, 인산, 천연착향료, "
+                            "합성감미료(아스파탐, 아세설팜칼륨), 천연카페인(향미증진제)",
+                  "출처": "https://example.com/p", "확인일": "2026-08-11"}}
+
+    def _rec(self, labels):
+        rows = [mk_row("코카콜라 제로", self.OPAQUE, report_no="K1")]
+        recs = z.canonicalize(rows, {}, {}, labels)
+        z.annotate(recs)
+        return recs[0]
+
+    def test_label_ingredients_resolve_unknown_tier(self):
+        r = self._rec(self.LBL)
+        self.assertEqual(r["티어"], "B")
+        self.assertEqual(r["감미료미표기"], "")
+        self.assertEqual(r["유통명출처"], "https://example.com/p")
+
+    def test_without_label_it_stays_unknown_and_flagged(self):
+        r = self._rec({})
+        self.assertEqual(r["감미료미표기"], "Y")
+        self.assertNotEqual(r["티어"], "B")
+
+    def test_flags_read_label_ingredients(self):
+        r = self._rec(self.LBL)
+        self.assertEqual(r["아스파탐"], "Y")
+        self.assertEqual(r["카페인"], "Y")
+
+    def test_label_ingredients_do_not_override_a_known_tier(self):
+        # C002 로 이미 판정된 제품은 건드리지 않는다. 정부 신고 데이터가 우선이다.
+        rows = [mk_row("어떤사이다", "정제수, 에리스리톨", report_no="K1")]
+        recs = z.canonicalize(rows, {}, {}, self.LBL)
+        self.assertEqual(recs[0]["티어"], "C")
