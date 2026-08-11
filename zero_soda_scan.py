@@ -1089,6 +1089,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   tr.row.expanded td{background:#f4f8fd}
   tr.row.expanded:hover td{background:#eef4fb}
   tr.row.expanded td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+  tr.fake-zero.row.expanded td:first-child{box-shadow:inset 3px 0 0 var(--accent),inset 6px 0 0 var(--danger)}
   td.c-name .pname{font-weight:600}
   td.c-maker{color:var(--muted)}
   td.c-date,td.c-vol{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -1101,8 +1102,9 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
         font-size:10.5px;font-weight:600;margin-left:5px;vertical-align:1px}
   .chip.warn-chip{background:#fff4e5;color:#8a5300;cursor:help}
   .chip.ok-chip{background:#e8f5ec;color:#1c6b3c;cursor:help}
-  tr.detail td{background:#fafbfc;font-size:12px;padding:0}
-  .detail-box{padding:11px 13px;border-left:3px solid var(--accent);margin:2px 0;white-space:pre-wrap;line-height:1.65;
+  tr.detail td{background:#f4f8fd;font-size:12px;padding:0}
+  .detail-cell{width:0;min-width:100%}
+  .detail-box{padding:11px 13px;border-left:3px solid var(--accent);white-space:pre-wrap;line-height:1.65;
               animation:detailIn .14s cubic-bezier(.16,1,.3,1)}
   .detail-raw{color:var(--text);margin-bottom:6px}
   .detail-box a{color:var(--accent)}
@@ -1172,7 +1174,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
                          background:var(--danger)}
     tr.row.expanded{background:#f4f8fd}
     tr.row.expanded td:first-child{box-shadow:none}
-    tr.row.expanded::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+    tr.row.expanded::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
                             background:var(--accent)}
     tr.detail td{padding:0}
     tr.detail td::before{display:none}
@@ -1392,8 +1394,8 @@ function detailHtml(r) {
       return '<div>&nbsp;&nbsp;' + escapeHtml(h['보고일자']) + ' \u00b7 ' + escapeHtml(h['보고번호']) + ' \u00b7 ' + escapeHtml(h['원재료전문']) + '</div>';
     }).join('');
   }
-  return '<tr class="detail"><td colspan="9"><div class="detail-box">' +
-         '<div class="detail-raw">' + escapeHtml(r['원재료전문']) + '</div>' + extra + '</div></td></tr>';
+  return '<tr class="detail"><td colspan="9"><div class="detail-cell"><div class="detail-box">' +
+         '<div class="detail-raw">' + escapeHtml(r['원재료전문']) + '</div>' + extra + '</div></div></td></tr>';
 }
 
 function pagerHtml(total, page, pages) {
