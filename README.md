@@ -205,7 +205,8 @@
 
 ## 리포트 기능
 
-[**zero-drinks-tier.vercel.app**](https://zero-drinks-tier.vercel.app/) — 외부 리소스 0개의 단일 HTML 파일
+[**zero-drinks-tier.vercel.app**](https://zero-drinks-tier.vercel.app/) — 단일 HTML 파일. 렌더링에 필요한 외부 리소스는 0개이며, 방문 통계용 Google Analytics 태그만 예외로 불러옵니다
+  (로컬로 연 산출물은 호스트를 가려 통계에서 제외합니다)
 
 - 티어 배지 **다중 선택** 필터 (S + A 동시 선택 = 합집합)
 - 제품명·업소명 실시간 검색 — **유통명으로도 찾힙니다.** `나랑드 사이다 제로`로 검색하면

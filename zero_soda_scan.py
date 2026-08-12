@@ -68,6 +68,7 @@ DEFAULT_OUT_CSV = "zero_soda_result.csv"
 DEFAULT_OUT_HTML = "zero_soda_report.html"
 DEFAULT_DOCS_HTML = os.path.join("docs", "index.html")
 PAGE_URL = "https://zero-drinks-tier.vercel.app/"   # Vercel 배포 주소 (canonical/OG용)
+GA_ID = "G-8QMBBJ4EXD"   # Google Analytics 4 측정 ID. 빈 문자열로 두면 태그를 넣지 않는다
 
 
 # ── 감미료 사전 ────────────────────────────────────────────────
@@ -908,6 +909,24 @@ def annotate(records):
     return {"제조사": top_makers}
 
 
+_GA_SNIPPET = """<script>
+(function () {
+  // 로컬로 연 산출물(file://, localhost)은 통계에서 제외한다
+  if (location.protocol.indexOf('http') !== 0) return;
+  var h = location.hostname;
+  if (h === 'localhost' || h === '::1' || h.indexOf('127.') === 0) return;
+  var s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://www.googletagmanager.com/gtag/js?id=__GA_ID__';
+  document.head.appendChild(s);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { dataLayer.push(arguments); };
+  gtag('js', new Date());
+  gtag('config', '__GA_ID__');
+})();
+</script>"""
+
+
 # ── Step 5: 단일 파일 HTML 리포트 ────────────────────────────
 _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="ko">
@@ -924,6 +943,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <meta property="og:title" content="제로 탄산음료 감미료 티어 리포트">
 <meta property="og:description" content="식약처 원재료 데이터로 분류한 국내 제로·무당류 탄산음료 __TOTAL__개의 감미료 티어(S~F). 알룰로스부터 아스파탐까지 성분별 근거를 확인하세요.">
 <meta property="og:url" content="__PAGE_URL__">
+__GA__
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -1260,6 +1280,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
   <div>출처: 식품의약품안전처 C002 품목제조보고(원재료). 표시된 배합은 각 제품의 최신 보고일자 기준이며 배합은 자주 바뀝니다.</div>
   <div>열량·당류: 전국통합식품영양성분정보(가공식품) 표준데이터(공공데이터포털 15100066). 품목제조보고번호로 조인되지 않은 제품은 공란이며 0을 의미하지 않습니다.</div>
   <div>C 티어 근거인 에리스리톨의 심혈관 사건 신호는 관찰 연구에서 제기된 것으로 인과관계가 확정되지 않았습니다.</div>
+  <div>방문 통계를 위해 Google Analytics(GA4)를 사용합니다. 쿠키로 익명 식별자가 저장될 수 있습니다.</div>
   <div>'제로 사칭'은 제품명에 제로 표기가 있으면서 신고 원재료에 당류가 포함된 경우를 가리킵니다. 제조사의 표시 기준 위반을 뜻하지 않습니다 — 제로칼로리 표기 기준은 100ml당 4kcal 미만이며, 소량의 당류로도 이를 충족할 수 있습니다.</div>
 </footer>
 </div>
@@ -1612,6 +1633,7 @@ def write_html(records, meta, meta_info, path):
     html = html.replace("__TYPES__", ", ".join(meta_info["types"]) or "-")
     html = html.replace("__TOTAL__", str(len(records)))
     html = html.replace("__PAGE_URL__", PAGE_URL)
+    html = html.replace("__GA__", _GA_SNIPPET.replace("__GA_ID__", GA_ID) if GA_ID else "")
     html = html.replace("__GENERATED_DATE__", meta_info["generated_at"][:10])
     html = html.replace("__BADGES__", badges_html)
     html = html.replace("__ZERO_TOTAL__", str(zero_total))

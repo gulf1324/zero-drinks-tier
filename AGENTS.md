@@ -164,7 +164,7 @@ I2570 의 제품명 예시 - 지금 등록명보다 오히려 나쁘다:
 |---|---|
 | `zero_soda_scan.py` | 수집·영양조인·산출 CLI. 표준 라이브러리만 사용 |
 | `zero_soda_result.csv` | 결과물 (UTF-8 BOM, 엑셀 호환) |
-| `zero_soda_report.html` | 검색·필터·정렬 가능한 단일 파일 리포트 (외부 리소스 0) |
+| `zero_soda_report.html` | 검색·필터·정렬 가능한 단일 파일 리포트. 렌더링용 외부 리소스 0, Google Analytics 태그(`GA_ID` 상수)만 예외 |
 | `zero_soda_raw.json` | C002 원본 스냅샷. **git 추적 대상** — 증분 비교의 기준이자 오프라인 재현용 |
 | `zero_soda_nutrition.json` | 영양 조인 캐시. **git 추적 대상**. `rows`(매칭분)와 `checked`(조회 시도한 보고번호 전체)를 함께 보관 |
 
