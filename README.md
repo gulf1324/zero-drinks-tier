@@ -2,9 +2,9 @@
 
 # 대체당 제로 음료 티어
 
-![리포트 바로가기](https://img.shields.io/badge/%F0%9F%A5%A4%20%EB%A6%AC%ED%8F%AC%ED%8A%B8%20%EB%B0%94%EB%A1%9C%EA%B0%80%EA%B8%B0-gulf1324.github.io%2Fzero--drinks--tier-2563eb?style=for-the-badge&logoColor=white)
+![리포트 바로가기](https://img.shields.io/badge/%F0%9F%A5%A4%20%EB%A6%AC%ED%8F%AC%ED%8A%B8%20%EB%B0%94%EB%A1%9C%EA%B0%80%EA%B8%B0-zero--drinks--tier.vercel.app-2563eb?style=for-the-badge&logoColor=white)
 
-### 🔗 [https://gulf1324.github.io/zero-drinks-tier/](https://gulf1324.github.io/zero-drinks-tier/)
+### 🔗 [https://zero-drinks-tier.vercel.app/](https://zero-drinks-tier.vercel.app/)
 
 **정부 공식 데이터 · 동료평가 논문 근거 · 오픈 데이터**
 
@@ -205,7 +205,7 @@
 
 ## 리포트 기능
 
-[**gulf1324.github.io/zero-drinks-tier**](https://gulf1324.github.io/zero-drinks-tier/) — 외부 리소스 0개의 단일 HTML 파일
+[**zero-drinks-tier.vercel.app**](https://zero-drinks-tier.vercel.app/) — 외부 리소스 0개의 단일 HTML 파일
 
 - 티어 배지 **다중 선택** 필터 (S + A 동시 선택 = 합집합)
 - 제품명·업소명 실시간 검색 — **유통명으로도 찾힙니다.** `나랑드 사이다 제로`로 검색하면

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://gulf1324.github.io/zero-drinks-tier/sitemap.xml
+Sitemap: https://zero-drinks-tier.vercel.app/sitemap.xml

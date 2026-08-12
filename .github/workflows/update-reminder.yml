@@ -62,7 +62,7 @@ jobs:
               '',
               '## 끝나고 확인',
               '',
-              '- 리포트: https://gulf1324.github.io/zero-drinks-tier/',
+              '- 리포트: https://zero-drinks-tier.vercel.app/',
               '- 변경이 있었다면 커밋이 하나 올라오고, Pages 재배포까지 1~2분',
               '',
               '완료하면 이 이슈를 닫아 주세요.',

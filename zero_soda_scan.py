@@ -67,7 +67,7 @@ DEFAULT_NUTRITION_CACHE = "zero_soda_nutrition.json"
 DEFAULT_OUT_CSV = "zero_soda_result.csv"
 DEFAULT_OUT_HTML = "zero_soda_report.html"
 DEFAULT_DOCS_HTML = os.path.join("docs", "index.html")
-PAGE_URL = "https://gulf1324.github.io/zero-drinks-tier/"   # GitHub Pages 배포 주소 (canonical/OG용)
+PAGE_URL = "https://zero-drinks-tier.vercel.app/"   # Vercel 배포 주소 (canonical/OG용)
 
 
 # ── 감미료 사전 ────────────────────────────────────────────────
@@ -1968,9 +1968,9 @@ PUSH_PATHS = [
 def write_seo_files(docs_dir, lastmod):
     """sitemap.xml / robots.txt 생성. lastmod 는 리포트 산출일(YYYY-MM-DD).
 
-    robots.txt 는 원 단위(도메인 루트)로만 읽히므로 하위 경로인 현재 배포
-    주소에서는 크롤러가 참조하지 않는다. 커스텀 도메인으로 옮길 때를 대비해
-    같이 두되, 색인 유도는 sitemap 을 Search Console 에 직접 제출해서 한다.
+    Vercel 은 도메인 루트로 서빙하므로 robots.txt 가 실제로 읽힌다
+    (GitHub Pages 하위 경로 시절에는 무시됐다). 색인 유도는 sitemap 을
+    Search Console 에 제출해서 병행한다.
     """
     sitemap = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
