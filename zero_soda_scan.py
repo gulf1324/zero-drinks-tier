@@ -917,6 +917,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <title>제로 탄산음료 감미료 티어 리포트 | 식약처 원재료 데이터 기반 __TOTAL__개 제품 분석</title>
 <meta name="description" content="국내 유통 제로·무당류 탄산음료 __TOTAL__개의 감미료 구성을 식약처 품목제조보고 원재료 데이터로 분석해 S~F 티어로 분류합니다. 알룰로스·스테비아·수크랄로스·아스파탐·에리스리톨 등 성분별 연구 근거와 제로 표기 사칭 여부까지 확인하세요.">
 <meta name="robots" content="index, follow">
+<meta name="naver-site-verification" content="a3a82e491e9f40e89ab9e12d3306aab7">
 <link rel="canonical" href="__PAGE_URL__">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ko_KR">
@@ -1971,6 +1972,11 @@ def write_seo_files(docs_dir, lastmod):
     Vercel 은 도메인 루트로 서빙하므로 robots.txt 가 실제로 읽힌다
     (GitHub Pages 하위 경로 시절에는 무시됐다). 색인 유도는 sitemap 을
     Search Console 에 제출해서 병행한다.
+
+    robots.txt 는 매칭되는 첫 User-agent 블록만 적용되므로, 네이버 크롤러
+    Yeti 를 명시적으로 허용하려면 그 블록 안에도 Allow: / 를 따로 둬야
+    한다 (없으면 Yeti 는 자신의 블록만 보고 전부 차단된 것으로 해석한다).
+    Sitemap 지시문은 블록과 무관한 전역 지시문이라 한 번만 적는다.
     """
     sitemap = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -1984,6 +1990,9 @@ def write_seo_files(docs_dir, lastmod):
         '</urlset>\n'
     )
     robots = (
+        "User-agent: Yeti\n"
+        "Allow: /\n"
+        "\n"
         "User-agent: *\n"
         "Allow: /\n"
         "\n"
