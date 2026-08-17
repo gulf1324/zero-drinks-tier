@@ -70,6 +70,14 @@ DEFAULT_DOCS_HTML = os.path.join("docs", "index.html")
 PAGE_URL = "https://zero-drinks-tier.vercel.app/"   # Vercel 배포 주소 (canonical/OG용)
 GA_ID = "G-8QMBBJ4EXD"   # Google Analytics 4 측정 ID. 빈 문자열로 두면 태그를 넣지 않는다
 
+# 파비콘 32x32 PNG. 데이터 URI 로 심어 로컬 단일 파일에서도 뜨게 하고 추가 요청을 없앤다.
+# 원본은 249x249 RGBA. docs/favicon.ico(16/32/48) 와 docs/apple-touch-icon.png(180) 은 별도 파일.
+_FAVICON_B64 = "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"
+_FAVICON_HTML = (
+    '<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,' + _FAVICON_B64 + '">\n'
+    '<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">'
+)
+
 
 # ── 감미료 사전 ────────────────────────────────────────────────
 # 표기 흔들림(알룰로스/알룰로오스, 에리스리톨/에리스리트리톨 등)까지 커버
@@ -937,6 +945,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <meta name="description" content="국내 유통 제로·무당류 탄산음료 __TOTAL__개의 감미료 구성을 식약처 품목제조보고 원재료 데이터로 분석해 S~F 티어로 분류합니다. 알룰로스·스테비아·수크랄로스·아스파탐·에리스리톨 등 성분별 연구 근거와 제로 표기 사칭 여부까지 확인하세요.">
 <meta name="robots" content="index, follow">
 <meta name="naver-site-verification" content="a3a82e491e9f40e89ab9e12d3306aab7">
+__FAVICON__
 <link rel="canonical" href="__PAGE_URL__">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ko_KR">
@@ -1633,6 +1642,7 @@ def write_html(records, meta, meta_info, path):
     html = html.replace("__TYPES__", ", ".join(meta_info["types"]) or "-")
     html = html.replace("__TOTAL__", str(len(records)))
     html = html.replace("__PAGE_URL__", PAGE_URL)
+    html = html.replace("__FAVICON__", _FAVICON_HTML)
     html = html.replace("__GA__", _GA_SNIPPET.replace("__GA_ID__", GA_ID) if GA_ID else "")
     html = html.replace("__GENERATED_DATE__", meta_info["generated_at"][:10])
     html = html.replace("__BADGES__", badges_html)
