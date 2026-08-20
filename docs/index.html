@@ -186,6 +186,7 @@
      letter-spacing:.02em;white-space:nowrap;cursor:pointer;user-select:none;
      box-shadow:inset 0 -1px 0 var(--border-strong)}
   th:hover{color:var(--text);background:#f1f3f5}
+  .th-unit{display:block;font-size:9px;font-weight:600;color:var(--muted-2);letter-spacing:0;margin-top:1px}
   th:first-child{border-top-left-radius:var(--radius)}
   th:last-child{border-top-right-radius:var(--radius)}
   th.sorted{color:var(--accent)}
@@ -297,7 +298,7 @@
 <div class="page">
 <header>
   <h1>제로 탄산음료 티어 리포트</h1>
-  <div class="meta">생성 2026-08-20 22:21:29 · 대상 식품유형 탄산음료, 탄산수 · 당류 없는 음료와 제로 표기 제품 616개<br><span class="meta-note">설탕이 들어간 일반 음료는 제외했습니다. 단, 제로를 표방하면서 당류가 있는 제품은 F 티어로 남겼습니다.</span></div>
+  <div class="meta">생성 2026-08-20 22:28:31 · 대상 식품유형 탄산음료, 탄산수 · 당류 없는 음료와 제로 표기 제품 616개<br><span class="meta-note">설탕이 들어간 일반 음료는 제외했습니다. 단, 제로를 표방하면서 당류가 있는 제품은 F 티어로 남겼습니다.</span></div>
   <section class="searchbar">
     <div class="searchfield">
       <svg class="s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -356,7 +357,7 @@
   <thead><tr>
     <th data-key="티어">티어</th><th data-key="조합">조합</th><th data-key="제품명">제품명</th>
     <th data-key="업소명">업소명</th><th data-key="보고일자">보고일자</th>
-    <th data-key="열량">열량</th><th data-key="당류">당류</th><th data-key="용량">용량</th>
+    <th data-key="열량">열량<span class="th-unit">100mL당</span></th><th data-key="당류">당류<span class="th-unit">100mL당</span></th><th data-key="용량">용량</th>
     <th data-key="감미료">감미료</th>
   </tr></thead>
   <tbody id="tbody"></tbody>
@@ -365,7 +366,7 @@
 <nav class="pager" id="pager" aria-label="페이지 이동"></nav>
 <footer>
   <div>출처: 식품의약품안전처 C002 품목제조보고(원재료). 표시된 배합은 각 제품의 최신 보고일자 기준이며 배합은 자주 바뀝니다.</div>
-  <div>열량·당류: 전국통합식품영양성분정보(가공식품) 표준데이터(공공데이터포털 15100066). 품목제조보고번호로 조인되지 않은 제품은 공란이며 0을 의미하지 않습니다.</div>
+  <div>열량·당류: 전국통합식품영양성분정보(가공식품) 표준데이터(공공데이터포털 15100066). <b>표의 값은 100mL(또는 100g)당</b>이며 한 병·한 캔 전체 값이 아닙니다 — 제품 라벨은 전체 기준으로 적혀 있어 숫자가 달라 보입니다. 행을 누르면 전체 기준 환산값을 함께 보여줍니다. 품목제조보고번호로 조인되지 않은 제품은 공란이며 0을 의미하지 않습니다.</div>
   <div>C 티어 근거인 에리스리톨의 심혈관 사건 신호는 관찰 연구에서 제기된 것으로 인과관계가 확정되지 않았습니다.</div>
   <div>방문 통계를 위해 Google Analytics(GA4)를 사용합니다. 쿠키로 익명 식별자가 저장될 수 있습니다.</div>
   <div>'제로 사칭'은 제품명에 제로 표기가 있으면서 신고 원재료에 당류가 포함된 경우를 가리킵니다. 제조사의 표시 기준 위반을 뜻하지 않습니다 — 제로칼로리 표기 기준은 100ml당 4kcal 미만이며, 소량의 당류로도 이를 충족할 수 있습니다.</div>
@@ -483,6 +484,19 @@ function rowHtml(r) {
 
 function detailHtml(r) {
   let extra = '';
+  // 표의 열량·당류는 100mL 당 값이다. 라벨은 한 병 전체를 적으므로 헷갈린다.
+  // 용량을 알면 전체 기준으로 환산해 같이 보여준다 (계산값임을 밝힌다).
+  if (r['열량'] !== '' && r['열량'] != null) {
+    const base = r['기준량'] || '100ml';
+    let line = '열량 ' + escapeHtml(String(r['열량'])) + ' kcal / ' + escapeHtml(base);
+    if (r['당류'] !== '' && r['당류'] != null) line += ' \u00b7 당류 ' + escapeHtml(String(r['당류'])) + ' g / ' + escapeHtml(base);
+    const vol = parseFloat(String(r['용량'] || '').replace(/[^\d.]/g, ''));
+    const kcal = parseFloat(r['열량']);
+    if (isFinite(vol) && vol > 0 && isFinite(kcal)) {
+      line += ' \u2192 ' + escapeHtml(String(r['용량'])) + ' 한 개 약 ' + Math.round(kcal * vol / 100) + ' kcal (계산값)';
+    }
+    extra += '<div>' + line + '</div>';
+  }
   if (r['표시원재료']) {
     // C002 원재료가 혼합제제로 가려진 제품이다. 무엇으로 판정했는지 그대로 보여준다.
     extra += '<div><b>표시 원재료</b> (' +
