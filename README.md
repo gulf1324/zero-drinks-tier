@@ -399,7 +399,7 @@ python -m unittest test_classify -v    # 58 tests — 분류 로직 회귀 검�
 이 저장소의 스냅샷은 재현성을 위해 보관한 사본이므로, 재사용하실 때는
 [식품안전나라](https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002)와
 [공공데이터포털 15100066](https://www.data.go.kr/data/15100066/standard.do)을 출처로 밝히고
-각 기관의 최신 약관을 확인해 주세요.
+각 기관의 최신 약관을 확인해 주세요. 
 
 **티어 분류는 인용된 연구를 근거로 한 이 프로젝트의 해석이며, 정부 기관의 공식 평가가 아닙니다.**
 
