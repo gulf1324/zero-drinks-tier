@@ -821,7 +821,12 @@ def canonicalize(rows, nutrition, discontinued=None, labels=None):
         # 고시에 실린 표시 원재료로 다시 판정한다. 코카콜라 제로가 '무감미료'(최상위)로
         # 표시되던 것이 이 경로로 바로잡힌다. 티어를 바꾸는 만큼 출처를 반드시 남긴다.
         label_raw = (label or {}).get("원재료", "")
-        if label_raw and cls["tier"] == "?":
+        # 라벨 표시원재료는 C002 가 감미료를 하나도 못 짚었을 때만 덮어쓴다.
+        # "?" 는 혼합제제로 가려진 경우, "무감미료" 는 신고서에 감미료가 없는 경우다.
+        # 신고서의 '없음'보다 라벨의 '있음'이 더 구체적인 증거라 라벨을 따른다
+        # (제로슈거 하이진저: C002 는 감미료 0건, 라벨은 알룰로스·수크랄로스·아세설팜).
+        # C002 가 이미 감미료를 짚은 제품은 건드리지 않는다 - 정부 신고 데이터가 우선.
+        if label_raw and cls["tier"] in ("?", "무감미료"):
             cls = classify(label_raw)
 
         tier, combo, hidden = resolve_by_nutrition(cls, nut)

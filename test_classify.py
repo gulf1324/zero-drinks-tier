@@ -475,3 +475,27 @@ class LabelIngredientTests(unittest.TestCase):
         rows = [mk_row("어떤사이다", "정제수, 에리스리톨", report_no="K1")]
         recs = z.canonicalize(rows, {}, {}, self.LBL)
         self.assertEqual(recs[0]["티어"], "C")
+
+    def test_label_overrides_no_sweetener_filing(self):
+        # C002 신고서에 감미료가 아예 없어 '무감미료'로 잡혔더라도, 라벨에 감미료가
+        # 명시돼 있으면 라벨을 따른다. '없음'보다 '있음'이 구체적인 증거다.
+        # 실제 사례: 제로슈거 하이진저 (신고서 감미료 0건, 라벨은 알룰로스+수크랄로스+아세설팜)
+        rows = [mk_row("제로슈거 하이진저", "정제수, 생강착즙액, 탄산가스", report_no="K2")]
+        labels = {"K2": {"유통명": "제로슈거 하이진저",
+                         "원재료": "정제수, 액상 알룰로스, 감미료(수크랄로스, 아세설팜칼륨), 탄산가스",
+                         "출처": "https://example.com/hi", "확인일": "2026-08-20"}}
+        r = z.canonicalize(rows, {}, {}, labels)[0]
+        self.assertEqual(r["티어"], "B")
+        self.assertEqual(r["조합"], "S+B")
+
+    def test_label_can_confirm_no_sweetener(self):
+        # 라벨에도 감미료가 없으면 무감미료가 확정된다. 경고 표시가 사라져야 한다.
+        # 실제 사례: 하이트제로 0.00 (폴리덱스트로스는 식이섬유다)
+        rows = [mk_row("하이트제로 0.00", self.OPAQUE, report_no="K3")]
+        labels = {"K3": {"유통명": "하이트제로 0.00",
+                         "원재료": "정제수, 폴리덱스트로스, 이산화탄소, 맥아추출베이스, 홉추출물",
+                         "출처": "https://example.com/hz", "확인일": "2026-08-20"}}
+        recs = z.canonicalize(rows, {}, {}, labels)
+        z.annotate(recs)
+        self.assertEqual(recs[0]["티어"], "무감미료")
+        self.assertEqual(recs[0]["감미료미표기"], "")
