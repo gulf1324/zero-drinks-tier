@@ -195,6 +195,41 @@ class AnnotateTests(unittest.TestCase):
         self.assertEqual(rec["아스파탐"], "")
 
 
+class ManualCaffeineTests(unittest.TestCase):
+    """신고 원재료가 혼합제제로 카페인을 가릴 때만 손으로 표시한다 (펩시 계열)."""
+
+    OPAQUE = "정제수, 혼합제제, 혼합제제, 아스파탐, 이산화탄소"
+
+    def _rec(self, labels, raw=None):
+        rows = [mk_row("펩시제로슈거", raw or self.OPAQUE, report_no="P1")]
+        recs = z.canonicalize(rows, {}, {}, labels)
+        z.annotate(recs)
+        return recs[0]
+
+    def test_manual_flag_marks_caffeine(self):
+        r = self._rec({"P1": {"카페인": "Y", "확인일": "2026-08-20"}})
+        self.assertEqual(r["카페인"], "Y")
+        self.assertEqual(r["카페인수동"], "Y")
+
+    def test_no_flag_leaves_caffeine_blank(self):
+        r = self._rec({})
+        self.assertEqual(r["카페인"], "")
+        self.assertEqual(r.get("카페인수동", ""), "")
+
+    def test_ingredient_text_wins_over_manual(self):
+        # 원재료에 카페인이 적혀 있으면 그게 근거다. 수동 표시로 덮지 않는다.
+        r = self._rec({"P1": {"카페인": "Y"}}, raw="정제수, 카페인, 이산화탄소")
+        self.assertEqual(r["카페인"], "Y")
+        self.assertEqual(r.get("카페인수동", ""), "")
+
+    def test_flag_only_label_does_not_rename_product(self):
+        # 유통명 없는 플래그 전용 항목이 제품명·그룹을 건드리면 안 된다.
+        r = self._rec({"P1": {"카페인": "Y"}})
+        self.assertEqual(r["제품명"], "펩시제로슈거")
+        self.assertEqual(r["등록명"], "")
+        self.assertEqual(r["유통명출처"], "")
+
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -680,7 +680,7 @@ def recency(row):
 
 CSV_FIELDS = ["티어", "조합", "제품명", "등록명", "식품유형", "업소명", "보고일자", "감미료",
               "열량", "기준량", "당류", "용량", "감미료미표기", "이력행수", "배합변경", "티어불일치",
-              "원재료전문", "제로표기", "실측제로", "제로사칭", "카페인", "아스파탐",
+              "원재료전문", "제로표기", "실측제로", "제로사칭", "카페인", "카페인수동", "아스파탐",
               "생산중단일", "표시원재료", "유통명출처", "일반판", "일반판티어"]
 
 
@@ -776,7 +776,8 @@ def canonicalize(rows, nutrition, discontinued=None, labels=None):
     for key, group in by_registered.items():
         label = next((labels[n] for n in
                       (pick(r, FIELD_REPORT_NO).strip() for r in group) if n in labels), None)
-        groups.setdefault(norm_name(label["유통명"]) if label else key, []).extend(group)
+        retail_key = norm_name(label["유통명"]) if label and label.get("유통명") else key
+        groups.setdefault(retail_key, []).extend(group)
 
     records = []
     for group in groups.values():
@@ -838,6 +839,9 @@ def canonicalize(rows, nutrition, discontinued=None, labels=None):
             "등록명": registered if retail and retail != registered else "",
             "유통명출처": (label or {}).get("출처", "") if (retail or label_raw) else "",
             "표시원재료": label_raw,
+            # 신고 원재료가 혼합제제로 가려 카페인을 알 수 없는 제품에 한해 손으로 표시한다.
+            # 유/무만 다루므로 원재료 전문 없이도 넣을 수 있다 (annotate 에서 적용).
+            "_카페인수동": (label or {}).get("카페인", ""),
             "생산중단일": end_dt,
             "식품유형": pick(cur, FIELD_TYPE),
             "업소명": display_maker,
@@ -890,6 +894,11 @@ def annotate(records):
         # 식품첨가물혼합제제로 뭉뚱그려진 제품은 카페인·아스파탐도 안 보인다.
         text = (rec.get("표시원재료") or rec["원재료전문"]).replace(" ", "")
         rec["카페인"] = "Y" if any(tok in text for tok in CAFFEINE_TOKENS) else ""
+        # 원재료에서 못 짚었을 때만 수동 판정을 쓴다. 원재료에 카페인이 적혀 있으면 그게 우선.
+        manual = rec.pop("_카페인수동", "")
+        if manual and not rec["카페인"]:
+            rec["카페인"] = "Y" if manual == "Y" else ""
+            rec["카페인수동"] = "Y" if manual == "Y" else ""
         rec["아스파탐"] = "Y" if any(tok in text for tok in ASPARTAME_TOKENS) else ""
         rec["일반판"] = ""
         rec["일반판티어"] = ""
@@ -1431,6 +1440,10 @@ function detailHtml(r) {
              '): ' + escapeHtml(r['표시원재료']) + '</div>' +
              '<div>위 신고 원재료는 식품첨가물혼합제제로 뭉뚱그려져 감미료가 보이지 않습니다. 티어는 고시 표시 원재료로 판정했습니다.</div>';
   }
+  if (r['카페인수동'] === 'Y') {
+    // 신고 원재료에 카페인이 안 보이는 제품이다. 손으로 판단했음을 숨기지 않는다.
+    extra += '<div>카페인 유무는 신고 원재료가 혼합제제로 뭉뚱그려져 확인할 수 없어, 널리 알려진 제품 정보를 근거로 <b>손으로 표시</b>했습니다. 함량은 다루지 않습니다.</div>';
+  }
   if (r['등록명']) {
     // 표시한 이름이 품목제조보고 등록명과 다르면 반드시 출처를 함께 밝힌다.
     extra += '<div>품목제조보고 등록명: ' + escapeHtml(r['등록명']) +
@@ -1634,7 +1647,7 @@ def write_html(records, meta, meta_info, path):
         "원재료전문": r["원재료전문"], "제로표기": r["제로표기"], "실측제로": r["실측제로"],
         "등록명": r["등록명"], "유통명출처": r["유통명출처"],
         "표시원재료": r["표시원재료"],
-        "제로사칭": r["제로사칭"], "카페인": r["카페인"], "아스파탐": r["아스파탐"],
+        "제로사칭": r["제로사칭"], "카페인": r["카페인"], "카페인수동": r.get("카페인수동", ""), "아스파탐": r["아스파탐"],
         "일반판": r["일반판"], "일반판티어": r["일반판티어"], "이력": r["이력"],
     } for r in records]
 
