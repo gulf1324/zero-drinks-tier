@@ -1280,7 +1280,12 @@ tr[hidden]{display:none}
 table{border-collapse:collapse;width:100%;background:#fff;font-size:13px;
       box-shadow:0 1px 3px rgba(16,24,40,.06);border-radius:8px;overflow:hidden}
 th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #e4e7eb;vertical-align:top}
-th{background:#f7f8fa;font-weight:700;font-size:12px;white-space:nowrap}
+th{background:#f7f8fa;font-weight:700;font-size:12px;white-space:nowrap;
+   cursor:pointer;user-select:none;position:relative}
+th:hover{background:#eef0f3;color:#2563eb}
+th:focus-visible{outline:2px solid #2563eb;outline-offset:-2px}
+th.sorted{color:#2563eb}
+th.sorted::after{content:" " attr(data-dir);font-size:9px}
 td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .t{display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border-radius:999px;
    font-weight:700;font-size:11.5px;color:#16191d}
@@ -1312,7 +1317,7 @@ footer div{margin-bottom:5px}
 <h2>읽는 법</h2>
 <div class="howto">알룰로스는 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 메타분석 결과가 있어 이 리포트에서 가장 높은 S 등급입니다. 다만 <b>다른 감미료가 함께 들어가면 최종 등급은 더 나쁜 쪽을 따릅니다</b> - 그래서 이 목록의 대부분은 S 가 아닙니다.</div>
 <div class="meta">기준일 2026-08-30 &middot; 출처 식품의약품안전처 품목제조보고(C002) &middot; 열량·당류는 공공데이터포털 전국통합식품영양성분정보(15100066)</div>
-<div class="tw"><table><thead><tr><th>티어</th><th>제품명</th><th>업소명</th><th>감미료</th><th>열량<br><small>100mL당</small></th><th>당류<br><small>100mL당</small></th><th>용량</th></tr></thead><tbody>
+<div class="tw"><table><thead><tr><th data-key="티어" data-sort="tier" role="button" tabindex="0" aria-label="티어 기준으로 정렬">티어</th><th data-key="제품명" data-sort="text" role="button" tabindex="0" aria-label="제품명 기준으로 정렬">제품명</th><th data-key="업소명" data-sort="text" role="button" tabindex="0" aria-label="업소명 기준으로 정렬">업소명</th><th data-key="감미료" data-sort="text" role="button" tabindex="0" aria-label="감미료 기준으로 정렬">감미료</th><th data-key="열량" data-sort="num" role="button" tabindex="0" aria-label="열량 기준으로 정렬">열량<br><small>100mL당</small></th><th data-key="당류" data-sort="num" role="button" tabindex="0" aria-label="당류 기준으로 정렬">당류<br><small>100mL당</small></th><th data-key="용량" data-sort="size" role="button" tabindex="0" aria-label="용량 기준으로 정렬">용량</th></tr></thead><tbody>
 <tr><td><span class="t" style="background:#ffc107">B</span></td><td>1945 라임사이다</td><td>(주)일화초정공장</td><td>알룰로오스(S,1) / 수크랄로스(B,3) / 아세설팜(B,4)</td><td class="n">1</td><td class="n">0.00</td><td>350ml</td></tr>
 <tr><td><span class="t" style="background:#ffc107">B</span></td><td>1945 레몬콜라</td><td>(주)일화초정공장</td><td>알룰로오스(S,15) / 아세설팜(B,8) / 수크랄로스(B,9)</td><td class="n">0</td><td class="n">0.00</td><td>350ml</td></tr>
 <tr><td><span class="t" style="background:#ffc107">B</span></td><td>HOT6글로우애플&amp;포멜로</td><td>롯데칠성음료(주)</td><td>알룰로오스(S,5) / 수크랄로스(B,6) / 아세설팜(B,7)</td><td class="n">3</td><td class="n">0.05</td><td>355ml</td></tr>
@@ -1483,6 +1488,7 @@ footer div{margin-bottom:5px}
   var q = document.getElementById('q'), qc = document.getElementById('qc'),
       qn = document.getElementById('qn');
   if (!q) return;
+  var TIER = { '\ubb34': 0, 'S': 1, 'A': 2, 'B': 3, 'C': 4, 'D': 5, 'F': 6 };
   var groups = [].slice.call(document.querySelectorAll('table')).map(function (tb) {
     var rows = [].slice.call(tb.tBodies[0].rows).map(function (tr) {
       return { tr: tr, hay: tr.textContent.replace(/\s+/g, '').toLowerCase() };
@@ -1516,6 +1522,59 @@ footer div{margin-bottom:5px}
       ? shown.toLocaleString() + '\uac1c \ud45c\uc2dc \uc911 (\uc804\uccb4 ' + total.toLocaleString() + '\uac1c)'
       : '\uc804\uccb4 ' + total.toLocaleString() + '\uac1c';
   }
+  // 정렬 - 칼럼 제목을 누르면 오름/내림이 번갈아 적용된다. 초기 상태는 화살표 없음.
+  groups.forEach(function (g) {
+    var ths = [].slice.call(g.tb.tHead.rows[0].cells);
+    var key = -1, dir = 1;
+
+    function val(tr, i, kind) {
+      var txt = (tr.cells[i].textContent || '').trim();
+      if (kind === 'tier') return TIER.hasOwnProperty(txt) ? TIER[txt] : 99;
+      if (kind === 'num' || kind === 'size') {
+        var f = parseFloat(txt.replace(/[^0-9.]/g, ''));
+        if (!isFinite(f)) return null;              // 데이터 없음
+        if (kind === 'size' && /l$/i.test(txt) && !/ml/i.test(txt)) f *= 1000;
+        return f;
+      }
+      return txt;
+    }
+
+    function apply() {
+      var kind = ths[key].getAttribute('data-sort');
+      var sorted = g.rows.slice().sort(function (a, b) {
+        var x = val(a.tr, key, kind), y = val(b.tr, key, kind);
+        // 데이터 없는 칸은 오름/내림과 무관하게 항상 맨 뒤로 보낸다.
+        // '없음'이 '가장 큼'으로 읽히면 열량 내림차순 첫 화면이 공란으로 찬다.
+        if (x === null || y === null) {
+          if (x === y) return 0;
+          return x === null ? 1 : -1;
+        }
+        if (x === y) return a.tr.cells[1].textContent.localeCompare(b.tr.cells[1].textContent, 'ko');
+        if (typeof x === 'string') return x.localeCompare(y, 'ko') * dir;
+        return (x < y ? -1 : 1) * dir;
+      });
+      var frag = document.createDocumentFragment();
+      sorted.forEach(function (r) { frag.appendChild(r.tr); });
+      g.tb.tBodies[0].appendChild(frag);
+      ths.forEach(function (th, i) {
+        th.classList.toggle('sorted', i === key);
+        if (i === key) th.setAttribute('data-dir', dir === 1 ? '\u25b2' : '\u25bc');
+        else th.removeAttribute('data-dir');
+      });
+    }
+
+    ths.forEach(function (th, i) {
+      function hit() {
+        if (key === i) dir = -dir; else { key = i; dir = 1; }
+        apply();
+      }
+      th.addEventListener('click', hit);
+      th.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); hit(); }
+      });
+    });
+  });
+
   q.addEventListener('input', run);
   q.addEventListener('keydown', function (e) { if (e.key === 'Escape') { q.value = ''; run(); } });
   qc.addEventListener('click', function () { q.value = ''; q.focus(); run(); });

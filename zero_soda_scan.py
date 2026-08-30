@@ -2171,7 +2171,7 @@ tr[hidden]{display:none}
 table{border-collapse:collapse;width:100%;background:#fff;font-size:13px;
       box-shadow:0 1px 3px rgba(16,24,40,.06);border-radius:8px;overflow:hidden}
 th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #e4e7eb;vertical-align:top}
-th{background:#f7f8fa;font-weight:700;font-size:12px;white-space:nowrap}
+th{background:#f7f8fa;font-weight:700;font-size:12px;white-space:nowrap;\n   cursor:pointer;user-select:none;position:relative}\nth:hover{background:#eef0f3;color:#2563eb}\nth:focus-visible{outline:2px solid #2563eb;outline-offset:-2px}\nth.sorted{color:#2563eb}\nth.sorted::after{content:" " attr(data-dir);font-size:9px}
 td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .t{display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border-radius:999px;
    font-weight:700;font-size:11.5px;color:#16191d}
@@ -2193,6 +2193,7 @@ _FINDER_JS = """<script>
   var q = document.getElementById('q'), qc = document.getElementById('qc'),
       qn = document.getElementById('qn');
   if (!q) return;
+  var TIER = { '\\ubb34': 0, 'S': 1, 'A': 2, 'B': 3, 'C': 4, 'D': 5, 'F': 6 };
   var groups = [].slice.call(document.querySelectorAll('table')).map(function (tb) {
     var rows = [].slice.call(tb.tBodies[0].rows).map(function (tr) {
       return { tr: tr, hay: tr.textContent.replace(/\\s+/g, '').toLowerCase() };
@@ -2226,6 +2227,59 @@ _FINDER_JS = """<script>
       ? shown.toLocaleString() + '\\uac1c \\ud45c\\uc2dc \\uc911 (\\uc804\\uccb4 ' + total.toLocaleString() + '\\uac1c)'
       : '\\uc804\\uccb4 ' + total.toLocaleString() + '\\uac1c';
   }
+  // 정렬 - 칼럼 제목을 누르면 오름/내림이 번갈아 적용된다. 초기 상태는 화살표 없음.
+  groups.forEach(function (g) {
+    var ths = [].slice.call(g.tb.tHead.rows[0].cells);
+    var key = -1, dir = 1;
+
+    function val(tr, i, kind) {
+      var txt = (tr.cells[i].textContent || '').trim();
+      if (kind === 'tier') return TIER.hasOwnProperty(txt) ? TIER[txt] : 99;
+      if (kind === 'num' || kind === 'size') {
+        var f = parseFloat(txt.replace(/[^0-9.]/g, ''));
+        if (!isFinite(f)) return null;              // 데이터 없음
+        if (kind === 'size' && /l$/i.test(txt) && !/ml/i.test(txt)) f *= 1000;
+        return f;
+      }
+      return txt;
+    }
+
+    function apply() {
+      var kind = ths[key].getAttribute('data-sort');
+      var sorted = g.rows.slice().sort(function (a, b) {
+        var x = val(a.tr, key, kind), y = val(b.tr, key, kind);
+        // 데이터 없는 칸은 오름/내림과 무관하게 항상 맨 뒤로 보낸다.
+        // '없음'이 '가장 큼'으로 읽히면 열량 내림차순 첫 화면이 공란으로 찬다.
+        if (x === null || y === null) {
+          if (x === y) return 0;
+          return x === null ? 1 : -1;
+        }
+        if (x === y) return a.tr.cells[1].textContent.localeCompare(b.tr.cells[1].textContent, 'ko');
+        if (typeof x === 'string') return x.localeCompare(y, 'ko') * dir;
+        return (x < y ? -1 : 1) * dir;
+      });
+      var frag = document.createDocumentFragment();
+      sorted.forEach(function (r) { frag.appendChild(r.tr); });
+      g.tb.tBodies[0].appendChild(frag);
+      ths.forEach(function (th, i) {
+        th.classList.toggle('sorted', i === key);
+        if (i === key) th.setAttribute('data-dir', dir === 1 ? '\\u25b2' : '\\u25bc');
+        else th.removeAttribute('data-dir');
+      });
+    }
+
+    ths.forEach(function (th, i) {
+      function hit() {
+        if (key === i) dir = -dir; else { key = i; dir = 1; }
+        apply();
+      }
+      th.addEventListener('click', hit);
+      th.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); hit(); }
+      });
+    });
+  });
+
   q.addEventListener('input', run);
   q.addEventListener('keydown', function (e) { if (e.key === 'Escape') { q.value = ''; run(); } });
   qc.addEventListener('click', function () { q.value = ''; q.focus(); run(); });
@@ -2244,9 +2298,17 @@ def _tier_badge(tier):
     return f'<span class="t" style="background:{_TIER_BG.get(tier, "#999")}">{_esc(label)}</span>'
 
 
+_SORT_TYPE = {"티어": "tier", "열량": "num", "당류": "num", "용량": "size"}
+
+
 def _rows_table(records, cols=("티어", "제품명", "업소명", "감미료", "열량", "당류", "용량")):
-    head = "".join(f"<th>{_esc(c)}{'<br><small>100mL당</small>' if c in ('열량', '당류') else ''}</th>"
-                   for c in cols)
+    # data-key / data-sort 는 메인 리포트의 th 규약과 같다. 정렬 UI 를 새로 만들지 않고
+    # 같은 방식(클릭 -> data-dir 화살표)을 쓴다.
+    head = "".join(
+        f'<th data-key="{_esc(c)}" data-sort="{_SORT_TYPE.get(c, "text")}" '
+        f'role="button" tabindex="0" aria-label="{_esc(c)} 기준으로 정렬">'
+        f"{_esc(c)}{'<br><small>100mL당</small>' if c in ('열량', '당류') else ''}</th>"
+        for c in cols)
     out = [f'<div class="tw"><table><thead><tr>{head}</tr></thead><tbody>']
     for r in records:
         cells = []
