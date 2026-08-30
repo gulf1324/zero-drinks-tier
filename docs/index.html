@@ -15,6 +15,14 @@
 <meta property="og:title" content="제로 탄산음료 감미료 티어 리포트">
 <meta property="og:description" content="식약처 원재료 데이터로 분류한 국내 제로·무당류 탄산음료 616개의 감미료 티어(S~F). 알룰로스부터 아스파탐까지 성분별 근거를 확인하세요.">
 <meta property="og:url" content="https://zero-drinks-tier.vercel.app/">
+<meta property="og:site_name" content="대체당 제로 음료 티어">
+<meta property="og:image" content="https://zero-drinks-tier.vercel.app/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="제로 탄산음료 감미료 티어 리포트">
+<meta name="twitter:description" content="식약처 원재료 데이터로 분류한 국내 제로·무당류 탄산음료 616개의 감미료 티어(S~F).">
+<meta name="twitter:image" content="https://zero-drinks-tier.vercel.app/og-card.png">
 <script>
 (function () {
   // 로컬로 연 산출물(file://, localhost)은 통계에서 제외한다
@@ -40,11 +48,20 @@
   "description": "국내 유통 제로·무당류 탄산음료와 탄산수 616개 제품의 대체당(감미료) 구성을 식품의약품안전처 품목제조보고 원재료 전문으로 수집하고, 피어리뷰 메타분석 근거에 따라 S~F 티어로 분류한 데이터셋입니다. 알룰로스·스테비올배당체·수크랄로스·아스파탐·에리스리톨 등 감미료별 탐지 결과와 제로 표기 대비 실제 당류 포함 여부를 담고 있습니다.",
   "url": "https://zero-drinks-tier.vercel.app/",
   "inLanguage": "ko",
-  "dateModified": "2026-08-28",
+  "dateModified": "2026-08-30",
+  "datePublished": "2026-08-09",
+  "temporalCoverage": "2026-08-09/..",
+  "measurementTechnique": "식품의약품안전처 품목제조보고 원재료 전문에서 감미료 표기를 탐지하고, 품목제조보고번호로 공공데이터포털 영양성분 표준데이터를 조인",
+  "spatialCoverage": {"@type": "Place", "name": "대한민국"},
+
   "isAccessibleForFree": true,
   "keywords": ["제로음료", "대체당", "감미료", "알룰로스", "스테비아", "수크랄로스", "아스파탐", "에리스리톨", "탄산음료", "식품영양", "오픈데이터"],
   "variableMeasured": ["티어", "감미료 조합", "원재료 전문", "열량", "당류", "카페인 함유", "아스파탐 함유", "제로 표기 여부"],
-  "creator": {"@type": "Person", "name": "gulf1324", "url": "https://github.com/gulf1324"},
+  "creator": {"@type": "Person", "name": "gulf1324", "url": "https://github.com/gulf1324",
+              "sameAs": ["https://github.com/gulf1324", "https://github.com/gulf1324/zero-drinks-tier"]},
+  "publisher": {"@type": "Organization", "@id": "https://zero-drinks-tier.vercel.app/#publisher", "name": "대체당 제로 음료 티어",
+                "url": "https://zero-drinks-tier.vercel.app/", "logo": "https://zero-drinks-tier.vercel.app/apple-touch-icon.png",
+                "sameAs": ["https://github.com/gulf1324/zero-drinks-tier"]},
   "sourceOrganization": {"@type": "GovernmentOrganization", "name": "식품의약품안전처", "url": "https://www.mfds.go.kr/"},
   "isBasedOn": [
     "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002",
@@ -55,10 +72,57 @@
   "license": "https://github.com/gulf1324/zero-drinks-tier/blob/main/NOTICE.md",
   "distribution": [
     {"@type": "DataDownload", "encodingFormat": "text/html", "contentUrl": "https://zero-drinks-tier.vercel.app/"},
-    {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": "https://raw.githubusercontent.com/gulf1324/zero-drinks-tier/main/zero_soda_raw.json"}
+    {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": "https://raw.githubusercontent.com/gulf1324/zero-drinks-tier/main/zero_soda_raw.json"},
+    {"@type": "DataDownload", "encodingFormat": "text/markdown", "contentUrl": "https://zero-drinks-tier.vercel.app/llms-full.txt"}
   ]
 }
 </script>
+<script type="application/ld+json">{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "제로 음료 중 가장 나은 감미료는 무엇인가요?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "알룰로스와 타가토스입니다. 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 메타분석 결과가 있어 이 리포트에서 S 등급입니다. 다만 국내 탄산음료에서 알룰로스만 쓰는 제품은 드물고 대개 다른 감미료와 섞여 최종 등급이 내려갑니다."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "코카콜라 제로에는 어떤 감미료가 들어가나요?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "아스파탐과 아세설팜칼륨입니다. 식약처 신고 원재료에는 '식품첨가물혼합제제'로만 적혀 있어 감미료가 보이지 않아, 판매처의 상품정보제공 고시 표시사항으로 확인해 출처와 함께 표시했습니다."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "제로라고 적혀 있으면 칼로리가 정말 0인가요?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "아닙니다. 제로칼로리 표기 기준은 100mL당 4kcal 미만이라 소량의 열량과 당류가 있어도 적법하게 '제로'를 붙일 수 있습니다. 이 리포트는 제로를 표방하면서 신고 원재료에 당류가 있는 제품을 F 등급으로 따로 표시합니다."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "에리스리톨은 피해야 하나요?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "혈당에는 무해하지만 혈소판 반응성·심혈관 사건과 연관된 관찰연구 신호가 있어 이 리포트에서 C 등급입니다. 인과관계는 확정되지 않았습니다. 스테비아 제품은 대부분 에리스리톨과 혼합되므로 원재료를 직접 확인해야 합니다."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "이 데이터는 어디서 온 것인가요?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "식품의약품안전처 식품(첨가물)품목제조보고 원재료(C002)에서 제품명·업소명·원재료 전문을 수집하고, 품목제조보고번호로 공공데이터포털 전국통합식품영양성분정보(15100066)의 열량·당류를 조인했습니다. 추정으로 채우지 않으며 매월 갱신합니다."
+   }
+  }
+ ]
+}</script>
 <style>
   :root{
     --bg:#f4f5f7; --surface:#fff; --border:#e4e7eb; --border-strong:#d3d8de;
@@ -234,6 +298,20 @@
 
   footer{margin-top:18px;padding-top:13px;border-top:1px solid var(--border);font-size:11px;color:var(--muted-2);line-height:1.7}
   footer div+div{margin-top:3px}
+  .guides{margin:26px 0 0}
+  .guides h2,.faq h2{font-size:15px;margin:0 0 10px;letter-spacing:-.01em}
+  .guides ul{list-style:none;padding:0;margin:0;display:grid;gap:7px;
+             grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
+  .guides a{display:block;background:var(--surface);border:1px solid var(--border);
+            border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);
+            text-decoration:none;font-size:13px;box-shadow:var(--shadow-sm)}
+  .guides a:hover{border-color:var(--accent);color:var(--accent)}
+  .guides span{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+  .faq{margin:26px 0 0}
+  .faq details{background:var(--surface);border:1px solid var(--border);
+               border-radius:var(--radius-sm);padding:9px 12px;margin-bottom:6px;font-size:13px}
+  .faq summary{cursor:pointer;font-weight:600}
+  .faq p{margin:8px 0 2px;color:var(--muted);line-height:1.7}
 
   /* 긴 원재료 문자열이 칸 밖으로 새지 않도록 전역 가드 */
   td,th,.detail-box,.tier-why,.maker-name{overflow-wrap:anywhere;word-break:break-word}
@@ -298,7 +376,7 @@
 <div class="page">
 <header>
   <h1>제로 탄산음료 티어 리포트</h1>
-  <div class="meta">생성 2026-08-28 22:06:51 · 대상 식품유형 탄산음료, 탄산수 · 당류 없는 음료와 제로 표기 제품 616개<br><span class="meta-note">설탕이 들어간 일반 음료는 제외했습니다. 단, 제로를 표방하면서 당류가 있는 제품은 F 티어로 남겼습니다.</span></div>
+  <div class="meta">생성 2026-08-30 14:37:50 · 대상 식품유형 탄산음료, 탄산수 · 당류 없는 음료와 제로 표기 제품 616개<br><span class="meta-note">설탕이 들어간 일반 음료는 제외했습니다. 단, 제로를 표방하면서 당류가 있는 제품은 F 티어로 남겼습니다.</span></div>
   <section class="searchbar">
     <div class="searchfield">
       <svg class="s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -364,6 +442,26 @@
 </table>
 </div>
 <nav class="pager" id="pager" aria-label="페이지 이동"></nav>
+<section class="guides">
+<h2>질문별로 골라 보기</h2>
+<ul>
+<li><a href="https://zero-drinks-tier.vercel.app/products.html"><b>616개 전체 목록</b><span>무JS 정적 표. 티어·감미료·열량 한눈에</span></a></li>
+<li><a href="https://zero-drinks-tier.vercel.app/allulose.html"><b>알룰로스 쓰는 제로 음료</b><span>가장 높은 S 등급 감미료를 쓴 제품</span></a></li>
+<li><a href="https://zero-drinks-tier.vercel.app/no-aspartame.html"><b>아스파탐 없는 제로 음료</b><span>신고 원재료에 아스파탐이 없는 제품</span></a></li>
+<li><a href="https://zero-drinks-tier.vercel.app/no-erythritol.html"><b>에리스리톨 없는 제로 음료</b><span>심혈관 신호 연구를 피하고 싶을 때</span></a></li>
+<li><a href="https://zero-drinks-tier.vercel.app/no-caffeine.html"><b>카페인 없는 제로 음료</b><span>콜라·에너지드링크 계열 제외</span></a></li>
+<li><a href="https://zero-drinks-tier.vercel.app/fake-zero.html"><b>제로라면서 당류가 있는 음료</b><span>표기와 신고 원재료의 불일치</span></a></li>
+<li><a href="https://zero-drinks-tier.vercel.app/hidden-zero.html"><b>이름에 제로가 없는데 0kcal</b><span>이름만 보면 놓치는 제품</span></a></li>
+</ul>
+</section>
+<section class="faq">
+<h2>자주 묻는 질문</h2>
+<details><summary>제로 음료 중 가장 나은 감미료는 무엇인가요?</summary><p>알룰로스와 타가토스입니다. 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 메타분석 결과가 있어 이 리포트에서 S 등급입니다. 다만 국내 탄산음료에서 알룰로스만 쓰는 제품은 드물고 대개 다른 감미료와 섞여 최종 등급이 내려갑니다.</p></details>
+<details><summary>코카콜라 제로에는 어떤 감미료가 들어가나요?</summary><p>아스파탐과 아세설팜칼륨입니다. 식약처 신고 원재료에는 '식품첨가물혼합제제'로만 적혀 있어 감미료가 보이지 않아, 판매처의 상품정보제공 고시 표시사항으로 확인해 출처와 함께 표시했습니다.</p></details>
+<details><summary>제로라고 적혀 있으면 칼로리가 정말 0인가요?</summary><p>아닙니다. 제로칼로리 표기 기준은 100mL당 4kcal 미만이라 소량의 열량과 당류가 있어도 적법하게 '제로'를 붙일 수 있습니다. 이 리포트는 제로를 표방하면서 신고 원재료에 당류가 있는 제품을 F 등급으로 따로 표시합니다.</p></details>
+<details><summary>에리스리톨은 피해야 하나요?</summary><p>혈당에는 무해하지만 혈소판 반응성·심혈관 사건과 연관된 관찰연구 신호가 있어 이 리포트에서 C 등급입니다. 인과관계는 확정되지 않았습니다. 스테비아 제품은 대부분 에리스리톨과 혼합되므로 원재료를 직접 확인해야 합니다.</p></details>
+<details><summary>이 데이터는 어디서 온 것인가요?</summary><p>식품의약품안전처 식품(첨가물)품목제조보고 원재료(C002)에서 제품명·업소명·원재료 전문을 수집하고, 품목제조보고번호로 공공데이터포털 전국통합식품영양성분정보(15100066)의 열량·당류를 조인했습니다. 추정으로 채우지 않으며 매월 갱신합니다.</p></details>
+</section>
 <footer>
   <div>출처: 식품의약품안전처 C002 품목제조보고(원재료). 표시된 배합은 각 제품의 최신 보고일자 기준이며 배합은 자주 바뀝니다.</div>
   <div>열량·당류: 전국통합식품영양성분정보(가공식품) 표준데이터(공공데이터포털 15100066). <b>표의 값은 100mL(또는 100g)당</b>이며 한 병·한 캔 전체 값이 아닙니다 — 제품 라벨은 전체 기준으로 적혀 있어 숫자가 달라 보입니다. 행을 누르면 전체 기준 환산값을 함께 보여줍니다. 품목제조보고번호로 조인되지 않은 제품은 공란이며 0을 의미하지 않습니다.</div>

@@ -931,6 +931,32 @@ def annotate(records):
     return {"제조사": top_makers}
 
 
+# 가시 FAQ 와 FAQPage LD 는 같은 원본에서 만든다. 글자가 어긋나면 스팸 판정 위험이
+# 있어서, 화면 문구와 구조화 데이터를 절대 따로 쓰지 않는다.
+_FAQ = [
+    ("제로 음료 중 가장 나은 감미료는 무엇인가요?",
+     "알룰로스와 타가토스입니다. 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 "
+     "메타분석 결과가 있어 이 리포트에서 S 등급입니다. 다만 국내 탄산음료에서 알룰로스만 "
+     "쓰는 제품은 드물고 대개 다른 감미료와 섞여 최종 등급이 내려갑니다."),
+    ("코카콜라 제로에는 어떤 감미료가 들어가나요?",
+     "아스파탐과 아세설팜칼륨입니다. 식약처 신고 원재료에는 '식품첨가물혼합제제'로만 "
+     "적혀 있어 감미료가 보이지 않아, 판매처의 상품정보제공 고시 표시사항으로 확인해 "
+     "출처와 함께 표시했습니다."),
+    ("제로라고 적혀 있으면 칼로리가 정말 0인가요?",
+     "아닙니다. 제로칼로리 표기 기준은 100mL당 4kcal 미만이라 소량의 열량과 당류가 "
+     "있어도 적법하게 '제로'를 붙일 수 있습니다. 이 리포트는 제로를 표방하면서 신고 "
+     "원재료에 당류가 있는 제품을 F 등급으로 따로 표시합니다."),
+    ("에리스리톨은 피해야 하나요?",
+     "혈당에는 무해하지만 혈소판 반응성·심혈관 사건과 연관된 관찰연구 신호가 있어 이 "
+     "리포트에서 C 등급입니다. 인과관계는 확정되지 않았습니다. 스테비아 제품은 대부분 "
+     "에리스리톨과 혼합되므로 원재료를 직접 확인해야 합니다."),
+    ("이 데이터는 어디서 온 것인가요?",
+     "식품의약품안전처 식품(첨가물)품목제조보고 원재료(C002)에서 제품명·업소명·원재료 "
+     "전문을 수집하고, 품목제조보고번호로 공공데이터포털 전국통합식품영양성분정보"
+     "(15100066)의 열량·당류를 조인했습니다. 추정으로 채우지 않으며 매월 갱신합니다."),
+]
+
+
 _GA_SNIPPET = """<script>
 (function () {
   // 로컬로 연 산출물(file://, localhost)은 통계에서 제외한다
@@ -966,6 +992,14 @@ __FAVICON__
 <meta property="og:title" content="제로 탄산음료 감미료 티어 리포트">
 <meta property="og:description" content="식약처 원재료 데이터로 분류한 국내 제로·무당류 탄산음료 __TOTAL__개의 감미료 티어(S~F). 알룰로스부터 아스파탐까지 성분별 근거를 확인하세요.">
 <meta property="og:url" content="__PAGE_URL__">
+<meta property="og:site_name" content="대체당 제로 음료 티어">
+<meta property="og:image" content="__PAGE_URL__og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="제로 탄산음료 감미료 티어 리포트">
+<meta name="twitter:description" content="식약처 원재료 데이터로 분류한 국내 제로·무당류 탄산음료 __TOTAL__개의 감미료 티어(S~F).">
+<meta name="twitter:image" content="__PAGE_URL__og-card.png">
 __GA__
 <script type="application/ld+json">
 {
@@ -977,10 +1011,19 @@ __GA__
   "url": "__PAGE_URL__",
   "inLanguage": "ko",
   "dateModified": "__GENERATED_DATE__",
+  "datePublished": "2026-08-09",
+  "temporalCoverage": "2026-08-09/..",
+  "measurementTechnique": "식품의약품안전처 품목제조보고 원재료 전문에서 감미료 표기를 탐지하고, 품목제조보고번호로 공공데이터포털 영양성분 표준데이터를 조인",
+  "spatialCoverage": {"@type": "Place", "name": "대한민국"},
+
   "isAccessibleForFree": true,
   "keywords": ["제로음료", "대체당", "감미료", "알룰로스", "스테비아", "수크랄로스", "아스파탐", "에리스리톨", "탄산음료", "식품영양", "오픈데이터"],
   "variableMeasured": ["티어", "감미료 조합", "원재료 전문", "열량", "당류", "카페인 함유", "아스파탐 함유", "제로 표기 여부"],
-  "creator": {"@type": "Person", "name": "gulf1324", "url": "https://github.com/gulf1324"},
+  "creator": {"@type": "Person", "name": "gulf1324", "url": "https://github.com/gulf1324",
+              "sameAs": ["https://github.com/gulf1324", "https://github.com/gulf1324/zero-drinks-tier"]},
+  "publisher": {"@type": "Organization", "@id": "__PAGE_URL__#publisher", "name": "대체당 제로 음료 티어",
+                "url": "__PAGE_URL__", "logo": "__PAGE_URL__apple-touch-icon.png",
+                "sameAs": ["https://github.com/gulf1324/zero-drinks-tier"]},
   "sourceOrganization": {"@type": "GovernmentOrganization", "name": "식품의약품안전처", "url": "https://www.mfds.go.kr/"},
   "isBasedOn": [
     "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002",
@@ -991,10 +1034,12 @@ __GA__
   "license": "https://github.com/gulf1324/zero-drinks-tier/blob/main/NOTICE.md",
   "distribution": [
     {"@type": "DataDownload", "encodingFormat": "text/html", "contentUrl": "__PAGE_URL__"},
-    {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": "https://raw.githubusercontent.com/gulf1324/zero-drinks-tier/main/zero_soda_raw.json"}
+    {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": "https://raw.githubusercontent.com/gulf1324/zero-drinks-tier/main/zero_soda_raw.json"},
+    {"@type": "DataDownload", "encodingFormat": "text/markdown", "contentUrl": "__PAGE_URL__llms-full.txt"}
   ]
 }
 </script>
+__FAQ_LD__
 <style>
   :root{
     --bg:#f4f5f7; --surface:#fff; --border:#e4e7eb; --border-strong:#d3d8de;
@@ -1170,6 +1215,20 @@ __GA__
 
   footer{margin-top:18px;padding-top:13px;border-top:1px solid var(--border);font-size:11px;color:var(--muted-2);line-height:1.7}
   footer div+div{margin-top:3px}
+  .guides{margin:26px 0 0}
+  .guides h2,.faq h2{font-size:15px;margin:0 0 10px;letter-spacing:-.01em}
+  .guides ul{list-style:none;padding:0;margin:0;display:grid;gap:7px;
+             grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
+  .guides a{display:block;background:var(--surface);border:1px solid var(--border);
+            border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);
+            text-decoration:none;font-size:13px;box-shadow:var(--shadow-sm)}
+  .guides a:hover{border-color:var(--accent);color:var(--accent)}
+  .guides span{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+  .faq{margin:26px 0 0}
+  .faq details{background:var(--surface);border:1px solid var(--border);
+               border-radius:var(--radius-sm);padding:9px 12px;margin-bottom:6px;font-size:13px}
+  .faq summary{cursor:pointer;font-weight:600}
+  .faq p{margin:8px 0 2px;color:var(--muted);line-height:1.7}
 
   /* 긴 원재료 문자열이 칸 밖으로 새지 않도록 전역 가드 */
   td,th,.detail-box,.tier-why,.maker-name{overflow-wrap:anywhere;word-break:break-word}
@@ -1300,6 +1359,8 @@ __GA__
 </table>
 </div>
 <nav class="pager" id="pager" aria-label="페이지 이동"></nav>
+__GUIDES__
+__FAQ_HTML__
 <footer>
   <div>출처: 식품의약품안전처 C002 품목제조보고(원재료). 표시된 배합은 각 제품의 최신 보고일자 기준이며 배합은 자주 바뀝니다.</div>
   <div>열량·당류: 전국통합식품영양성분정보(가공식품) 표준데이터(공공데이터포털 15100066). <b>표의 값은 100mL(또는 100g)당</b>이며 한 병·한 캔 전체 값이 아닙니다 — 제품 라벨은 전체 기준으로 적혀 있어 숫자가 달라 보입니다. 행을 누르면 전체 기준 환산값을 함께 보여줍니다. 품목제조보고번호로 조인되지 않은 제품은 공란이며 0을 의미하지 않습니다.</div>
@@ -1675,6 +1736,42 @@ def write_html(records, meta, meta_info, path):
     html = html.replace("__TOTAL__", str(len(records)))
     html = html.replace("__PAGE_URL__", PAGE_URL)
     html = html.replace("__FAVICON__", _FAVICON_HTML)
+
+    # 질문별 정적 목록으로 가는 링크. 크롤러의 탐색 경로이자 사용자 진입점이다.
+    guides = [
+        ("products.html", f"{len(records)}개 전체 목록", "무JS 정적 표. 티어·감미료·열량 한눈에"),
+        ("allulose.html", "알룰로스 쓰는 제로 음료", "가장 높은 S 등급 감미료를 쓴 제품"),
+        ("no-aspartame.html", "아스파탐 없는 제로 음료", "신고 원재료에 아스파탐이 없는 제품"),
+        ("no-erythritol.html", "에리스리톨 없는 제로 음료", "심혈관 신호 연구를 피하고 싶을 때"),
+        ("no-caffeine.html", "카페인 없는 제로 음료", "콜라·에너지드링크 계열 제외"),
+        ("fake-zero.html", "제로라면서 당류가 있는 음료", "표기와 신고 원재료의 불일치"),
+        ("hidden-zero.html", "이름에 제로가 없는데 0kcal", "이름만 보면 놓치는 제품"),
+    ]
+    guides_html = (
+        '<section class="guides">\n<h2>질문별로 골라 보기</h2>\n<ul>\n'
+        + "".join(f'<li><a href="{PAGE_URL}{slug}"><b>{title}</b><span>{note}</span></a></li>\n'
+                  for slug, title, note in guides)
+        + "</ul>\n</section>")
+    html = html.replace("__GUIDES__", guides_html)
+
+    # 가시 FAQ 와 FAQPage LD 를 같은 _FAQ 에서 만든다 — 글자가 어긋나면 스팸 판정 위험.
+    faq_html = ('<section class="faq">\n<h2>자주 묻는 질문</h2>\n'
+                + "".join(f"<details><summary>{q}</summary><p>{a}</p></details>\n"
+                          for q, a in _FAQ)
+                + "</section>")
+    html = html.replace("__FAQ_HTML__", faq_html)
+
+    faq_ld = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {"@type": "Question", "name": q,
+             "acceptedAnswer": {"@type": "Answer", "text": a}}
+            for q, a in _FAQ
+        ],
+    }
+    html = html.replace("__FAQ_LD__", '<script type="application/ld+json">'
+                        + json.dumps(faq_ld, ensure_ascii=False, indent=1) + "</script>")
     html = html.replace("__GA__", _GA_SNIPPET.replace("__GA_ID__", GA_ID) if GA_ID else "")
     html = html.replace("__GENERATED_DATE__", meta_info["generated_at"][:10])
     html = html.replace("__BADGES__", badges_html)
@@ -2012,7 +2109,9 @@ def sync(key, types, raw_path, cache_path, out_csv, out_html, docs_html, force=F
         os.makedirs(os.path.dirname(docs_html) or ".", exist_ok=True)
         shutil.copyfile(out_html, docs_html)
         print(f"[sync] {out_html} -> {docs_html}")
-        write_seo_files(os.path.dirname(docs_html) or ".", stats["generated_at"][:10])
+        docs_dir = os.path.dirname(docs_html) or "."
+        slugs = write_seo_files(docs_dir, stats["generated_at"][:10], stats.get("records"))
+        ping_indexnow([PAGE_URL] + [f"{PAGE_URL}{s}" for s in slugs])
 
     if update_readme(stats, fetched_at):
         print("[readme] 수집 현황 블록 갱신")
@@ -2027,46 +2126,428 @@ PUSH_PATHS = [
     DEFAULT_RAW, DEFAULT_NUTRITION_CACHE, DEFAULT_DOCS_HTML, README_PATH,
     os.path.join(DEFAULT_DOCS_DIR, "sitemap.xml"),
     os.path.join(DEFAULT_DOCS_DIR, "robots.txt"),
+    os.path.join(DEFAULT_DOCS_DIR, "llms.txt"),
+    os.path.join(DEFAULT_DOCS_DIR, "llms-full.txt"),
+    os.path.join(DEFAULT_DOCS_DIR, "products.html"),
+    os.path.join(DEFAULT_DOCS_DIR, "allulose.html"),
+    os.path.join(DEFAULT_DOCS_DIR, "no-aspartame.html"),
+    os.path.join(DEFAULT_DOCS_DIR, "no-erythritol.html"),
+    os.path.join(DEFAULT_DOCS_DIR, "no-caffeine.html"),
+    os.path.join(DEFAULT_DOCS_DIR, "fake-zero.html"),
+    os.path.join(DEFAULT_DOCS_DIR, "hidden-zero.html"),
 ]
 
 
-def write_seo_files(docs_dir, lastmod):
-    """sitemap.xml / robots.txt 생성. lastmod 는 리포트 산출일(YYYY-MM-DD).
+# -- SEO: 정적 페이지 생성 -------------------------------------
+# 리포트는 단일 페이지 앱이라 제품 616개가 JSON 블록 안에 갇혀 크롤러에게 안 보인다.
+# 그래서 빌드 때 무JS 정적 페이지를 같이 뽑는다. 답변엔진·생성엔진은 표를
+# 구조화된 사실로 파싱하므로, 질문 하나당 페이지 하나 원칙으로 만든다.
+
+_STATIC_CSS = """*{box-sizing:border-box}
+body{font-family:-apple-system,"Malgun Gothic",sans-serif;margin:0;padding:20px 16px 56px;
+     background:#f4f5f7;color:#16191d;line-height:1.7}
+main{max-width:1000px;margin:0 auto}
+h1{font-size:23px;margin:0 0 10px;line-height:1.35}
+h2{font-size:17px;margin:30px 0 8px}
+.lead{font-size:16px;font-weight:600;background:#eef4ff;border-left:4px solid #2563eb;
+      padding:12px 14px;margin:0 0 14px;border-radius:0 8px 8px 0}
+.meta{color:#6b7280;font-size:13px;margin:0 0 20px}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:13px;
+      box-shadow:0 1px 3px rgba(16,24,40,.06);border-radius:8px;overflow:hidden}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #e4e7eb;vertical-align:top}
+th{background:#f7f8fa;font-weight:700;font-size:12px;white-space:nowrap}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.t{display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border-radius:999px;
+   font-weight:700;font-size:11.5px;color:#16191d}
+nav{font-size:13px;margin:0 0 16px}
+nav a{color:#2563eb;margin-right:12px}
+footer{margin-top:34px;font-size:12px;color:#6b7280;border-top:1px solid #e4e7eb;padding-top:14px}
+footer div{margin-bottom:5px}
+.q{font-weight:700;margin-top:14px}
+@media(max-width:720px){table{font-size:12px}th,td{padding:6px 7px}h1{font-size:20px}}"""
+
+_TIER_BG = {"무감미료": "#4caf50", "S": "#8bc34a", "A": "#cddc39", "B": "#ffc107",
+            "C": "#ff9800", "D": "#f4511e", "F": "#c00", "?": "#999"}
+
+
+def _esc(s):
+    return (str(s).replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;").replace('"', "&quot;"))
+
+
+def _tier_badge(tier):
+    label = "무" if tier == "무감미료" else tier
+    return f'<span class="t" style="background:{_TIER_BG.get(tier, "#999")}">{_esc(label)}</span>'
+
+
+def _rows_table(records, cols=("티어", "제품명", "업소명", "감미료", "열량", "당류", "용량")):
+    head = "".join(f"<th>{_esc(c)}{'<br><small>100mL당</small>' if c in ('열량', '당류') else ''}</th>"
+                   for c in cols)
+    out = [f"<table><thead><tr>{head}</tr></thead><tbody>"]
+    for r in records:
+        cells = []
+        for c in cols:
+            v = r.get(c, "")
+            if c == "티어":
+                cells.append(f"<td>{_tier_badge(v)}</td>")
+            elif c in ("열량", "당류"):
+                cells.append(f'<td class="n">{_esc(v) if v != "" else "&mdash;"}</td>')
+            else:
+                cells.append(f"<td>{_esc(v) if v != '' else '&mdash;'}</td>")
+        out.append("<tr>" + "".join(cells) + "</tr>")
+    out.append("</tbody></table>")
+    return "\n".join(out)
+
+
+def _static_page(slug, title, desc, h1, lead, body, lastmod, ld=None):
+    """무JS 정적 페이지 한 장. 가시 텍스트와 JSON-LD 를 어긋나게 만들지 않는다."""
+    ld_html = ""
+    if ld:
+        ld_html = ('<script type="application/ld+json">'
+                   + json.dumps(ld, ensure_ascii=False, indent=1) + "</script>\n")
+    return f"""<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{_esc(title)}</title>
+<meta name="description" content="{_esc(desc)}">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="{PAGE_URL}{slug}">
+<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,{_FAVICON_B64}">
+<meta property="og:type" content="article">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:site_name" content="대체당 제로 음료 티어">
+<meta property="og:title" content="{_esc(title)}">
+<meta property="og:description" content="{_esc(desc)}">
+<meta property="og:url" content="{PAGE_URL}{slug}">
+<meta property="og:image" content="{PAGE_URL}og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{_esc(title)}">
+<meta name="twitter:description" content="{_esc(desc)}">
+<meta name="twitter:image" content="{PAGE_URL}og-card.png">
+{ld_html}<style>{_STATIC_CSS}</style>
+</head>
+<body>
+<main>
+<nav><a href="{PAGE_URL}">&larr; 전체 리포트(검색·필터)</a><a href="{PAGE_URL}products.html">616개 전체 목록</a></nav>
+<h1>{h1}</h1>
+<p class="lead">{lead}</p>
+<div class="meta">기준일 {lastmod} &middot; 출처 식품의약품안전처 품목제조보고(C002) &middot; 열량·당류는 공공데이터포털 전국통합식품영양성분정보(15100066)</div>
+{body}
+<footer>
+<div>이 표의 감미료는 제조사가 식약처에 신고한 <b>품목제조보고 원재료 전문</b>에서 탐지한 것입니다. 추정으로 채우지 않으며 데이터에 없으면 표시하지 않습니다.</div>
+<div>열량·당류는 <b>100mL(또는 100g)당</b> 값입니다. 제품 라벨은 한 병 전체 기준이라 숫자가 달라 보일 수 있습니다.</div>
+<div>티어는 인용된 연구를 근거로 한 이 프로젝트의 해석이며 정부 기관의 공식 평가가 아닙니다. 의학적 조언이 아닙니다.</div>
+<div>데이터 &copy; 식품의약품안전처 &middot; 공공데이터포털 &middot; <a href="https://github.com/gulf1324/zero-drinks-tier">소스·산출 방법</a></div>
+</footer>
+</main>
+</body>
+</html>
+"""
+
+
+def _item_list_ld(name, desc, slug, records, limit=100):
+    return {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": name,
+        "description": desc,
+        "url": f"{PAGE_URL}{slug}",
+        "numberOfItems": len(records),
+        "itemListElement": [
+            {"@type": "ListItem", "position": i + 1,
+             "item": {"@type": "Product", "name": r["제품명"],
+                      "brand": {"@type": "Organization", "name": r["업소명"]}}}
+            for i, r in enumerate(records[:limit])
+        ],
+    }
+
+
+def _num(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def seo_landing_specs(records):
+    """의도 랜딩 정의. (slug, title, desc, h1, 직답, 대상 레코드, 표 설명) 목록.
+
+    사람이 검색창에 실제로 치는 질문 하나당 페이지 하나로 만든다. 각 질문의 답은
+    데이터로 확정되는 것만 쓴다 - 추천·권유는 넣지 않는다.
+    """
+    by_tier = lambda t: [r for r in records if r["티어"] == t]
+    n = len(records)
+
+    allulose = sorted([r for r in records if "S" in (r["조합"] or "").split("+")],
+                      key=lambda r: r["제품명"])
+    no_asp = sorted([r for r in records if r["아스파탐"] != "Y" and r["티어"] not in ("F",)],
+                    key=lambda r: (TIER_RANK.get(r["티어"], 99), r["제품명"]))
+    no_ery = sorted([r for r in records if "에리스" not in (r["감미료"] or "")
+                     and r["티어"] not in ("F",)],
+                    key=lambda r: (TIER_RANK.get(r["티어"], 99), r["제품명"]))
+    no_caf = sorted([r for r in records if r["카페인"] != "Y" and r["티어"] not in ("F",)],
+                    key=lambda r: (TIER_RANK.get(r["티어"], 99), r["제품명"]))
+    fake = sorted(by_tier("F"), key=lambda r: -(_num(r["당류"]) or 0))
+    hidden = sorted([r for r in records if r["제로표기"] != "Y" and r["실측제로"] == "Y"],
+                    key=lambda r: (_num(r["열량"]) if _num(r["열량"]) is not None else 99,
+                                   r["제품명"]))
+    return [
+        ("allulose.html",
+         f"알룰로스 쓰는 제로 음료 {len(allulose)}개 — 식약처 원재료 기준 전체 목록",
+         f"국내 유통 제로 탄산음료 가운데 알룰로스·타가토스를 쓰는 제품 {len(allulose)}개를 "
+         f"식약처 품목제조보고 원재료 전문으로 추려 정리했습니다. 제품명·제조사·열량·당류를 함께 봅니다.",
+         "알룰로스 쓰는 제로 음료는 무엇인가?",
+         f"결론부터: 수집한 {n}개 제품 중 알룰로스 계열(알룰로스·타가토스)을 신고 원재료에 "
+         f"올린 제품은 <b>{len(allulose)}개</b>입니다.",
+         allulose,
+         "알룰로스는 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 메타분석 결과가 있어 "
+         "이 리포트에서 가장 높은 S 등급입니다. 다른 감미료가 함께 들어가면 최종 등급은 더 나쁜 쪽을 따릅니다."),
+        ("no-aspartame.html",
+         f"아스파탐 없는 제로 음료 {len(no_asp)}개 — 신고 원재료 기준",
+         f"아스파탐이 신고 원재료에 없는 제로·무당류 탄산음료 {len(no_asp)}개 목록입니다. "
+         f"식약처 품목제조보고 원재료 전문에서 아스파탐 표기를 탐지해 제외했습니다.",
+         "아스파탐 없는 제로 음료는 무엇인가?",
+         f"결론부터: 수집한 {n}개 중 신고 원재료에 아스파탐이 <b>없는</b> 제품은 "
+         f"<b>{len(no_asp)}개</b>입니다.",
+         no_asp,
+         "아스파탐이 든 제품은 라벨에 '페닐알라닌 함유' 문구가 함께 붙습니다. "
+         "원재료가 식품첨가물혼합제제로 뭉뚱그려진 제품은 아스파탐 여부를 확인할 수 없어 이 목록에 포함될 수 있습니다."),
+        ("no-erythritol.html",
+         f"에리스리톨 없는 제로 음료 {len(no_ery)}개 — 신고 원재료 기준",
+         f"에리스리톨이 신고 원재료에 없는 제로·무당류 탄산음료 {len(no_ery)}개 목록입니다. "
+         f"에리스리톨의 심혈관 신호 연구를 이유로 피하려는 경우를 위한 목록입니다.",
+         "에리스리톨 없는 제로 음료는 무엇인가?",
+         f"결론부터: 수집한 {n}개 중 신고 원재료에 에리스리톨이 <b>없는</b> 제품은 "
+         f"<b>{len(no_ery)}개</b>입니다.",
+         no_ery,
+         "에리스리톨의 혈소판 반응성·심혈관 사건 신호는 관찰연구에서 제기되고 소규모 개입연구로 "
+         "보강된 단계이며 <b>인과관계가 확정되지 않았습니다</b>. 스테비아 제품은 대부분 에리스리톨과 혼합되므로 원재료를 직접 확인해야 합니다."),
+        ("no-caffeine.html",
+         f"카페인 없는 제로 음료 {len(no_caf)}개 — 신고 원재료 기준",
+         f"카페인이 확인되지 않은 제로·무당류 탄산음료 {len(no_caf)}개 목록입니다. "
+         f"콜라·에너지드링크 계열을 피하고 싶을 때 쓰는 목록입니다.",
+         "카페인 없는 제로 탄산음료는 무엇인가?",
+         f"결론부터: 수집한 {n}개 중 카페인이 확인되지 않은 제품은 <b>{len(no_caf)}개</b>입니다.",
+         no_caf,
+         "신고 원재료가 식품첨가물혼합제제로 뭉뚱그려진 제품은 카페인 표기가 보이지 않아 "
+         "이 목록에 포함될 수 있습니다. 콜라 계열은 표기가 없어도 카페인이 들어가는 것이 일반적입니다."),
+        ("fake-zero.html",
+         f"제로라면서 당류가 있는 음료 {len(fake)}개 — 표기와 원재료 불일치",
+         f"제품명에 제로를 표기하면서 신고 원재료에 당류가 들어간 제품 {len(fake)}개입니다. "
+         f"제로칼로리 표시 기준은 100mL당 4kcal 미만이라 소량의 당류로도 적법하게 표기할 수 있습니다.",
+         "제로라고 적혀 있는데 당류가 들어간 음료가 있나?",
+         f"결론부터: 제로를 표기한 제품 가운데 신고 원재료에 당류가 있는 것은 "
+         f"<b>{len(fake)}개</b>입니다. 법 위반이 아니라 표시 기준 안의 일입니다.",
+         fake,
+         "<b>표시 기준 위반이 아닙니다.</b> 제로칼로리 표기 기준은 100mL당 4kcal 미만이므로 "
+         "소량의 당류가 들어가도 적법하게 '제로'를 붙일 수 있습니다. 이 표는 표기와 신고 원재료의 불일치를 보여줄 뿐입니다. "
+         "실측 당류가 0g으로 확인된 제품은 착향용 미량으로 보고 이 목록에서 제외했습니다."),
+        ("hidden-zero.html",
+         f"이름에 제로가 없는데 실제로 0kcal인 음료 {len(hidden)}개",
+         f"제품명에 제로 표기가 없지만 신고 영양성분상 100mL당 4kcal 미만인 제품 {len(hidden)}개입니다. "
+         f"제로 음료를 찾을 때 이름만 보면 놓치는 제품들입니다.",
+         "이름에 제로가 없는데 실제로는 제로인 음료가 있나?",
+         f"결론부터: 제품명에 제로 표기가 없으면서 100mL당 4kcal 미만인 제품이 "
+         f"<b>{len(hidden)}개</b> 있습니다.",
+         hidden,
+         "식약처 표시 기준으로 100mL당 4kcal 미만이면 '제로칼로리'로 표기할 수 있습니다. "
+         "이 제품들은 조건을 충족하는데 제품명으로 알리지 않는 경우입니다. 열량은 신고 영양성분 값입니다."),
+    ]
+
+
+def write_seo_pages(docs_dir, records, lastmod):
+    """정적 목록·의도 랜딩 페이지를 쓰고 생성한 slug 목록을 돌려준다."""
+    written = []
+
+    ordered = sorted(records, key=lambda r: (TIER_RANK.get(r["티어"], 99), r["제품명"]))
+    body = (f"<p>식약처 품목제조보고에 신고된 원재료 전문에서 감미료를 탐지해 "
+            f"{len(records)}개 제품을 S~F 티어로 분류한 전체 목록입니다. "
+            f"검색·필터·정렬이 필요하면 <a href=\"{PAGE_URL}\">전체 리포트</a>를 쓰세요.</p>"
+            + _rows_table(ordered))
+    page = _static_page(
+        "products.html",
+        f"제로 탄산음료 {len(records)}개 전체 목록 — 감미료·티어·열량 한눈에",
+        f"국내 유통 제로·무당류 탄산음료 {len(records)}개의 감미료 구성과 티어, 100mL당 열량·당류를 "
+        f"한 페이지에 정리한 전체 목록입니다. 식약처 품목제조보고 원재료 전문 기준입니다.",
+        f"제로 탄산음료 {len(records)}개 전체 목록",
+        f"결론부터: 수집·분류한 제품은 <b>{len(records)}개</b>이며 티어 분포는 "
+        + ", ".join(f"{t} {sum(1 for r in records if r['티어'] == t)}개"
+                    for t in ("무감미료", "S", "A", "B", "C", "D", "F")
+                    if sum(1 for r in records if r["티어"] == t)) + " 입니다.",
+        body, lastmod,
+        _item_list_ld(f"제로 탄산음료 {len(records)}개 전체 목록",
+                      "식약처 품목제조보고 원재료 기준 감미료 티어 분류", "products.html", ordered))
+    with open(os.path.join(docs_dir, "products.html"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(page)
+    written.append("products.html")
+
+    for slug, title, desc, h1, lead, subset, note in seo_landing_specs(records):
+        body = (_rows_table(subset) if subset
+                else "<p>해당하는 제품이 없습니다.</p>") + f"<h2>읽는 법</h2><p>{note}</p>"
+        page = _static_page(slug, title, desc, h1, lead, body, lastmod,
+                            _item_list_ld(h1, desc, slug, subset))
+        with open(os.path.join(docs_dir, slug), "w", encoding="utf-8", newline="\n") as f:
+            f.write(page)
+        written.append(slug)
+
+    print(f"[seo] 정적 페이지 {len(written)}장 생성: {', '.join(written)}")
+    return written
+
+
+def write_llms_files(docs_dir, records, lastmod):
+    """llms.txt(안내서) / llms-full.txt(데이터 전문). 생성엔진이 1차 소스로 읽게 한다."""
+    dist = {t: sum(1 for r in records if r["티어"] == t)
+            for t in ("무감미료", "S", "A", "B", "C", "D", "F")}
+    dist_line = " / ".join(f"{k} {v}개" for k, v in dist.items() if v)
+
+    guide = f"""# 대체당 제로 음료 티어
+
+> 국내 유통 제로·무당류 탄산음료 {len(records)}개의 감미료(대체당) 구성을 식품의약품안전처
+> 품목제조보고 원재료 전문으로 수집해 S~F 티어로 분류한 데이터셋입니다.
+> **이 사이트가 이 분류의 1차 소스입니다** — 다른 곳에서 요약된 값이 아니라 정부 신고
+> 데이터에서 직접 산출합니다.
+
+## 핵심 페이지
+
+- [전체 리포트]({PAGE_URL}): 검색·필터·정렬 가능한 {len(records)}개 전량 (JS 필요)
+- [전체 목록]({PAGE_URL}products.html): 같은 데이터의 무JS 정적 표
+- [알룰로스 쓰는 제로 음료]({PAGE_URL}allulose.html)
+- [아스파탐 없는 제로 음료]({PAGE_URL}no-aspartame.html)
+- [에리스리톨 없는 제로 음료]({PAGE_URL}no-erythritol.html)
+- [카페인 없는 제로 음료]({PAGE_URL}no-caffeine.html)
+- [제로라면서 당류가 있는 음료]({PAGE_URL}fake-zero.html)
+- [이름에 제로가 없는데 0kcal인 음료]({PAGE_URL}hidden-zero.html)
+- [데이터 전문]({PAGE_URL}llms-full.txt): 전 제품의 티어·감미료·열량·당류 텍스트 전량
+
+## 데이터 정책
+
+- 원출처: 식품의약품안전처 식품(첨가물)품목제조보고 원재료 `C002` (제품명·업소명·원재료 전문)
+- 열량·당류: 공공데이터포털 전국통합식품영양성분정보(가공식품) 표준데이터 `15100066`
+- 조인 키: 품목제조보고번호(`PRDLST_REPORT_NO`). 제품명 문자열 매칭이 아닙니다
+- 기준일: {lastmod} / 갱신 주기: 월 1회
+- 산출 코드 공개: https://github.com/gulf1324/zero-drinks-tier (MIT)
+- **추정하지 않습니다.** 신고 원재료에 없으면 없다고 표시합니다. 원재료가
+  '식품첨가물혼합제제'로 뭉뚱그려진 제품은 판매처 표시사항으로 보강하고 출처를 함께 밝힙니다
+
+## 티어 기준
+
+- S 알룰로스·타가토스 — 0.2~0.4 kcal/g, 식후 혈당을 낮춤 (AJCN 2026 메타분석)
+- A 스테비올배당체·나한과 — 0 kcal, 혈당 영향 없음
+- B 수크랄로스·아세설팜칼륨·아스파탐·사카린 — RCT 21건 메타분석에서 공복 인슐린·HbA1c 상승
+- C 에리스리톨·자일리톨 — 혈소판 반응성·심혈관 사건 신호 (인과관계 미확정)
+- D 말티톨·소르비톨 등 당알코올 — 실제 2~2.6 kcal/g
+- F 제로를 표방하나 신고 원재료에 당류가 있음
+- 무감미료 — 신고 원재료에 감미료가 없음
+- 한 제품에 여러 감미료가 있으면 **가장 나쁜 등급**을 최종 티어로 부여합니다
+
+## 현재 분포 ({lastmod} 기준)
+
+{dist_line} / 총 {len(records)}개
+
+## 인용 시 표기
+
+`zero-drinks-tier.vercel.app` (데이터 원출처: 식품의약품안전처 · 공공데이터포털)
+"""
+
+    lines = [
+        f"# 대체당 제로 음료 티어 — 데이터 전문 ({lastmod} 기준)",
+        "",
+        f"제품 {len(records)}개. 출처: 식품의약품안전처 품목제조보고 원재료(C002) + "
+        f"공공데이터포털 전국통합식품영양성분정보(15100066).",
+        "열량·당류는 100mL(또는 100g)당 값이며 한 병 전체 기준이 아닙니다.",
+        f"정본: {PAGE_URL}  /  산출 코드: https://github.com/gulf1324/zero-drinks-tier",
+        "",
+        "| 티어 | 제품명 | 제조사 | 감미료 | 열량 | 당류 | 용량 |",
+        "|---|---|---|---|---:|---:|---|",
+    ]
+    for r in sorted(records, key=lambda r: (TIER_RANK.get(r["티어"], 99), r["제품명"])):
+        cell = lambda v: str(v).replace("|", "/") if v != "" else "-"
+        lines.append("| {} | {} | {} | {} | {} | {} | {} |".format(
+            cell(r["티어"]), cell(r["제품명"]), cell(r["업소명"]),
+            cell(r["감미료"]), cell(r["열량"]), cell(r["당류"]), cell(r["용량"])))
+    lines.append("")
+
+    for name, body in (("llms.txt", guide), ("llms-full.txt", "\n".join(lines))):
+        with open(os.path.join(docs_dir, name), "w", encoding="utf-8", newline="\n") as f:
+            f.write(body)
+    print(f"[seo] llms.txt / llms-full.txt 생성 ({len(records)}개 제품)")
+
+
+def write_seo_files(docs_dir, lastmod, records=None):
+    """sitemap.xml / robots.txt / 정적 페이지 / llms.txt 를 한 번에 생성한다.
 
     Vercel 은 도메인 루트로 서빙하므로 robots.txt 가 실제로 읽힌다
-    (GitHub Pages 하위 경로 시절에는 무시됐다). 색인 유도는 sitemap 을
-    Search Console 에 제출해서 병행한다.
+    (GitHub Pages 하위 경로 시절에는 무시됐다).
 
-    robots.txt 는 매칭되는 첫 User-agent 블록만 적용되므로, 네이버 크롤러
-    Yeti 를 명시적으로 허용하려면 그 블록 안에도 Allow: / 를 따로 둬야
-    한다 (없으면 Yeti 는 자신의 블록만 보고 전부 차단된 것으로 해석한다).
-    Sitemap 지시문은 블록과 무관한 전역 지시문이라 한 번만 적는다.
+    robots.txt 는 매칭되는 첫 User-agent 블록만 적용되므로, 크롤러를 명시적으로
+    허용하려면 그 블록 안에도 Allow: / 를 따로 둬야 한다 (없으면 자신의 블록만
+    보고 전부 차단된 것으로 해석한다). Sitemap 지시문은 전역이라 한 번만 적는다.
+
+    AI 크롤러는 용도가 세 가지고 (학습·검색색인·실시간 fetch) 이 프로젝트는 인용
+    유입이 목표라 전부 허용한다. 데이터 자체가 공개 정부 데이터이고 산출 코드도
+    MIT 로 공개돼 있어 학습을 막을 이유가 없다.
     """
-    sitemap = (
-        '<?xml version="1.0" encoding="UTF-8"?>\n'
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-        '  <url>\n'
-        f'    <loc>{PAGE_URL}</loc>\n'
-        f'    <lastmod>{lastmod}</lastmod>\n'
-        '    <changefreq>monthly</changefreq>\n'
-        '    <priority>1.0</priority>\n'
-        '  </url>\n'
-        '</urlset>\n'
-    )
-    robots = (
-        "User-agent: Yeti\n"
-        "Allow: /\n"
-        "\n"
-        "User-agent: *\n"
-        "Allow: /\n"
-        "\n"
-        f"Sitemap: {PAGE_URL}sitemap.xml\n"
-    )
-    for name, body in (("sitemap.xml", sitemap), ("robots.txt", robots)):
-        path = os.path.join(docs_dir, name)
-        with open(path, "w", encoding="utf-8", newline="\n") as f:
-            f.write(body)
-    print(f"[seo] sitemap.xml / robots.txt 갱신 (lastmod {lastmod})")
+    slugs = []
+    if records:
+        slugs = write_seo_pages(docs_dir, records, lastmod)
+        write_llms_files(docs_dir, records, lastmod)
+
+    urls = [(PAGE_URL, "1.0", "monthly")]
+    urls += [(f"{PAGE_URL}{s}", "0.8", "monthly") for s in slugs]
+    body = "".join(
+        f"  <url>\n    <loc>{loc}</loc>\n    <lastmod>{lastmod}</lastmod>\n"
+        f"    <changefreq>{freq}</changefreq>\n    <priority>{pri}</priority>\n  </url>\n"
+        for loc, pri, freq in urls)
+    sitemap = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+               '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+               + body + "</urlset>\n")
+
+    ai_agents = [
+        # 학습 (모델 훈련) — 미래 모델의 인지를 얻는다
+        "GPTBot", "ClaudeBot", "Google-Extended", "CCBot", "Applebot-Extended",
+        # 검색 색인 (AI 검색의 자체 인덱스)
+        "OAI-SearchBot", "Claude-SearchBot", "PerplexityBot",
+        # 실시간 fetch (사용자 질문 시 페이지 열람)
+        "ChatGPT-User", "Claude-User", "Perplexity-User",
+    ]
+    robots = "".join(f"User-agent: {a}\nAllow: /\n\n" for a in ["Yeti"] + ai_agents)
+    robots += "User-agent: *\nAllow: /\n\n"
+    robots += f"Sitemap: {PAGE_URL}sitemap.xml\n"
+
+    for name, text in (("sitemap.xml", sitemap), ("robots.txt", robots)):
+        with open(os.path.join(docs_dir, name), "w", encoding="utf-8", newline="\n") as f:
+            f.write(text)
+    print(f"[seo] sitemap.xml({len(urls)} URL) / robots.txt 갱신 (lastmod {lastmod})")
+    return slugs
+
+
+def ping_indexnow(urls, key=None):
+    """IndexNow 로 갱신을 알린다. Bing·Naver·Yandex 계열이 소비한다 (Google 미지원).
+
+    키 파일이 사이트 루트에 있어야 유효하다. 키가 없으면 조용히 건너뛴다 -
+    색인 가속은 부가 기능이라 실패가 빌드를 막아서는 안 된다.
+    """
+    key = key or os.environ.get("INDEXNOW_KEY", "")
+    if not key or not urls:
+        return False
+    host = PAGE_URL.split("//", 1)[1].strip("/")
+    payload = json.dumps({
+        "host": host, "key": key,
+        "keyLocation": f"{PAGE_URL}{key}.txt",
+        "urlList": list(urls),
+    }).encode()
+    req = urllib.request.Request("https://api.indexnow.org/IndexNow", data=payload,
+                                 headers={"Content-Type": "application/json; charset=utf-8",
+                                          "User-Agent": UA})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            print(f"[indexnow] {r.status} — {len(urls)}개 URL 통보")
+            return 200 <= r.status < 300
+    except Exception as e:  # 네트워크·인증 실패가 빌드를 막지 않게 한다
+        print(f"[indexnow] 건너뜀: {e}")
+        return False
 
 
 def git_push(message=None):

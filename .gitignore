@@ -7,6 +7,8 @@
 !zero_soda_nutrition.json
 !zero_soda_label.json
 !docs/*.html
+!docs/llms.txt
+!docs/llms-full.txt
 __pycache__/
 *.pyc
 *.log

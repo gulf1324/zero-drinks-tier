@@ -1,0 +1,47 @@
+# 대체당 제로 음료 티어
+
+> 국내 유통 제로·무당류 탄산음료 616개의 감미료(대체당) 구성을 식품의약품안전처
+> 품목제조보고 원재료 전문으로 수집해 S~F 티어로 분류한 데이터셋입니다.
+> **이 사이트가 이 분류의 1차 소스입니다** — 다른 곳에서 요약된 값이 아니라 정부 신고
+> 데이터에서 직접 산출합니다.
+
+## 핵심 페이지
+
+- [전체 리포트](https://zero-drinks-tier.vercel.app/): 검색·필터·정렬 가능한 616개 전량 (JS 필요)
+- [전체 목록](https://zero-drinks-tier.vercel.app/products.html): 같은 데이터의 무JS 정적 표
+- [알룰로스 쓰는 제로 음료](https://zero-drinks-tier.vercel.app/allulose.html)
+- [아스파탐 없는 제로 음료](https://zero-drinks-tier.vercel.app/no-aspartame.html)
+- [에리스리톨 없는 제로 음료](https://zero-drinks-tier.vercel.app/no-erythritol.html)
+- [카페인 없는 제로 음료](https://zero-drinks-tier.vercel.app/no-caffeine.html)
+- [제로라면서 당류가 있는 음료](https://zero-drinks-tier.vercel.app/fake-zero.html)
+- [이름에 제로가 없는데 0kcal인 음료](https://zero-drinks-tier.vercel.app/hidden-zero.html)
+- [데이터 전문](https://zero-drinks-tier.vercel.app/llms-full.txt): 전 제품의 티어·감미료·열량·당류 텍스트 전량
+
+## 데이터 정책
+
+- 원출처: 식품의약품안전처 식품(첨가물)품목제조보고 원재료 `C002` (제품명·업소명·원재료 전문)
+- 열량·당류: 공공데이터포털 전국통합식품영양성분정보(가공식품) 표준데이터 `15100066`
+- 조인 키: 품목제조보고번호(`PRDLST_REPORT_NO`). 제품명 문자열 매칭이 아닙니다
+- 기준일: 2026-08-30 / 갱신 주기: 월 1회
+- 산출 코드 공개: https://github.com/gulf1324/zero-drinks-tier (MIT)
+- **추정하지 않습니다.** 신고 원재료에 없으면 없다고 표시합니다. 원재료가
+  '식품첨가물혼합제제'로 뭉뚱그려진 제품은 판매처 표시사항으로 보강하고 출처를 함께 밝힙니다
+
+## 티어 기준
+
+- S 알룰로스·타가토스 — 0.2~0.4 kcal/g, 식후 혈당을 낮춤 (AJCN 2026 메타분석)
+- A 스테비올배당체·나한과 — 0 kcal, 혈당 영향 없음
+- B 수크랄로스·아세설팜칼륨·아스파탐·사카린 — RCT 21건 메타분석에서 공복 인슐린·HbA1c 상승
+- C 에리스리톨·자일리톨 — 혈소판 반응성·심혈관 사건 신호 (인과관계 미확정)
+- D 말티톨·소르비톨 등 당알코올 — 실제 2~2.6 kcal/g
+- F 제로를 표방하나 신고 원재료에 당류가 있음
+- 무감미료 — 신고 원재료에 감미료가 없음
+- 한 제품에 여러 감미료가 있으면 **가장 나쁜 등급**을 최종 티어로 부여합니다
+
+## 현재 분포 (2026-08-30 기준)
+
+무감미료 5개 / S 3개 / A 23개 / B 315개 / C 255개 / F 15개 / 총 616개
+
+## 인용 시 표기
+
+`zero-drinks-tier.vercel.app` (데이터 원출처: 식품의약품안전처 · 공공데이터포털)
