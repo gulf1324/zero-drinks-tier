@@ -2144,7 +2144,27 @@ body{font-family:-apple-system,"Malgun Gothic",sans-serif;margin:0;padding:20px 
      background:#f4f5f7;color:#16191d;line-height:1.7}
 main{max-width:1000px;margin:0 auto}
 h1{font-size:23px;margin:0 0 10px;line-height:1.35}
-h2{font-size:17px;margin:30px 0 8px}\nh2.first{margin-top:18px}\n.howto{background:#fff;border:1px solid #e4e7eb;border-radius:8px;\n       padding:12px 14px;margin:0 0 16px;font-size:13.5px;color:#3d4450}
+h2{font-size:17px;margin:30px 0 8px}\nh2.first{margin-top:18px}
+.finder{position:sticky;top:0;z-index:5;background:#f4f5f7;padding:10px 0 8px;margin:0 0 4px;
+        border-bottom:1px solid #e4e7eb}
+.finder-in{position:relative;display:flex;align-items:center}
+.f-ico{position:absolute;left:12px;width:17px;height:17px;fill:none;stroke:#8a919b;stroke-width:2;
+       stroke-linecap:round;pointer-events:none}
+.finder input{width:100%;padding:11px 38px 11px 37px;font-size:15px;font-family:inherit;
+              border:1px solid #d3d8de;border-radius:10px;background:#fff;color:#16191d;
+              box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.finder input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.13)}
+.finder button{position:absolute;right:7px;width:26px;height:26px;border:0;border-radius:50%;
+               background:#eef0f2;color:#6b7280;font-size:17px;line-height:1;cursor:pointer}
+.finder button:hover{background:#e2e5e9;color:#16191d}
+.finder-n{font-size:12.5px;color:#6b7280;margin-top:6px;min-height:16px;
+          font-variant-numeric:tabular-nums}
+tr[hidden]{display:none}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 0 8px;
+    border-radius:8px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+.tw table{box-shadow:none;border-radius:0;min-width:640px}
+.nohit{font-size:13px;color:#6b7280;background:#fff;border:1px dashed #d3d8de;
+       border-radius:8px;padding:14px;text-align:center;margin:0 0 8px}\n.howto{background:#fff;border:1px solid #e4e7eb;border-radius:8px;\n       padding:12px 14px;margin:0 0 16px;font-size:13.5px;color:#3d4450}
 .lead{font-size:16px;font-weight:600;background:#eef4ff;border-left:4px solid #2563eb;
       padding:12px 14px;margin:0 0 14px;border-radius:0 8px 8px 0}
 .meta{color:#6b7280;font-size:13px;margin:0 0 20px}
@@ -2166,6 +2186,54 @@ _TIER_BG = {"무감미료": "#4caf50", "S": "#8bc34a", "A": "#cddc39", "B": "#ff
             "C": "#ff9800", "D": "#f4511e", "F": "#c00", "?": "#999"}
 
 
+# 정적 페이지의 제품 검색. 표는 이미 HTML 에 전부 있고 이 스크립트는 행을 숨기기만
+# 한다 - 크롤러가 보는 내용은 변하지 않는다(점진적 향상). 외부 리소스 0 을 지킨다.
+_FINDER_JS = """<script>
+(function () {
+  var q = document.getElementById('q'), qc = document.getElementById('qc'),
+      qn = document.getElementById('qn');
+  if (!q) return;
+  var groups = [].slice.call(document.querySelectorAll('table')).map(function (tb) {
+    var rows = [].slice.call(tb.tBodies[0].rows).map(function (tr) {
+      return { tr: tr, hay: tr.textContent.replace(/\\s+/g, '').toLowerCase() };
+    });
+    var empty = document.createElement('div');
+    empty.className = 'nohit';
+    empty.textContent = '\\uc774 \\ubaa9\\ub85d\\uc5d0\\ub294 \\uac80\\uc0c9 \\uacb0\\uacfc\\uac00 \\uc5c6\\uc2b5\\ub2c8\\ub2e4.';
+    empty.hidden = true;
+    var anchor = tb.parentNode.classList.contains('tw') ? tb.parentNode : tb;
+    anchor.parentNode.insertBefore(empty, anchor.nextSibling);
+    return { tb: tb, rows: rows, empty: empty };
+  });
+  var total = groups.reduce(function (n, g) { return n + g.rows.length; }, 0);
+
+  function run() {
+    var s = q.value.replace(/\\s+/g, '').toLowerCase();
+    qc.hidden = !q.value;
+    var shown = 0;
+    groups.forEach(function (g) {
+      var n = 0;
+      g.rows.forEach(function (r) {
+        var hit = !s || r.hay.indexOf(s) >= 0;
+        if (r.tr.hidden === hit) r.tr.hidden = !hit;
+        if (hit) n++;
+      });
+      (g.tb.parentNode.classList.contains('tw') ? g.tb.parentNode : g.tb).hidden = !!s && n === 0;
+      g.empty.hidden = !(s && n === 0);
+      shown += n;
+    });
+    qn.textContent = s
+      ? shown.toLocaleString() + '\\uac1c \\ud45c\\uc2dc \\uc911 (\\uc804\\uccb4 ' + total.toLocaleString() + '\\uac1c)'
+      : '\\uc804\\uccb4 ' + total.toLocaleString() + '\\uac1c';
+  }
+  q.addEventListener('input', run);
+  q.addEventListener('keydown', function (e) { if (e.key === 'Escape') { q.value = ''; run(); } });
+  qc.addEventListener('click', function () { q.value = ''; q.focus(); run(); });
+  run();
+})();
+</script>"""
+
+
 def _esc(s):
     return (str(s).replace("&", "&amp;").replace("<", "&lt;")
             .replace(">", "&gt;").replace('"', "&quot;"))
@@ -2179,7 +2247,7 @@ def _tier_badge(tier):
 def _rows_table(records, cols=("티어", "제품명", "업소명", "감미료", "열량", "당류", "용량")):
     head = "".join(f"<th>{_esc(c)}{'<br><small>100mL당</small>' if c in ('열량', '당류') else ''}</th>"
                    for c in cols)
-    out = [f"<table><thead><tr>{head}</tr></thead><tbody>"]
+    out = [f'<div class="tw"><table><thead><tr>{head}</tr></thead><tbody>']
     for r in records:
         cells = []
         for c in cols:
@@ -2191,7 +2259,7 @@ def _rows_table(records, cols=("티어", "제품명", "업소명", "감미료", 
             else:
                 cells.append(f"<td>{_esc(v) if v != '' else '&mdash;'}</td>")
         out.append("<tr>" + "".join(cells) + "</tr>")
-    out.append("</tbody></table>")
+    out.append("</tbody></table></div>")
     return "\n".join(out)
 
 
@@ -2234,6 +2302,16 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None):
 <main>
 <nav><a href="{PAGE_URL}">&larr; 전체 리포트(검색·필터)</a><a href="{PAGE_URL}products.html">616개 전체 목록</a></nav>
 <h1>{h1}</h1>
+<div class="finder">
+  <div class="finder-in">
+    <svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input type="search" id="q" autocomplete="off" spellcheck="false"
+           placeholder="제품명 · 제조사 · 감미료로 검색 (예: 코카콜라, 아스파탐)"
+           aria-label="이 표에서 제품 검색">
+    <button type="button" id="qc" aria-label="검색어 지우기" hidden>&times;</button>
+  </div>
+  <div class="finder-n" id="qn" role="status" aria-live="polite"></div>
+</div>
 <h2 class="first">요약</h2>
 <p class="lead">{summary}</p>
 <h2>읽는 법</h2>
@@ -2247,6 +2325,7 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None):
 <div>데이터 &copy; 식품의약품안전처 &middot; 공공데이터포털 &middot; <a href="https://github.com/gulf1324/zero-drinks-tier">소스·산출 방법</a></div>
 </footer>
 </main>
+{_FINDER_JS}
 </body>
 </html>
 """

@@ -1252,6 +1252,26 @@ main{max-width:1000px;margin:0 auto}
 h1{font-size:23px;margin:0 0 10px;line-height:1.35}
 h2{font-size:17px;margin:30px 0 8px}
 h2.first{margin-top:18px}
+.finder{position:sticky;top:0;z-index:5;background:#f4f5f7;padding:10px 0 8px;margin:0 0 4px;
+        border-bottom:1px solid #e4e7eb}
+.finder-in{position:relative;display:flex;align-items:center}
+.f-ico{position:absolute;left:12px;width:17px;height:17px;fill:none;stroke:#8a919b;stroke-width:2;
+       stroke-linecap:round;pointer-events:none}
+.finder input{width:100%;padding:11px 38px 11px 37px;font-size:15px;font-family:inherit;
+              border:1px solid #d3d8de;border-radius:10px;background:#fff;color:#16191d;
+              box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.finder input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.13)}
+.finder button{position:absolute;right:7px;width:26px;height:26px;border:0;border-radius:50%;
+               background:#eef0f2;color:#6b7280;font-size:17px;line-height:1;cursor:pointer}
+.finder button:hover{background:#e2e5e9;color:#16191d}
+.finder-n{font-size:12.5px;color:#6b7280;margin-top:6px;min-height:16px;
+          font-variant-numeric:tabular-nums}
+tr[hidden]{display:none}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 0 8px;
+    border-radius:8px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+.tw table{box-shadow:none;border-radius:0;min-width:640px}
+.nohit{font-size:13px;color:#6b7280;background:#fff;border:1px dashed #d3d8de;
+       border-radius:8px;padding:14px;text-align:center;margin:0 0 8px}
 .howto{background:#fff;border:1px solid #e4e7eb;border-radius:8px;
        padding:12px 14px;margin:0 0 16px;font-size:13.5px;color:#3d4450}
 .lead{font-size:16px;font-weight:600;background:#eef4ff;border-left:4px solid #2563eb;
@@ -1277,12 +1297,22 @@ footer div{margin-bottom:5px}
 <main>
 <nav><a href="https://zero-drinks-tier.vercel.app/">&larr; 전체 리포트(검색·필터)</a><a href="https://zero-drinks-tier.vercel.app/products.html">616개 전체 목록</a></nav>
 <h1>알룰로스 쓰는 제로 음료는 무엇인가?</h1>
+<div class="finder">
+  <div class="finder-in">
+    <svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input type="search" id="q" autocomplete="off" spellcheck="false"
+           placeholder="제품명 · 제조사 · 감미료로 검색 (예: 코카콜라, 아스파탐)"
+           aria-label="이 표에서 제품 검색">
+    <button type="button" id="qc" aria-label="검색어 지우기" hidden>&times;</button>
+  </div>
+  <div class="finder-n" id="qn" role="status" aria-live="polite"></div>
+</div>
 <h2 class="first">요약</h2>
 <p class="lead">결론부터: 수집한 616개 제품 중 알룰로스 계열(알룰로스·타가토스)을 신고 원재료에 올린 제품은 <b>157개</b>입니다.</p>
 <h2>읽는 법</h2>
 <div class="howto">알룰로스는 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 메타분석 결과가 있어 이 리포트에서 가장 높은 S 등급입니다. 다만 <b>다른 감미료가 함께 들어가면 최종 등급은 더 나쁜 쪽을 따릅니다</b> - 그래서 이 목록의 대부분은 S 가 아닙니다.</div>
 <div class="meta">기준일 2026-08-30 &middot; 출처 식품의약품안전처 품목제조보고(C002) &middot; 열량·당류는 공공데이터포털 전국통합식품영양성분정보(15100066)</div>
-<table><thead><tr><th>티어</th><th>제품명</th><th>업소명</th><th>감미료</th><th>열량<br><small>100mL당</small></th><th>당류<br><small>100mL당</small></th><th>용량</th></tr></thead><tbody>
+<div class="tw"><table><thead><tr><th>티어</th><th>제품명</th><th>업소명</th><th>감미료</th><th>열량<br><small>100mL당</small></th><th>당류<br><small>100mL당</small></th><th>용량</th></tr></thead><tbody>
 <tr><td><span class="t" style="background:#ffc107">B</span></td><td>1945 라임사이다</td><td>(주)일화초정공장</td><td>알룰로오스(S,1) / 수크랄로스(B,3) / 아세설팜(B,4)</td><td class="n">1</td><td class="n">0.00</td><td>350ml</td></tr>
 <tr><td><span class="t" style="background:#ffc107">B</span></td><td>1945 레몬콜라</td><td>(주)일화초정공장</td><td>알룰로오스(S,15) / 아세설팜(B,8) / 수크랄로스(B,9)</td><td class="n">0</td><td class="n">0.00</td><td>350ml</td></tr>
 <tr><td><span class="t" style="background:#ffc107">B</span></td><td>HOT6글로우애플&amp;포멜로</td><td>롯데칠성음료(주)</td><td>알룰로오스(S,5) / 수크랄로스(B,6) / 아세설팜(B,7)</td><td class="n">3</td><td class="n">0.05</td><td>355ml</td></tr>
@@ -1440,7 +1470,7 @@ footer div{margin-bottom:5px}
 <tr><td><span class="t" style="background:#ffc107">B</span></td><td>헬씨올리고 팝 리치살구</td><td>오케이에프음료 주식회사</td><td>알룰로오스(S,16) / 스테비올배당체(A,5) / 수크랄로스(B,8)</td><td class="n">3</td><td class="n">0.00</td><td>350ml</td></tr>
 <tr><td><span class="t" style="background:#ffc107">B</span></td><td>헬씨올리고 팝 스트로베리바닐라</td><td>오케이에프음료 주식회사</td><td>알룰로오스(S,14) / 스테비올배당체(A,4) / 수크랄로스(B,5)</td><td class="n">4</td><td class="n">0.00</td><td>350ml</td></tr>
 <tr><td><span class="t" style="background:#ffc107">B</span></td><td>헬씨올리고 팝 애플체리</td><td>오케이에프음료 주식회사</td><td>알룰로오스(S,2) / 스테비올배당체(A,13) / 수크랄로스(B,12)</td><td class="n">10</td><td class="n">0.00</td><td>350ml</td></tr>
-</tbody></table>
+</tbody></table></div>
 <footer>
 <div>이 표의 감미료는 제조사가 식약처에 신고한 <b>품목제조보고 원재료 전문</b>에서 탐지한 것입니다. 추정으로 채우지 않으며 데이터에 없으면 표시하지 않습니다.</div>
 <div>열량·당류는 <b>100mL(또는 100g)당</b> 값입니다. 제품 라벨은 한 병 전체 기준이라 숫자가 달라 보일 수 있습니다.</div>
@@ -1448,5 +1478,49 @@ footer div{margin-bottom:5px}
 <div>데이터 &copy; 식품의약품안전처 &middot; 공공데이터포털 &middot; <a href="https://github.com/gulf1324/zero-drinks-tier">소스·산출 방법</a></div>
 </footer>
 </main>
+<script>
+(function () {
+  var q = document.getElementById('q'), qc = document.getElementById('qc'),
+      qn = document.getElementById('qn');
+  if (!q) return;
+  var groups = [].slice.call(document.querySelectorAll('table')).map(function (tb) {
+    var rows = [].slice.call(tb.tBodies[0].rows).map(function (tr) {
+      return { tr: tr, hay: tr.textContent.replace(/\s+/g, '').toLowerCase() };
+    });
+    var empty = document.createElement('div');
+    empty.className = 'nohit';
+    empty.textContent = '\uc774 \ubaa9\ub85d\uc5d0\ub294 \uac80\uc0c9 \uacb0\uacfc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.';
+    empty.hidden = true;
+    var anchor = tb.parentNode.classList.contains('tw') ? tb.parentNode : tb;
+    anchor.parentNode.insertBefore(empty, anchor.nextSibling);
+    return { tb: tb, rows: rows, empty: empty };
+  });
+  var total = groups.reduce(function (n, g) { return n + g.rows.length; }, 0);
+
+  function run() {
+    var s = q.value.replace(/\s+/g, '').toLowerCase();
+    qc.hidden = !q.value;
+    var shown = 0;
+    groups.forEach(function (g) {
+      var n = 0;
+      g.rows.forEach(function (r) {
+        var hit = !s || r.hay.indexOf(s) >= 0;
+        if (r.tr.hidden === hit) r.tr.hidden = !hit;
+        if (hit) n++;
+      });
+      (g.tb.parentNode.classList.contains('tw') ? g.tb.parentNode : g.tb).hidden = !!s && n === 0;
+      g.empty.hidden = !(s && n === 0);
+      shown += n;
+    });
+    qn.textContent = s
+      ? shown.toLocaleString() + '\uac1c \ud45c\uc2dc \uc911 (\uc804\uccb4 ' + total.toLocaleString() + '\uac1c)'
+      : '\uc804\uccb4 ' + total.toLocaleString() + '\uac1c';
+  }
+  q.addEventListener('input', run);
+  q.addEventListener('keydown', function (e) { if (e.key === 'Escape') { q.value = ''; run(); } });
+  qc.addEventListener('click', function () { q.value = ''; q.focus(); run(); });
+  run();
+})();
+</script>
 </body>
 </html>
