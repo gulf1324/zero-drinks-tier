@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 """zero_soda_scan.py 분류기·통합·파생플래그 테스트. 네트워크 0, 픽스처 0."""
 
+import tempfile
+import shutil
+import os
 import unittest
 
 import zero_soda_scan as z
@@ -228,6 +231,57 @@ class ManualCaffeineTests(unittest.TestCase):
         self.assertEqual(r["제품명"], "펩시제로슈거")
         self.assertEqual(r["등록명"], "")
         self.assertEqual(r["유통명출처"], "")
+
+
+class IndexNowKeyTests(unittest.TestCase):
+    """키는 배포 디렉터리에서 스스로 찾는다. 손으로 넣는 환경변수에 의존하면 끊긴다."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.saved = os.environ.pop("INDEXNOW_KEY", None)
+
+    def tearDown(self):
+        shutil.rmtree(self.dir, ignore_errors=True)
+        if self.saved is not None:
+            os.environ["INDEXNOW_KEY"] = self.saved
+        else:
+            os.environ.pop("INDEXNOW_KEY", None)
+
+    def _put(self, name, body):
+        with open(os.path.join(self.dir, name), "w", encoding="utf-8") as f:
+            f.write(body)
+
+    def test_finds_key_file(self):
+        key = "99deea80987e4be2a215ce8ce2030776"
+        self._put(f"{key}.txt", key)
+        self.assertEqual(z.indexnow_key(self.dir), key)
+
+    def test_ignores_unrelated_txt(self):
+        # llms.txt 처럼 무관한 텍스트 파일을 키로 오인하면 안 된다.
+        self._put("llms.txt", "# 안내서\n본문")
+        self._put("robots.txt", "User-agent: *\nAllow: /")
+        self.assertEqual(z.indexnow_key(self.dir), "")
+
+    def test_ignores_mismatched_content(self):
+        # 파일명과 내용이 다르면 키가 아니다.
+        self._put("99deea80987e4be2a215ce8ce2030776.txt", "다른내용")
+        self.assertEqual(z.indexnow_key(self.dir), "")
+
+    def test_env_wins(self):
+        self._put("99deea80987e4be2a215ce8ce2030776.txt", "99deea80987e4be2a215ce8ce2030776")
+        os.environ["INDEXNOW_KEY"] = "envkey1234567890"
+        self.assertEqual(z.indexnow_key(self.dir), "envkey1234567890")
+
+    def test_write_rejects_bad_format(self):
+        self.assertIsNone(z.write_indexnow_key(self.dir, "짧음"))
+        self.assertIsNone(z.write_indexnow_key(self.dir, "has space in it"))
+
+    def test_write_creates_matching_file(self):
+        key = "abcdef1234567890abcdef1234567890"
+        path = z.write_indexnow_key(self.dir, key)
+        self.assertTrue(path.endswith(f"{key}.txt"))
+        with open(path, encoding="utf-8") as f:
+            self.assertEqual(f.read(), key)
 
 
 if __name__ == "__main__":

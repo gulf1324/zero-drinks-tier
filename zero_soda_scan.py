@@ -2526,13 +2526,44 @@ def write_seo_files(docs_dir, lastmod, records=None):
     return slugs
 
 
+def indexnow_key(docs_dir=None):
+    """IndexNow 키를 찾는다. 환경변수 우선, 없으면 배포 디렉터리의 키 파일에서 읽는다.
+
+    키 파일은 사이트 루트에 공개되도록 설계된 값이라 저장소에 그대로 들어간다.
+    그래서 한 번 배치해 두면 환경변수 없이도 계속 쓸 수 있다 - 손으로 넣는
+    환경변수에 의존하면 월간 갱신 때 반드시 빠뜨린다.
+
+    파일명(확장자 제외)과 내용이 같은 .txt 만 키로 인정한다. llms.txt 처럼
+    무관한 텍스트 파일을 키로 오인하지 않기 위한 조건이다.
+    """
+    env = os.environ.get("INDEXNOW_KEY", "").strip()
+    if env:
+        return env
+    docs_dir = docs_dir or DEFAULT_DOCS_DIR
+    if not os.path.isdir(docs_dir):
+        return ""
+    for name in sorted(os.listdir(docs_dir)):
+        if not name.endswith(".txt"):
+            continue
+        stem = name[:-4]
+        if not re.fullmatch(r"[A-Za-z0-9\-]{8,128}", stem):
+            continue
+        try:
+            with open(os.path.join(docs_dir, name), encoding="utf-8") as f:
+                if f.read().strip() == stem:
+                    return stem
+        except OSError:
+            continue
+    return ""
+
+
 def write_indexnow_key(docs_dir, key=None):
     """IndexNow 키 파일을 사이트 루트에 쓴다. 내용은 키 문자열 그대로여야 한다.
 
     키 파일이 없으면 API 가 422 를 준다. 키를 환경변수로만 넣고 파일을 빼먹는 것이
     IndexNow 실패의 1순위 원인이라, 키가 있으면 파일도 같이 만든다.
     """
-    key = key or os.environ.get("INDEXNOW_KEY", "")
+    key = key or indexnow_key(docs_dir)
     if not key:
         return None
     if not re.fullmatch(r"[A-Za-z0-9\-]{8,128}", key):
@@ -2550,7 +2581,7 @@ def ping_indexnow(urls, key=None):
     키 파일이 사이트 루트에 있어야 유효하다. 키가 없으면 조용히 건너뛴다 -
     색인 가속은 부가 기능이라 실패가 빌드를 막아서는 안 된다.
     """
-    key = key or os.environ.get("INDEXNOW_KEY", "")
+    key = key or indexnow_key()
     if not key or not urls:
         return False
     host = PAGE_URL.split("//", 1)[1].strip("/")
@@ -2584,9 +2615,9 @@ def ping_mode(docs_dir=None):
     urls = re.findall(r"<loc>([^<]+)</loc>", open(path, encoding="utf-8").read())
     if not urls:
         sys.exit("사이트맵에 URL 이 없습니다")
-    key = os.environ.get("INDEXNOW_KEY", "")
+    key = indexnow_key(docs_dir)
     if not key:
-        print("INDEXNOW_KEY 환경변수가 없습니다. Bing 웹마스터도구 > IndexNow 에서 키를")
+        print("IndexNow 키를 찾을 수 없습니다. Bing 웹마스터도구 > IndexNow 에서 키를")
         print("발급받아 아래처럼 넣으세요 (키 파일은 자동 생성됩니다):")
         print("  set INDEXNOW_KEY=<발급키>   (Windows)")
         print(f"통보 대상 {len(urls)}개 URL:")
