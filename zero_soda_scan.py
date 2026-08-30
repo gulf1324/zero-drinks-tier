@@ -1739,13 +1739,13 @@ def write_html(records, meta, meta_info, path):
 
     # 질문별 정적 목록으로 가는 링크. 크롤러의 탐색 경로이자 사용자 진입점이다.
     guides = [
-        ("products.html", f"{len(records)}개 전체 목록", "무JS 정적 표. 티어·감미료·열량 한눈에"),
-        ("allulose.html", "알룰로스 쓰는 제로 음료", "가장 높은 S 등급 감미료를 쓴 제품"),
-        ("no-aspartame.html", "아스파탐 없는 제로 음료", "신고 원재료에 아스파탐이 없는 제품"),
-        ("no-erythritol.html", "에리스리톨 없는 제로 음료", "심혈관 신호 연구를 피하고 싶을 때"),
-        ("no-caffeine.html", "카페인 없는 제로 음료", "콜라·에너지드링크 계열 제외"),
-        ("fake-zero.html", "제로라면서 당류가 있는 음료", "표기와 신고 원재료의 불일치"),
-        ("hidden-zero.html", "이름에 제로가 없는데 0kcal", "이름만 보면 놓치는 제품"),
+        ("products.html", f"{len(records)}개 전체 목록", "티어·감미료·열량을 한눈에 볼 수 있습니다"),
+        ("allulose.html", "알룰로스를 쓰는 제로 음료", "가장 높은 S 등급 감미료를 쓴 제품입니다"),
+        ("no-aspartame.html", "아스파탐이 없는 제로 음료", "신고 원재료에서 아스파탐이 확인되지 않은 제품입니다"),
+        ("no-erythritol.html", "에리스리톨이 없는 제로 음료", "심혈관 신호 연구가 신경 쓰일 때 봅니다"),
+        ("no-caffeine.html", "카페인이 없는 제로 음료", "콜라·에너지드링크 계열을 제외했습니다"),
+        ("fake-zero.html", "제로라면서 당류가 들어간 음료", "표기와 신고 원재료가 다른 제품입니다"),
+        ("hidden-zero.html", "이름에 제로가 없는데 0kcal인 음료", "이름만 보면 놓치는 제품입니다"),
     ]
     guides_html = (
         '<section class="guides">\n<h2>질문별로 골라 보기</h2>\n<ul>\n'
@@ -2348,6 +2348,22 @@ def _item_list_ld(name, desc, slug, records, limit=100):
     }
 
 
+def _josa(word, with_final, without_final):
+    """마지막 글자의 종성 유무로 조사를 고른다 (이/가, 을/를, 은/는).
+
+    negative() 가 여러 성분에 재사용되므로 조사를 손으로 박으면 언젠가 틀린다.
+    '아스파탐이', '에리스리톨이', '알룰로스를' 이 자동으로 맞는다.
+    """
+    ch = word.strip()[-1:]
+    if not ch:
+        return with_final
+    if "가" <= ch <= "힣":
+        return with_final if (ord(ch) - 0xAC00) % 28 else without_final
+    if "\u3131" <= ch <= "\u3163":  # 낱자
+        return with_final
+    return with_final if ch.isalpha() and ch.lower() in "lmnr" else without_final
+
+
 def _is_opaque(rec):
     """원재료가 혼합제제 등으로 뭉뚱그려져 성분 유무를 단정할 수 없는 제품인가.
 
@@ -2397,33 +2413,36 @@ def seo_landing_specs(records):
                                    r["제품명"]))
 
     MURKY_NOTE = ("아래 제품들은 신고 원재료가 <b>식품첨가물혼합제제</b> 등으로 뭉뚱그려져 "
-                  "해당 성분이 들어 있는지 <b>확인할 수 없습니다</b>. 없다는 뜻이 아닙니다.")
+                  "있어서 해당 성분이 들어 있는지 <b>확인할 수 없습니다</b>. "
+                  "들어 있지 않다는 뜻이 아닙니다.")
 
     def negative(slug, subject, clear, murky, why, extra=""):
+        ga = subject + _josa(subject, "이", "가")          # 아스파탐이 / 카페인이
+        eul = subject + _josa(subject, "을", "를")         # 에리스리톨을 / 알룰로스를
         return (
             slug,
-            f"{subject} 없는 제로 음료 {len(clear)}개 — 원재료 전문으로 확인",
-            f"신고 원재료 전문에서 {subject}이 없는 것으로 확인된 제로·무당류 탄산음료 "
+            f"{ga} 없는 제로 음료 {len(clear)}개 — 원재료 전문으로 확인했습니다",
+            f"신고 원재료 전문에서 {ga} 없는 것으로 확인된 제로·무당류 탄산음료 "
             f"{len(clear)}개입니다. 원재료가 혼합제제로 가려져 확인할 수 없는 {len(murky)}개는 "
             f"따로 구분해 표시했습니다.",
-            f"{subject} 없는 제로 음료는 무엇인가?",
-            f"결론부터: 신고 원재료가 투명하게 공개된 제품 중 {subject}이 없는 것은 "
-            f"<b>{len(clear)}개</b>입니다. 별도로 <b>{len(murky)}개</b>는 원재료가 "
-            f"'식품첨가물혼합제제'로 뭉뚱그려져 {subject} 포함 여부를 <b>확인할 수 없습니다</b>. "
-            f"(전체 {n}개 기준)",
-            [(f"{subject} 없음이 확인된 {len(clear)}개", "", clear),
-             (f"확인할 수 없는 {len(murky)}개", MURKY_NOTE, murky)],
+            f"{ga} 없는 제로 음료는 무엇인가요?",
+            f"결론부터 말씀드리면, 신고 원재료가 투명하게 공개된 제품 중 {ga} 없는 것은 "
+            f"<b>{len(clear)}개</b>입니다. 이와 별도로 <b>{len(murky)}개</b>는 원재료가 "
+            f"'식품첨가물혼합제제'로 뭉뚱그려져 있어 {eul} 넣었는지 "
+            f"<b>확인할 수 없습니다</b>. (전체 {n}개 기준)",
+            [(f"{ga} 없는 것으로 확인된 {len(clear)}개", "", clear),
+             (f"{eul} 넣었는지 확인할 수 없는 {len(murky)}개", MURKY_NOTE, murky)],
             why + extra,
         )
 
     return [
         ("allulose.html",
-         f"알룰로스 쓰는 제로 음료 {len(allulose)}개 — 식약처 원재료 기준",
+         f"알룰로스를 쓰는 제로 음료 {len(allulose)}개 — 식약처 원재료 기준입니다",
          f"국내 유통 제로 탄산음료 가운데 알룰로스·타가토스를 쓰는 제품 {len(allulose)}개를 "
          f"식약처 품목제조보고 원재료 전문에서 추려 정리했습니다.",
-         "알룰로스 쓰는 제로 음료는 무엇인가?",
-         f"결론부터: 수집한 {n}개 제품 중 알룰로스 계열(알룰로스·타가토스)을 신고 원재료에 "
-         f"올린 제품은 <b>{len(allulose)}개</b>입니다.",
+         "알룰로스를 쓰는 제로 음료는 무엇인가요?",
+         f"결론부터 말씀드리면, 수집한 {n}개 제품 중 알룰로스 계열(알룰로스·타가토스)을 신고 "
+         f"원재료에 올린 제품은 <b>{len(allulose)}개</b>입니다.",
          [("", "", allulose)],
          "알룰로스는 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 메타분석 결과가 있어 "
          "이 리포트에서 가장 높은 S 등급입니다. 다만 <b>다른 감미료가 함께 들어가면 최종 등급은 "
@@ -2441,23 +2460,23 @@ def seo_landing_specs(records):
                  "펩시 계열처럼 널리 알려진 제품은 손으로 카페인 표시를 넣었지만, 확인 불가 "
                  "목록에는 여전히 카페인이 들어 있을 수 있는 제품이 남아 있습니다."),
         ("fake-zero.html",
-         f"제로라면서 당류가 있는 음료 {len(fake)}개 — 표기와 원재료 불일치",
+         f"제로라면서 당류가 들어간 음료 {len(fake)}개 — 표기와 원재료가 다릅니다",
          f"제품명에 제로를 표기하면서 신고 원재료에 당류가 들어간 제품 {len(fake)}개입니다. "
          f"제로칼로리 표시 기준은 100mL당 4kcal 미만이라 소량의 당류로도 적법하게 표기할 수 있습니다.",
-         "제로라고 적혀 있는데 당류가 들어간 음료가 있나?",
-         f"결론부터: 제로를 표기한 제품 가운데 신고 원재료에 당류가 있는 것은 "
-         f"<b>{len(fake)}개</b>입니다. 법 위반이 아니라 표시 기준 안의 일입니다.",
+         "제로라고 적혀 있는데 당류가 들어간 음료가 있나요?",
+         f"결론부터 말씀드리면, 제로를 표기한 제품 가운데 신고 원재료에 당류가 들어간 것은 "
+         f"<b>{len(fake)}개</b>입니다. 법 위반이 아니라 표시 기준 안에서 벌어지는 일입니다.",
          [("", "", fake)],
          "<b>표시 기준 위반이 아닙니다.</b> 제로칼로리 표기 기준은 100mL당 4kcal 미만이므로 "
          "소량의 당류가 들어가도 적법하게 '제로'를 붙일 수 있습니다. 이 표는 표기와 신고 원재료의 "
          "불일치를 보여줄 뿐입니다. 실측 당류가 0g으로 확인된 제품은 착향용 미량으로 보고 "
          "이 목록에서 제외했습니다."),
         ("hidden-zero.html",
-         f"이름에 제로가 없는데 실제로 0kcal인 음료 {len(hidden)}개",
+         f"이름에 제로가 없는데 실제로는 0kcal인 음료 {len(hidden)}개입니다",
          f"제품명에 제로 표기가 없지만 신고 영양성분상 100mL당 4kcal 미만인 제품 {len(hidden)}개입니다. "
          f"제로 음료를 찾을 때 이름만 보면 놓치는 제품들입니다.",
-         "이름에 제로가 없는데 실제로는 제로인 음료가 있나?",
-         f"결론부터: 제품명에 제로 표기가 없으면서 100mL당 4kcal 미만인 제품이 "
+         "이름에 제로가 없는데 실제로는 제로인 음료가 있나요?",
+         f"결론부터 말씀드리면, 제품명에 제로 표기가 없으면서 100mL당 4kcal 미만인 제품이 "
          f"<b>{len(hidden)}개</b> 있습니다.",
          [("", "", hidden)],
          "식약처 표시 기준으로 100mL당 4kcal 미만이면 '제로칼로리'로 표기할 수 있습니다. "
@@ -2481,14 +2500,14 @@ def write_seo_pages(docs_dir, records, lastmod):
     body = _rows_table(ordered)
     page = _static_page(
         "products.html",
-        f"제로 탄산음료 {len(records)}개 전체 목록 — 감미료·티어·열량 한눈에",
+        f"제로 탄산음료 {len(records)}개 전체 목록 — 감미료·티어·열량을 한눈에 봅니다",
         f"국내 유통 제로·무당류 탄산음료 {len(records)}개의 감미료 구성과 티어, 100mL당 열량·당류를 "
         f"한 페이지에 정리한 전체 목록입니다. 식약처 품목제조보고 원재료 전문 기준입니다.",
         f"제로 탄산음료 {len(records)}개 전체 목록",
-        f"결론부터: 수집·분류한 제품은 <b>{len(records)}개</b>이며 티어 분포는 "
+        f"결론부터 말씀드리면, 수집·분류한 제품은 <b>{len(records)}개</b>이며 티어 분포는 "
         + ", ".join(f"{t} {sum(1 for r in records if r['티어'] == t)}개"
                     for t in ("무감미료", "S", "A", "B", "C", "D", "F")
-                    if sum(1 for r in records if r["티어"] == t)) + " 입니다.",
+                    if sum(1 for r in records if r["티어"] == t)) + "입니다.",
         howto, body, lastmod,
         _item_list_ld(f"제로 탄산음료 {len(records)}개 전체 목록",
                       "식약처 품목제조보고 원재료 기준 감미료 티어 분류", "products.html", ordered))

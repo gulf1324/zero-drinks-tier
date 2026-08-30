@@ -284,6 +284,23 @@ class IndexNowKeyTests(unittest.TestCase):
             self.assertEqual(f.read(), key)
 
 
+class JosaTests(unittest.TestCase):
+    """조사 자동 선택. negative() 가 여러 성분에 재사용되므로 손으로 박으면 언젠가 틀린다."""
+
+    def test_final_consonant_takes_i_eul(self):
+        for w in ("아스파탐", "에리스리톨", "카페인", "사카린", "말티톨"):
+            self.assertEqual(z._josa(w, "이", "가"), "이", w)
+            self.assertEqual(z._josa(w, "을", "를"), "을", w)
+
+    def test_no_final_consonant_takes_ga_reul(self):
+        for w in ("알룰로스", "수크랄로스", "타가토스", "스테비아"):
+            self.assertEqual(z._josa(w, "이", "가"), "가", w)
+            self.assertEqual(z._josa(w, "을", "를"), "를", w)
+
+    def test_empty_is_safe(self):
+        self.assertEqual(z._josa("", "이", "가"), "이")
+
+
 if __name__ == "__main__":
     unittest.main()
 
