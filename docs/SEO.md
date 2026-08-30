@@ -44,12 +44,27 @@
 
 ## 사용자 계정이 필요한 남은 작업
 
-1. **Bing Webmaster Tools 등록** — GSC 에서 원클릭 임포트. ChatGPT 검색이 Bing
-   색인에 의존하므로 AEO·GEO 의 절반이다
-2. **Search Console 사이트맵 재제출** — URL 이 1개에서 8개로 늘었다
-3. **네이버 서치어드바이저** 사이트맵 제출 + 웹페이지 수집 요청
-4. **IndexNow 키 발급** 후 `INDEXNOW_KEY` 환경변수 + `docs/<key>.txt` 배치.
-   그러면 `--mode sync` 가 갱신 때마다 Bing·네이버에 자동 통보한다
+1. ~~**Bing Webmaster Tools 등록**~~ — **2026-08-30 완료.** GSC 에서 임포트해
+   소유확인·사이트맵이 함께 넘어갔다. 등록 직후 `site:` 결과는 0건이고 정상이다
+2. **IndexNow 키 발급** — Bing 웹마스터도구 > IndexNow 에서 키를 받아
+   `INDEXNOW_KEY` 환경변수에 넣으면 끝이다. **키 파일(`docs/<key>.txt`)은 빌드가
+   자동 생성**하므로 손으로 만들 필요 없다 (키 파일 누락이 IndexNow 실패 1순위다).
+   넣은 뒤 `python zero_soda_scan.py --mode ping` 으로 8개 URL 을 즉시 통보한다.
+   Bing 은 IndexNow 를 직접 소비하므로 크롤링을 기다리지 않아도 된다
+3. **Search Console 사이트맵 재제출** — URL 이 1개에서 8개로 늘었다
+4. **네이버 서치어드바이저** 사이트맵 제출 + 웹페이지 수집 요청
+
+### IndexNow 사용법
+
+```bash
+set INDEXNOW_KEY=<Bing에서 발급한 키>
+python zero_soda_scan.py --mode build        # 키 파일 자동 생성
+# docs/ 를 배포한 뒤 (키 파일이 사이트 루트에서 200 이어야 유효하다)
+python zero_soda_scan.py --mode ping         # 사이트맵의 URL 전량 통보
+```
+
+키가 없으면 `ping` 은 통보 대상 URL 만 출력하고 아무것도 하지 않는다.
+`sync` 에도 배선돼 있어 월간 갱신 때 자동으로 통보한다.
 
 ## 측정
 

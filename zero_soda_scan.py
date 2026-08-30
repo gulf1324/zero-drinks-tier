@@ -2519,8 +2519,29 @@ def write_seo_files(docs_dir, lastmod, records=None):
     for name, text in (("sitemap.xml", sitemap), ("robots.txt", robots)):
         with open(os.path.join(docs_dir, name), "w", encoding="utf-8", newline="\n") as f:
             f.write(text)
+    keyfile = write_indexnow_key(docs_dir)
+    if keyfile:
+        print(f"[indexnow] 키 파일 {os.path.basename(keyfile)} 생성")
     print(f"[seo] sitemap.xml({len(urls)} URL) / robots.txt 갱신 (lastmod {lastmod})")
     return slugs
+
+
+def write_indexnow_key(docs_dir, key=None):
+    """IndexNow 키 파일을 사이트 루트에 쓴다. 내용은 키 문자열 그대로여야 한다.
+
+    키 파일이 없으면 API 가 422 를 준다. 키를 환경변수로만 넣고 파일을 빼먹는 것이
+    IndexNow 실패의 1순위 원인이라, 키가 있으면 파일도 같이 만든다.
+    """
+    key = key or os.environ.get("INDEXNOW_KEY", "")
+    if not key:
+        return None
+    if not re.fullmatch(r"[A-Za-z0-9\-]{8,128}", key):
+        print(f"[indexnow] 키 형식이 올바르지 않아 건너뜀 (8~128자 영숫자·하이픈): {key[:12]}…")
+        return None
+    path = os.path.join(docs_dir, f"{key}.txt")
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(key)
+    return path
 
 
 def ping_indexnow(urls, key=None):
@@ -2548,6 +2569,34 @@ def ping_indexnow(urls, key=None):
     except Exception as e:  # 네트워크·인증 실패가 빌드를 막지 않게 한다
         print(f"[indexnow] 건너뜀: {e}")
         return False
+
+
+def ping_mode(docs_dir=None):
+    """사이트맵에 실린 URL 을 IndexNow 로 통보한다. 데이터를 건드리지 않는다.
+
+    Bing·네이버·Yandex 계열이 IndexNow 를 소비한다 (Google 은 미지원이라
+    사이트맵 lastmod 정확성으로 승부한다). 키는 Bing 웹마스터도구에서 발급한다.
+    """
+    docs_dir = docs_dir or DEFAULT_DOCS_DIR
+    path = os.path.join(docs_dir, "sitemap.xml")
+    if not os.path.exists(path):
+        sys.exit(f"사이트맵이 없습니다: {path} — 먼저 --mode build 를 실행하세요")
+    urls = re.findall(r"<loc>([^<]+)</loc>", open(path, encoding="utf-8").read())
+    if not urls:
+        sys.exit("사이트맵에 URL 이 없습니다")
+    key = os.environ.get("INDEXNOW_KEY", "")
+    if not key:
+        print("INDEXNOW_KEY 환경변수가 없습니다. Bing 웹마스터도구 > IndexNow 에서 키를")
+        print("발급받아 아래처럼 넣으세요 (키 파일은 자동 생성됩니다):")
+        print("  set INDEXNOW_KEY=<발급키>   (Windows)")
+        print(f"통보 대상 {len(urls)}개 URL:")
+        for u in urls:
+            print("  " + u)
+        return False
+    kf = write_indexnow_key(docs_dir, key)
+    if kf:
+        print(f"[indexnow] 키 파일 {os.path.basename(kf)} 준비 — 배포 후 유효해집니다")
+    return ping_indexnow(urls, key)
 
 
 def git_push(message=None):
@@ -2630,7 +2679,7 @@ def main():
     p.add_argument("--key", help="식품안전나라 인증키 (probe/collect에만 필요)")
     p.add_argument("--mode",
                    choices=["probe", "collect", "nutrition", "enrich", "build", "run",
-                            "diff", "sync", "update"],
+                            "diff", "sync", "update", "ping"],
                    default="build")
     p.add_argument("--type", action="append", default=[],
                    help="수집할 식품유형(PRDLST_DCNM). 여러 번 지정 가능. 기본: 탄산음료, 탄산수")
@@ -2691,6 +2740,8 @@ def main():
                        args.out, args.out_html, args.docs_html, args.force)
         if changed and args.push:
             git_push()
+    elif args.mode == "ping":
+        ping_mode(os.path.dirname(args.docs_html) or None)
     elif args.mode == "update":
         return update_mode(args, types)
     elif args.mode == "run":
