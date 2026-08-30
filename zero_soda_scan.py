@@ -2106,11 +2106,7 @@ def sync(key, types, raw_path, cache_path, out_csv, out_html, docs_html, force=F
     stats = build(raw_path, cache_path, out_csv, out_html, None)
 
     if docs_html:
-        os.makedirs(os.path.dirname(docs_html) or ".", exist_ok=True)
-        shutil.copyfile(out_html, docs_html)
-        print(f"[sync] {out_html} -> {docs_html}")
-        docs_dir = os.path.dirname(docs_html) or "."
-        slugs = write_seo_files(docs_dir, stats["generated_at"][:10], stats.get("records"))
+        _, slugs = publish_docs(docs_html, out_html, stats)
         ping_indexnow([PAGE_URL] + [f"{PAGE_URL}{s}" for s in slugs])
 
     if update_readme(stats, fetched_at):
@@ -2163,7 +2159,7 @@ nav{font-size:13px;margin:0 0 16px}
 nav a{color:#2563eb;margin-right:12px}
 footer{margin-top:34px;font-size:12px;color:#6b7280;border-top:1px solid #e4e7eb;padding-top:14px}
 footer div{margin-bottom:5px}
-.q{font-weight:700;margin-top:14px}
+.q{font-weight:700;margin-top:14px}\n.caveat{background:#fdf4f4;border-left:4px solid #c0262c;padding:10px 12px;\n        margin:0 0 12px;font-size:13px;border-radius:0 6px 6px 0}
 @media(max-width:720px){table{font-size:12px}th,td{padding:6px 7px}h1{font-size:20px}}"""
 
 _TIER_BG = {"무감미료": "#4caf50", "S": "#8bc34a", "A": "#cddc39", "B": "#ffc107",
@@ -2226,7 +2222,8 @@ def _static_page(slug, title, desc, h1, lead, body, lastmod, ld=None):
 <meta name="twitter:title" content="{_esc(title)}">
 <meta name="twitter:description" content="{_esc(desc)}">
 <meta name="twitter:image" content="{PAGE_URL}og-card.png">
-{ld_html}<style>{_STATIC_CSS}</style>
+{ld_html}{_GA_SNIPPET.replace("__GA_ID__", GA_ID) if GA_ID else ""}
+<style>{_STATIC_CSS}</style>
 </head>
 <body>
 <main>
@@ -2254,7 +2251,7 @@ def _item_list_ld(name, desc, slug, records, limit=100):
         "name": name,
         "description": desc,
         "url": f"{PAGE_URL}{slug}",
-        "numberOfItems": len(records),
+        "numberOfItems": min(len(records), limit),
         "itemListElement": [
             {"@type": "ListItem", "position": i + 1,
              "item": {"@type": "Product", "name": r["제품명"],
@@ -2262,6 +2259,16 @@ def _item_list_ld(name, desc, slug, records, limit=100):
             for i, r in enumerate(records[:limit])
         ],
     }
+
+
+def _is_opaque(rec):
+    """원재료가 혼합제제 등으로 뭉뚱그려져 성분 유무를 단정할 수 없는 제품인가.
+
+    '탐지되지 않음'과 '들어 있지 않음'은 다르다. 이 구분을 흐리면 아스파탐을
+    피해야 하는 사람에게 잘못된 목록을 주게 된다.
+    """
+    text = (rec.get("표시원재료") or rec.get("원재료전문", "")).replace(" ", "")
+    return any(tok in text for tok in OPAQUE_TOKENS)
 
 
 def _num(v):
@@ -2272,67 +2279,80 @@ def _num(v):
 
 
 def seo_landing_specs(records):
-    """의도 랜딩 정의. (slug, title, desc, h1, 직답, 대상 레코드, 표 설명) 목록.
+    """의도 랜딩 정의. (slug, title, desc, h1, 직답, [(소제목, 설명, 레코드)], 읽는 법).
 
     사람이 검색창에 실제로 치는 질문 하나당 페이지 하나로 만든다. 각 질문의 답은
     데이터로 확정되는 것만 쓴다 - 추천·권유는 넣지 않는다.
+
+    '○○ 없는 음료' 류는 반드시 **확인된 목록과 확인 불가 목록을 나눈다.**
+    원재료가 식품첨가물혼합제제로 뭉뚱그려진 제품은 성분 유무를 단정할 수 없는데,
+    이를 '없음'으로 묶으면 화면이 사실 아닌 것을 말하게 된다.
     """
-    by_tier = lambda t: [r for r in records if r["티어"] == t]
     n = len(records)
+    rank = lambda r: (TIER_RANK.get(r["티어"], 99), r["제품명"])
+
+    def split(pred):
+        """조건을 만족하는 제품을 (원재료 투명 = 확인됨, 가려짐 = 확인 불가) 로 쪼갠다."""
+        hit = [r for r in records if pred(r) and r["티어"] != "F"]
+        clear = sorted([r for r in hit if not _is_opaque(r)], key=rank)
+        murky = sorted([r for r in hit if _is_opaque(r)], key=rank)
+        return clear, murky
 
     allulose = sorted([r for r in records if "S" in (r["조합"] or "").split("+")],
                       key=lambda r: r["제품명"])
-    no_asp = sorted([r for r in records if r["아스파탐"] != "Y" and r["티어"] not in ("F",)],
-                    key=lambda r: (TIER_RANK.get(r["티어"], 99), r["제품명"]))
-    no_ery = sorted([r for r in records if "에리스" not in (r["감미료"] or "")
-                     and r["티어"] not in ("F",)],
-                    key=lambda r: (TIER_RANK.get(r["티어"], 99), r["제품명"]))
-    no_caf = sorted([r for r in records if r["카페인"] != "Y" and r["티어"] not in ("F",)],
-                    key=lambda r: (TIER_RANK.get(r["티어"], 99), r["제품명"]))
-    fake = sorted(by_tier("F"), key=lambda r: -(_num(r["당류"]) or 0))
+    asp_clear, asp_murky = split(lambda r: r["아스파탐"] != "Y")
+    ery_clear, ery_murky = split(lambda r: "에리스" not in (r["감미료"] or ""))
+    caf_clear, caf_murky = split(lambda r: r["카페인"] != "Y")
+    fake = sorted([r for r in records if r["티어"] == "F"],
+                  key=lambda r: -(_num(r["당류"]) or 0))
     hidden = sorted([r for r in records if r["제로표기"] != "Y" and r["실측제로"] == "Y"],
                     key=lambda r: (_num(r["열량"]) if _num(r["열량"]) is not None else 99,
                                    r["제품명"]))
+
+    MURKY_NOTE = ("아래 제품들은 신고 원재료가 <b>식품첨가물혼합제제</b> 등으로 뭉뚱그려져 "
+                  "해당 성분이 들어 있는지 <b>확인할 수 없습니다</b>. 없다는 뜻이 아닙니다.")
+
+    def negative(slug, subject, clear, murky, why, extra=""):
+        return (
+            slug,
+            f"{subject} 없는 제로 음료 {len(clear)}개 — 원재료 전문으로 확인",
+            f"신고 원재료 전문에서 {subject}이 없는 것으로 확인된 제로·무당류 탄산음료 "
+            f"{len(clear)}개입니다. 원재료가 혼합제제로 가려져 확인할 수 없는 {len(murky)}개는 "
+            f"따로 구분해 표시했습니다.",
+            f"{subject} 없는 제로 음료는 무엇인가?",
+            f"결론부터: 신고 원재료가 투명하게 공개된 제품 중 {subject}이 없는 것은 "
+            f"<b>{len(clear)}개</b>입니다. 별도로 <b>{len(murky)}개</b>는 원재료가 "
+            f"'식품첨가물혼합제제'로 뭉뚱그려져 {subject} 포함 여부를 <b>확인할 수 없습니다</b>. "
+            f"(전체 {n}개 기준)",
+            [(f"{subject} 없음이 확인된 {len(clear)}개", "", clear),
+             (f"확인할 수 없는 {len(murky)}개", MURKY_NOTE, murky)],
+            why + extra,
+        )
+
     return [
         ("allulose.html",
-         f"알룰로스 쓰는 제로 음료 {len(allulose)}개 — 식약처 원재료 기준 전체 목록",
+         f"알룰로스 쓰는 제로 음료 {len(allulose)}개 — 식약처 원재료 기준",
          f"국내 유통 제로 탄산음료 가운데 알룰로스·타가토스를 쓰는 제품 {len(allulose)}개를 "
-         f"식약처 품목제조보고 원재료 전문으로 추려 정리했습니다. 제품명·제조사·열량·당류를 함께 봅니다.",
+         f"식약처 품목제조보고 원재료 전문에서 추려 정리했습니다.",
          "알룰로스 쓰는 제로 음료는 무엇인가?",
          f"결론부터: 수집한 {n}개 제품 중 알룰로스 계열(알룰로스·타가토스)을 신고 원재료에 "
          f"올린 제품은 <b>{len(allulose)}개</b>입니다.",
-         allulose,
+         [("", "", allulose)],
          "알룰로스는 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 메타분석 결과가 있어 "
-         "이 리포트에서 가장 높은 S 등급입니다. 다른 감미료가 함께 들어가면 최종 등급은 더 나쁜 쪽을 따릅니다."),
-        ("no-aspartame.html",
-         f"아스파탐 없는 제로 음료 {len(no_asp)}개 — 신고 원재료 기준",
-         f"아스파탐이 신고 원재료에 없는 제로·무당류 탄산음료 {len(no_asp)}개 목록입니다. "
-         f"식약처 품목제조보고 원재료 전문에서 아스파탐 표기를 탐지해 제외했습니다.",
-         "아스파탐 없는 제로 음료는 무엇인가?",
-         f"결론부터: 수집한 {n}개 중 신고 원재료에 아스파탐이 <b>없는</b> 제품은 "
-         f"<b>{len(no_asp)}개</b>입니다.",
-         no_asp,
-         "아스파탐이 든 제품은 라벨에 '페닐알라닌 함유' 문구가 함께 붙습니다. "
-         "원재료가 식품첨가물혼합제제로 뭉뚱그려진 제품은 아스파탐 여부를 확인할 수 없어 이 목록에 포함될 수 있습니다."),
-        ("no-erythritol.html",
-         f"에리스리톨 없는 제로 음료 {len(no_ery)}개 — 신고 원재료 기준",
-         f"에리스리톨이 신고 원재료에 없는 제로·무당류 탄산음료 {len(no_ery)}개 목록입니다. "
-         f"에리스리톨의 심혈관 신호 연구를 이유로 피하려는 경우를 위한 목록입니다.",
-         "에리스리톨 없는 제로 음료는 무엇인가?",
-         f"결론부터: 수집한 {n}개 중 신고 원재료에 에리스리톨이 <b>없는</b> 제품은 "
-         f"<b>{len(no_ery)}개</b>입니다.",
-         no_ery,
-         "에리스리톨의 혈소판 반응성·심혈관 사건 신호는 관찰연구에서 제기되고 소규모 개입연구로 "
-         "보강된 단계이며 <b>인과관계가 확정되지 않았습니다</b>. 스테비아 제품은 대부분 에리스리톨과 혼합되므로 원재료를 직접 확인해야 합니다."),
-        ("no-caffeine.html",
-         f"카페인 없는 제로 음료 {len(no_caf)}개 — 신고 원재료 기준",
-         f"카페인이 확인되지 않은 제로·무당류 탄산음료 {len(no_caf)}개 목록입니다. "
-         f"콜라·에너지드링크 계열을 피하고 싶을 때 쓰는 목록입니다.",
-         "카페인 없는 제로 탄산음료는 무엇인가?",
-         f"결론부터: 수집한 {n}개 중 카페인이 확인되지 않은 제품은 <b>{len(no_caf)}개</b>입니다.",
-         no_caf,
-         "신고 원재료가 식품첨가물혼합제제로 뭉뚱그려진 제품은 카페인 표기가 보이지 않아 "
-         "이 목록에 포함될 수 있습니다. 콜라 계열은 표기가 없어도 카페인이 들어가는 것이 일반적입니다."),
+         "이 리포트에서 가장 높은 S 등급입니다. 다만 <b>다른 감미료가 함께 들어가면 최종 등급은 "
+         "더 나쁜 쪽을 따릅니다</b> - 그래서 이 목록의 대부분은 S 가 아닙니다."),
+        negative("no-aspartame.html", "아스파탐", asp_clear, asp_murky,
+                 "아스파탐이 든 제품은 라벨에 '페닐알라닌 함유' 문구가 함께 붙습니다. "
+                 "페닐케톤뇨증(PKU) 때문에 피해야 하는 경우라면 <b>확인 불가 목록의 제품은 "
+                 "제품 라벨을 직접 확인하세요.</b>"),
+        negative("no-erythritol.html", "에리스리톨", ery_clear, ery_murky,
+                 "에리스리톨의 혈소판 반응성·심혈관 사건 신호는 관찰연구에서 제기되고 소규모 "
+                 "개입연구로 보강된 단계이며 <b>인과관계가 확정되지 않았습니다</b>. "
+                 "스테비아 제품은 대부분 에리스리톨과 혼합되므로 원재료를 직접 확인해야 합니다."),
+        negative("no-caffeine.html", "카페인", caf_clear, caf_murky,
+                 "<b>콜라 계열은 표기가 없어도 카페인이 들어가는 것이 일반적입니다.</b> "
+                 "펩시 계열처럼 널리 알려진 제품은 손으로 카페인 표시를 넣었지만, 확인 불가 "
+                 "목록에는 여전히 카페인이 들어 있을 수 있는 제품이 남아 있습니다."),
         ("fake-zero.html",
          f"제로라면서 당류가 있는 음료 {len(fake)}개 — 표기와 원재료 불일치",
          f"제품명에 제로를 표기하면서 신고 원재료에 당류가 들어간 제품 {len(fake)}개입니다. "
@@ -2340,10 +2360,11 @@ def seo_landing_specs(records):
          "제로라고 적혀 있는데 당류가 들어간 음료가 있나?",
          f"결론부터: 제로를 표기한 제품 가운데 신고 원재료에 당류가 있는 것은 "
          f"<b>{len(fake)}개</b>입니다. 법 위반이 아니라 표시 기준 안의 일입니다.",
-         fake,
+         [("", "", fake)],
          "<b>표시 기준 위반이 아닙니다.</b> 제로칼로리 표기 기준은 100mL당 4kcal 미만이므로 "
-         "소량의 당류가 들어가도 적법하게 '제로'를 붙일 수 있습니다. 이 표는 표기와 신고 원재료의 불일치를 보여줄 뿐입니다. "
-         "실측 당류가 0g으로 확인된 제품은 착향용 미량으로 보고 이 목록에서 제외했습니다."),
+         "소량의 당류가 들어가도 적법하게 '제로'를 붙일 수 있습니다. 이 표는 표기와 신고 원재료의 "
+         "불일치를 보여줄 뿐입니다. 실측 당류가 0g으로 확인된 제품은 착향용 미량으로 보고 "
+         "이 목록에서 제외했습니다."),
         ("hidden-zero.html",
          f"이름에 제로가 없는데 실제로 0kcal인 음료 {len(hidden)}개",
          f"제품명에 제로 표기가 없지만 신고 영양성분상 100mL당 4kcal 미만인 제품 {len(hidden)}개입니다. "
@@ -2351,7 +2372,7 @@ def seo_landing_specs(records):
          "이름에 제로가 없는데 실제로는 제로인 음료가 있나?",
          f"결론부터: 제품명에 제로 표기가 없으면서 100mL당 4kcal 미만인 제품이 "
          f"<b>{len(hidden)}개</b> 있습니다.",
-         hidden,
+         [("", "", hidden)],
          "식약처 표시 기준으로 100mL당 4kcal 미만이면 '제로칼로리'로 표기할 수 있습니다. "
          "이 제품들은 조건을 충족하는데 제품명으로 알리지 않는 경우입니다. 열량은 신고 영양성분 값입니다."),
     ]
@@ -2383,11 +2404,18 @@ def write_seo_pages(docs_dir, records, lastmod):
         f.write(page)
     written.append("products.html")
 
-    for slug, title, desc, h1, lead, subset, note in seo_landing_specs(records):
-        body = (_rows_table(subset) if subset
-                else "<p>해당하는 제품이 없습니다.</p>") + f"<h2>읽는 법</h2><p>{note}</p>"
+    for slug, title, desc, h1, lead, sections, note in seo_landing_specs(records):
+        parts, all_rows = [], []
+        for heading, caveat, subset in sections:
+            all_rows += subset
+            if heading:
+                parts.append(f"<h2>{heading}</h2>")
+            if caveat:
+                parts.append(f'<p class="caveat">{caveat}</p>')
+            parts.append(_rows_table(subset) if subset else "<p>해당하는 제품이 없습니다.</p>")
+        body = "".join(parts) + f"<h2>읽는 법</h2><p>{note}</p>"
         page = _static_page(slug, title, desc, h1, lead, body, lastmod,
-                            _item_list_ld(h1, desc, slug, subset))
+                            _item_list_ld(h1, desc, slug, all_rows))
         with open(os.path.join(docs_dir, slug), "w", encoding="utf-8", newline="\n") as f:
             f.write(page)
         written.append(slug)
@@ -2475,7 +2503,21 @@ def write_llms_files(docs_dir, records, lastmod):
     print(f"[seo] llms.txt / llms-full.txt 생성 ({len(records)}개 제품)")
 
 
-def write_seo_files(docs_dir, lastmod, records=None):
+def publish_docs(docs_html, out_html, stats):
+    """배포 디렉터리에 리포트를 복사하고 SEO 산출물을 전부 다시 만든다.
+
+    build 와 sync 가 같은 경로를 쓰게 해서, 어느 쪽으로 돌려도 정적 페이지·
+    llms.txt·사이트맵이 리포트와 같은 시점을 가리키게 한다.
+    """
+    docs_dir = os.path.dirname(docs_html) or "."
+    os.makedirs(docs_dir, exist_ok=True)
+    shutil.copyfile(out_html, docs_html)
+    print(f"[docs] {out_html} -> {docs_html}")
+    slugs = write_seo_files(docs_dir, stats["generated_at"][:10], stats["records"])
+    return docs_dir, slugs
+
+
+def write_seo_files(docs_dir, lastmod, records):
     """sitemap.xml / robots.txt / 정적 페이지 / llms.txt 를 한 번에 생성한다.
 
     Vercel 은 도메인 루트로 서빙하므로 robots.txt 가 실제로 읽힌다
@@ -2489,10 +2531,12 @@ def write_seo_files(docs_dir, lastmod, records=None):
     유입이 목표라 전부 허용한다. 데이터 자체가 공개 정부 데이터이고 산출 코드도
     MIT 로 공개돼 있어 학습을 막을 이유가 없다.
     """
-    slugs = []
-    if records:
-        slugs = write_seo_pages(docs_dir, records, lastmod)
-        write_llms_files(docs_dir, records, lastmod)
+    if not records:
+        # 사이트맵을 1 URL 로 덮어쓰고 정적 페이지를 낡은 채 남기는 사고를 막는다.
+        raise ValueError("write_seo_files 에는 records 가 필요합니다 "
+                         "(build()/sync() 가 돌려주는 stats['records'])")
+    slugs = write_seo_pages(docs_dir, records, lastmod)
+    write_llms_files(docs_dir, records, lastmod)
 
     urls = [(PAGE_URL, "1.0", "monthly")]
     urls += [(f"{PAGE_URL}{s}", "0.8", "monthly") for s in slugs]
@@ -2762,8 +2806,13 @@ def main():
         enrich_mode(load_key(args.key), args.raw, args.enrich_cache,
                     args.nutrition_cache)
     elif args.mode == "build":
-        build(args.raw, args.nutrition_cache, args.out, args.out_html, args.find, args.keep_alcohol,
-              args.keep_sugar, args.enrich_cache, args.keep_discontinued)
+        stats = build(args.raw, args.nutrition_cache, args.out, args.out_html, args.find,
+                      args.keep_alcohol, args.keep_sugar, args.enrich_cache,
+                      args.keep_discontinued)
+        # --docs-html 을 주면 배포본 복사와 SEO 산출물 생성까지 한 번에 끝낸다.
+        # 손으로 build 만 돌리고 docs 를 복사하면 정적 페이지·llms.txt 가 낡는다.
+        if stats and args.docs_html:
+            publish_docs(args.docs_html, args.out_html, stats)
     elif args.mode == "diff":
         diff_mode(args.raw, args.diff_against)
     elif args.mode == "sync":

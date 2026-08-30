@@ -183,6 +183,25 @@ I2570 의 제품명 예시 - 지금 등록명보다 오히려 나쁘다:
 | `docs/LABELS.md` | 위 파일을 채우는 절차와 소스별 실증 결과, 남은 작업 목록 |
 | `docs/index.html` | Vercel 이 서빙하는 배포본. `zero_soda_report.html` 의 복사본이다 |
 
+## SEO 산출물 — 배포는 한 경로로만
+
+`docs/` 의 정적 페이지·`llms.txt`·사이트맵은 **`publish_docs()` 가 한 번에** 만든다.
+리포트만 손으로 복사하면 나머지가 낡은 채 남으니 그러지 말 것.
+
+```bash
+python zero_soda_scan.py --mode build --docs-html docs/index.html   # 전부 갱신
+python zero_soda_scan.py --mode ping                                # IndexNow 통보
+```
+
+`write_seo_files(docs_dir, lastmod, records)` 의 `records` 는 **필수**다. 빼먹으면
+사이트맵이 1 URL 로 줄어드는 사고가 나서 예외를 던지게 해 두었다.
+
+**부정형 랜딩('○○ 없는 음료')은 확인된 목록과 확인 불가 목록을 반드시 쪼갠다.**
+원재료가 혼합제제로 가려진 제품은 성분 유무를 단정할 수 없다 - '미탐지'를 '없음'으로
+쓰면 이 프로젝트의 제1원칙을 깨는 것이고, 아스파탐처럼 건강 위험이 되는 성분도 있다.
+`seo_landing_specs()` 의 `negative()` 헬퍼가 이 구조를 강제한다.
+자세한 내용은 `docs/SEO.md`.
+
 ## 실행
 
 ```bash

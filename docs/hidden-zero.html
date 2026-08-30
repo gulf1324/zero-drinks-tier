@@ -25,7 +25,7 @@
  "name": "이름에 제로가 없는데 실제로는 제로인 음료가 있나?",
  "description": "제품명에 제로 표기가 없지만 신고 영양성분상 100mL당 4kcal 미만인 제품 107개입니다. 제로 음료를 찾을 때 이름만 보면 놓치는 제품들입니다.",
  "url": "https://zero-drinks-tier.vercel.app/hidden-zero.html",
- "numberOfItems": 107,
+ "numberOfItems": 100,
  "itemListElement": [
   {
    "@type": "ListItem",
@@ -1229,6 +1229,22 @@
   }
  ]
 }</script>
+<script>
+(function () {
+  // 로컬로 연 산출물(file://, localhost)은 통계에서 제외한다
+  if (location.protocol.indexOf('http') !== 0) return;
+  var h = location.hostname;
+  if (h === 'localhost' || h === '::1' || h.indexOf('127.') === 0) return;
+  var s = document.createElement('script');
+  s.async = true;
+  s.src = 'https://www.googletagmanager.com/gtag/js?id=G-8QMBBJ4EXD';
+  document.head.appendChild(s);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { dataLayer.push(arguments); };
+  gtag('js', new Date());
+  gtag('config', 'G-8QMBBJ4EXD');
+})();
+</script>
 <style>*{box-sizing:border-box}
 body{font-family:-apple-system,"Malgun Gothic",sans-serif;margin:0;padding:20px 16px 56px;
      background:#f4f5f7;color:#16191d;line-height:1.7}
@@ -1250,6 +1266,8 @@ nav a{color:#2563eb;margin-right:12px}
 footer{margin-top:34px;font-size:12px;color:#6b7280;border-top:1px solid #e4e7eb;padding-top:14px}
 footer div{margin-bottom:5px}
 .q{font-weight:700;margin-top:14px}
+.caveat{background:#fdf4f4;border-left:4px solid #c0262c;padding:10px 12px;
+        margin:0 0 12px;font-size:13px;border-radius:0 6px 6px 0}
 @media(max-width:720px){table{font-size:12px}th,td{padding:6px 7px}h1{font-size:20px}}</style>
 </head>
 <body>
