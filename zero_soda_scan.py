@@ -2144,7 +2144,7 @@ body{font-family:-apple-system,"Malgun Gothic",sans-serif;margin:0;padding:20px 
      background:#f4f5f7;color:#16191d;line-height:1.7}
 main{max-width:1000px;margin:0 auto}
 h1{font-size:23px;margin:0 0 10px;line-height:1.35}
-h2{font-size:17px;margin:30px 0 8px}
+h2{font-size:17px;margin:30px 0 8px}\nh2.first{margin-top:18px}\n.howto{background:#fff;border:1px solid #e4e7eb;border-radius:8px;\n       padding:12px 14px;margin:0 0 16px;font-size:13.5px;color:#3d4450}
 .lead{font-size:16px;font-weight:600;background:#eef4ff;border-left:4px solid #2563eb;
       padding:12px 14px;margin:0 0 14px;border-radius:0 8px 8px 0}
 .meta{color:#6b7280;font-size:13px;margin:0 0 20px}
@@ -2195,8 +2195,13 @@ def _rows_table(records, cols=("티어", "제품명", "업소명", "감미료", 
     return "\n".join(out)
 
 
-def _static_page(slug, title, desc, h1, lead, body, lastmod, ld=None):
-    """무JS 정적 페이지 한 장. 가시 텍스트와 JSON-LD 를 어긋나게 만들지 않는다."""
+def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None):
+    """무JS 정적 페이지 한 장. 가시 텍스트와 JSON-LD 를 어긋나게 만들지 않는다.
+
+    순서를 h1 -> 요약 -> 읽는 법 -> 기준일 -> 표 로 고정한다. 읽는 법을 표 아래에
+    두면 수백 행을 지나야 '절반은 확인 불가' 같은 한계가 보인다 - 읽는 사람이
+    못 보는 경고는 없는 경고다. 답변엔진도 첫 화면에서 답을 추출한다.
+    """
     ld_html = ""
     if ld:
         ld_html = ('<script type="application/ld+json">'
@@ -2229,7 +2234,10 @@ def _static_page(slug, title, desc, h1, lead, body, lastmod, ld=None):
 <main>
 <nav><a href="{PAGE_URL}">&larr; 전체 리포트(검색·필터)</a><a href="{PAGE_URL}products.html">616개 전체 목록</a></nav>
 <h1>{h1}</h1>
-<p class="lead">{lead}</p>
+<h2 class="first">요약</h2>
+<p class="lead">{summary}</p>
+<h2>읽는 법</h2>
+<div class="howto">{howto}</div>
 <div class="meta">기준일 {lastmod} &middot; 출처 식품의약품안전처 품목제조보고(C002) &middot; 열량·당류는 공공데이터포털 전국통합식품영양성분정보(15100066)</div>
 {body}
 <footer>
@@ -2383,10 +2391,15 @@ def write_seo_pages(docs_dir, records, lastmod):
     written = []
 
     ordered = sorted(records, key=lambda r: (TIER_RANK.get(r["티어"], 99), r["제품명"]))
-    body = (f"<p>식약처 품목제조보고에 신고된 원재료 전문에서 감미료를 탐지해 "
-            f"{len(records)}개 제품을 S~F 티어로 분류한 전체 목록입니다. "
-            f"검색·필터·정렬이 필요하면 <a href=\"{PAGE_URL}\">전체 리포트</a>를 쓰세요.</p>"
-            + _rows_table(ordered))
+    howto = (f"식약처 품목제조보고에 신고된 원재료 전문에서 감미료를 탐지해 "
+             f"{len(records)}개 제품을 S~F 티어로 분류한 전체 목록입니다. "
+             f"한 제품에 여러 감미료가 있으면 <b>가장 나쁜 등급</b>을 최종 티어로 부여합니다. "
+             f"열량·당류는 <b>100mL(또는 100g)당</b> 값이라 제품 라벨(한 병 전체 기준)과 "
+             f"달라 보일 수 있습니다. 감미료 칸이 비어 있으면 신고 원재료에서 감미료를 찾지 "
+             f"못한 것이고, 원재료가 '식품첨가물혼합제제'로 가려져 확인할 수 없는 제품도 "
+             f"여기 포함됩니다. 검색·필터·정렬이 필요하면 "
+             f"<a href=\"{PAGE_URL}\">전체 리포트</a>를 쓰세요.")
+    body = _rows_table(ordered)
     page = _static_page(
         "products.html",
         f"제로 탄산음료 {len(records)}개 전체 목록 — 감미료·티어·열량 한눈에",
@@ -2397,7 +2410,7 @@ def write_seo_pages(docs_dir, records, lastmod):
         + ", ".join(f"{t} {sum(1 for r in records if r['티어'] == t)}개"
                     for t in ("무감미료", "S", "A", "B", "C", "D", "F")
                     if sum(1 for r in records if r["티어"] == t)) + " 입니다.",
-        body, lastmod,
+        howto, body, lastmod,
         _item_list_ld(f"제로 탄산음료 {len(records)}개 전체 목록",
                       "식약처 품목제조보고 원재료 기준 감미료 티어 분류", "products.html", ordered))
     with open(os.path.join(docs_dir, "products.html"), "w", encoding="utf-8", newline="\n") as f:
@@ -2413,8 +2426,8 @@ def write_seo_pages(docs_dir, records, lastmod):
             if caveat:
                 parts.append(f'<p class="caveat">{caveat}</p>')
             parts.append(_rows_table(subset) if subset else "<p>해당하는 제품이 없습니다.</p>")
-        body = "".join(parts) + f"<h2>읽는 법</h2><p>{note}</p>"
-        page = _static_page(slug, title, desc, h1, lead, body, lastmod,
+        body = "".join(parts)
+        page = _static_page(slug, title, desc, h1, lead, note, body, lastmod,
                             _item_list_ld(h1, desc, slug, all_rows))
         with open(os.path.join(docs_dir, slug), "w", encoding="utf-8", newline="\n") as f:
             f.write(page)
