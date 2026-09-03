@@ -2529,7 +2529,7 @@ def _rows_table(records, cols=("티어", "제품명", "업소명", "감미료", 
             elif c in ("열량", "당류"):
                 cells.append(f'<td class="n">{_esc(v) if v != "" else "&mdash;"}</td>')
             elif c == "제품명" and r.get("슬러그"):
-                cells.append(f'<td><a class="pl" href="{PAGE_URL}p/{r["슬러그"]}.html">'
+                cells.append(f'<td><a class="pl" href="{PAGE_URL}{slug_url(r["슬러그"])}">'
                              f"{_esc(v)}</a></td>")
             else:
                 cells.append(f"<td>{_esc(v) if v != '' else '&mdash;'}</td>")
@@ -2771,6 +2771,11 @@ def product_slug(name):
     return s or "product"
 
 
+def slug_url(slug):
+    """URL 에 쓸 퍼센트 인코딩 형태. 사이트맵 규격은 인코딩된 URL 을 요구한다."""
+    return "p/" + urllib.parse.quote(slug, safe="") + ".html"
+
+
 def assign_slugs(records):
     """제품마다 고유 슬러그를 붙인다. 충돌하면 뒤에 번호를 단다.
 
@@ -2917,7 +2922,7 @@ def product_page(rec, records, lastmod):
     same_tier = [r for r in records
                  if r["티어"] == tier and r["업소명"] != maker and r["제품명"] != name][:6]
     def links(items):
-        return "".join(f'<a href="{PAGE_URL}p/{r["슬러그"]}.html">{_tier_badge(r["티어"])}'
+        return "".join(f'<a href="{PAGE_URL}{slug_url(r["슬러그"])}">{_tier_badge(r["티어"])}'
                        f'<span>{_esc(r["제품명"])}</span></a>' for r in items)
     if same_maker:
         body.append(f'<h2>같은 제조사의 다른 제품</h2><div class="rel">{links(same_maker)}</div>')
@@ -2942,7 +2947,7 @@ def product_page(rec, records, lastmod):
              "brand": {"@type": "Organization", "name": maker},
              "category": rec["식품유형"],
              "description": f"{name}의 감미료 구성과 등급. 식약처 품목제조보고 원재료 기준.",
-             "url": f"{PAGE_URL}p/{rec['슬러그']}.html",
+             "url": f"{PAGE_URL}{slug_url(rec['슬러그'])}",
              "additionalProperty": props,
              "isBasedOn": f"{PAGE_URL}"},
             {"@type": "BreadcrumbList", "itemListElement": [
@@ -2957,7 +2962,7 @@ def product_page(rec, records, lastmod):
             + (f"탐지된 감미료: {', '.join(w for w, _ in sw)}. " if sw else "")
             + f"제조사 {maker.split(' 외')[0]}. 식약처 품목제조보고 원재료 전문 기준입니다.")
     return _static_page(
-        f"p/{rec['슬러그']}.html",
+        slug_url(rec["슬러그"]),
         f"{name} 감미료 · 등급 {tier} | 식약처 원재료 기준",
         desc[:150],
         _esc(name),
@@ -2976,7 +2981,7 @@ def write_product_pages(docs_dir, records, lastmod):
                   encoding="utf-8", newline="\n") as f:
             f.write(product_page(rec, records, lastmod))
     print(f"[seo] 제품별 페이지 {len(records)}장 생성 -> {d}/")
-    return [f"p/{r['슬러그']}.html" for r in records]
+    return [slug_url(r["슬러그"]) for r in records]
 
 
 def write_seo_pages(docs_dir, records, lastmod):
