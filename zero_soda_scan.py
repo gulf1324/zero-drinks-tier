@@ -2295,7 +2295,7 @@ h2{font-size:17px;margin:30px 0 8px}\nh2.first{margin-top:18px}
 .f-ico{position:absolute;left:12px;width:17px;height:17px;fill:none;stroke:var(--muted-2);stroke-width:2;
        stroke-linecap:round;pointer-events:none}
 .finder input{width:100%;padding:11px 38px 11px 37px;font-size:15px;font-family:inherit;
-              border:1px solid var(--border-strong);border-radius:10px;background:var(--surface);color:var(--text);
+              border:1px solid var(--border-strong);border-radius:var(--ctl);background:var(--surface);color:var(--text);
               box-shadow:0 1px 2px rgba(16,24,40,.04)}
 .finder input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.13)}
 .finder button{position:absolute;right:7px;width:26px;height:26px;border:0;border-radius:50%;
@@ -2307,19 +2307,19 @@ h2{font-size:17px;margin:30px 0 8px}\nh2.first{margin-top:18px}
           font-variant-numeric:tabular-nums}
 tr[hidden]{display:none}
 .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 0 8px;
-    border-radius:8px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+    box-shadow:var(--shadow-sm)}
 .tw table{box-shadow:none;border-radius:0;min-width:640px}
 .nohit{font-size:13px;color:var(--muted);background:var(--surface);border:1px dashed var(--border-strong);
-       border-radius:8px;padding:14px;text-align:center;margin:0 0 8px}\n.howto{background:var(--surface);border:1px solid var(--border);border-radius:8px;\n       padding:12px 14px;margin:0 0 16px;font-size:13.5px;color:var(--text-2)}
+       padding:14px;text-align:center;margin:0 0 8px}\n.howto{background:var(--surface);border:1px solid var(--border);\n       padding:12px 14px;margin:0 0 16px;font-size:13.5px;color:var(--text-2)}
 .lead{font-size:16px;font-weight:600;background:var(--accent-soft);border-left:4px solid var(--accent);
-      padding:12px 14px;margin:0 0 14px;border-radius:0 8px 8px 0}
+      padding:12px 14px;margin:0 0 14px;}
 .meta{color:var(--muted);font-size:13px;margin:0 0 20px}
 table{border-collapse:collapse;width:100%;background:var(--surface);font-size:13px;
-      box-shadow:0 1px 3px rgba(16,24,40,.06);border-radius:8px;overflow:hidden}
+      box-shadow:var(--shadow-sm);overflow:hidden}
 th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
 th{background:var(--th-bg);font-weight:700;font-size:12px;white-space:nowrap;\n   cursor:pointer;user-select:none;position:relative}\nth:hover{background:var(--hair);color:var(--accent)}\nth:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}\nth.sorted{color:var(--accent)}\nth.sorted::after{content:" " attr(data-dir);font-size:9px}
 td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.t{display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border-radius:999px;
+.t{display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border-radius:var(--pill);
    font-weight:700;font-size:11.5px;color:var(--text)}
 nav{font-size:13px;margin:0 0 16px}
 nav a{color:var(--accent);margin-right:12px}
@@ -2357,7 +2357,7 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
 @media(max-width:640px){
   .kvs{grid-template-columns:1fr}
   .hr{grid-template-columns:1fr;gap:4px}
-}\n.caveat{background:var(--danger-soft);border-left:4px solid var(--danger);padding:10px 12px;\n        margin:0 0 12px;font-size:13px;border-radius:0 6px 6px 0}
+}\n.caveat{background:var(--danger-soft);border-left:4px solid var(--danger);padding:10px 12px;\n        margin:0 0 12px;font-size:13px;}
 @media(max-width:720px){table{font-size:12px}th,td{padding:6px 7px}h1{font-size:20px}}"""
 
 _TIER_BG = {"무감미료": "#4caf50", "S": "#8bc34a", "A": "#cddc39", "B": "#ffc107",
