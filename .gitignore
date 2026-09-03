@@ -7,6 +7,9 @@
 !zero_soda_nutrition.json
 !zero_soda_label.json
 !docs/*.html
+# 제품별 상세 페이지. docs/*.html 글롭은 하위 디렉터리를 잡지 못한다 -
+# 이것 때문에 616장이 커밋되지 않고 404 가 났다.
+!docs/p/*.html
 !docs/llms.txt
 !docs/llms-full.txt
 __pycache__/
