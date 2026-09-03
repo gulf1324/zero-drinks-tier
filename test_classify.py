@@ -5,6 +5,7 @@
 import tempfile
 import shutil
 import os
+import re
 import unittest
 
 import zero_soda_scan as z
@@ -607,40 +608,60 @@ class LabelIngredientTests(unittest.TestCase):
         self.assertEqual(recs[0]["감미료미표기"], "")
 
 class PaletteSyncTests(unittest.TestCase):
-    """_STATIC_CSS 의 팔레트는 _HTML_TEMPLATE 에서 복사한 것이다.
+    """색은 _PALETTE_CSS 하나에서만 나온다.
 
-    한쪽만 고치면 다크모드가 정적 페이지에만 안 먹는 사고가 난다 (실제로 났다).
+    예전에는 팔레트를 리포트와 정적 페이지에 복사해 두었다가, 한쪽만 고쳐서
+    다크모드가 리포트에만 먹는 사고가 났다. 지금은 같은 문자열을 공유한다.
     """
 
-    def _blocks(self, css):
-        import re
-        root = re.search(r':root\{(.*?)\n\s*\}', css, re.S).group(1)
-        dark = re.search(r'@media \(prefers-color-scheme: dark\)\{\s*:root\{(.*?)\n\s*\}',
-                         css, re.S).group(1)
-        pair = lambda s: dict(re.findall(r'(--[a-z0-9-]+):([^;]+);', s))
-        return pair(root), pair(dark)
-
-    def test_static_and_report_palettes_match(self):
-        import re
+    def _report_css(self):
         tpl = re.search(r'_HTML_TEMPLATE = r"""(.*?)\n"""',
                         open('zero_soda_scan.py', encoding='utf-8').read(), re.S).group(1)
-        tcss = re.search(r'<style>(.*?)</style>', tpl, re.S).group(1)
-        scss = z._STATIC_CSS
-        troot, tdark = self._blocks(tcss)
-        sroot, sdark = self._blocks(scss)
-        for name, a, b in (("light", troot, sroot), ("dark", tdark, sdark)):
-            for k, v in b.items():
-                self.assertIn(k, a, f"{name}: 정적 CSS 의 {k} 가 템플릿에 없다")
-                self.assertEqual(a[k].strip(), v.strip(), f"{name}: {k} 값이 갈라졌다")
+        return re.search(r"<style>(.*?)</style>", tpl, re.S).group(1)
 
-    def test_static_css_has_no_hardcoded_colors(self):
-        import re
-        css = z._STATIC_CSS
-        pal = css.split("*{box-sizing", 1)[0]
-        rest = css.split("*{box-sizing", 1)[1]
-        self.assertEqual(re.findall(r"#[0-9a-fA-F]{3,6}", rest), [],
-                         "정적 CSS 본문에 하드코딩 색이 남았다 - 토큰을 쓸 것")
-        self.assertIn("prefers-color-scheme", pal)
+    def test_both_stylesheets_share_one_palette(self):
+        self.assertIn("__PALETTE__", self._report_css(),
+                      "리포트가 팔레트를 인라인으로 갖고 있다 - 복사본을 만들지 말 것")
+        self.assertTrue(z._STATIC_CSS.startswith(z._PALETTE_CSS),
+                        "정적 CSS 가 공유 팔레트로 시작하지 않는다")
+
+    def test_no_hardcoded_colors_outside_the_palette(self):
+        for name, css in (("정적", z._STATIC_CSS.replace(z._PALETTE_CSS, "")),
+                          ("리포트", self._report_css())):
+            # var(--tc,#fff) 형태의 폴백은 허용한다 - 토큰이 없을 때의 방어값이고
+            # 팔레트를 우회하지 않는다.
+            stripped = re.sub(r"var\(--[a-z0-9-]+,\s*#[0-9a-fA-F]{3,6}\)", "", css)
+            leaked = [h for h in re.findall(r"#[0-9a-fA-F]{3,6}", stripped)
+                      if h not in z._THEME_CSS]
+            self.assertEqual(leaked, [], f"{name} CSS 에 하드코딩 색이 남았다: {leaked}")
+
+    def test_three_theme_modes_are_expressible(self):
+        pal = z._PALETTE_CSS
+        # 자동: 미디어 쿼리. 단, 사용자가 라이트를 고르면 이겨야 한다.
+        self.assertIn("@media (prefers-color-scheme: dark)", pal)
+        self.assertIn(':root:not([data-theme="light"])', pal)
+        # 명시 선택: 속성 선택자
+        self.assertIn(':root[data-theme="dark"]{', pal)
+        self.assertIn(':root[data-theme="light"]{color-scheme:light}', pal)
+        # 다크 토큰이 자동·명시 두 경로에 다 들어갔는지
+        self.assertEqual(pal.count("--bg:#101315"), 2)
+
+    def test_theme_boot_is_synchronous_and_in_head(self):
+        boot = z._THEME_BOOT_JS
+        self.assertNotIn("defer", boot)
+        self.assertNotIn("async", boot)
+        self.assertIn("localStorage", boot)
+        tpl = re.search(r'_HTML_TEMPLATE = r"""(.*?)\n"""',
+                        open('zero_soda_scan.py', encoding='utf-8').read(), re.S).group(1)
+        head = tpl.split("</head>")[0]
+        self.assertIn("__THEME_BOOT__", head, "FOUC 방지 스크립트가 head 밖에 있다")
+
+    def test_search_input_focus_does_not_hardcode_white(self):
+        # 다크에서 흰 배경 + 거의 흰 글자가 되어 입력이 안 보이던 버그
+        css = self._report_css()
+        focus = re.search(r"input\[type=search\]:focus\{([^}]*)\}", css).group(1)
+        self.assertNotIn("#fff", focus)
+        self.assertIn("background:var(--surface)", focus)
 
 
 class ProductPageTests(unittest.TestCase):

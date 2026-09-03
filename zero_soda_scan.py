@@ -975,6 +975,156 @@ _GA_SNIPPET = """<script>
 </script>"""
 
 
+# ── 색 팔레트: 단일 진원지 ───────────────────────────────────
+# 리포트(_HTML_TEMPLATE)와 정적 페이지(_STATIC_CSS)가 이 문자열 하나를 공유한다.
+# 예전에는 팔레트를 두 곳에 복사해 두었다가 다크모드가 리포트에만 먹는 사고가 났다.
+#
+# 테마는 3가지다: 자동(기본, 브라우저 설정 추종) / 라이트 / 다크.
+# 명시 선택은 <html data-theme="light|dark"> 로 표현하고, _THEME_BOOT_JS 가
+# 첫 페인트 전에 그 속성을 심는다 (FOUC 방지).
+_TOKENS_LIGHT = """color-scheme: light dark;
+/* 색은 전부 토큰이다. 하드코딩 hex 를 CSS 에 두면 다크모드가 성립하지 않는다. */
+--bg:#f4f5f7; --surface:#fff; --surface-2:#fbfcfd; --surface-3:#f7f8fa;
+--border:#e4e7eb; --border-strong:#d3d8de; --border-hover:#b9c0c9;
+--text:#16191d; --muted:#6b7280; --muted-2:#8a919b; --faint:#c3c8cf;
+--row-hover:#f7f9fc; --sel:#f4f8fd; --sel-hover:#eef4fb; --th-hover:#f1f3f5;
+/* 정적 페이지와 공유: 본문 보조색·머리카락 구분선·표 헤더 배경 */
+--text-2:#3d4450; --hair:#eef0f2; --th-bg:#f7f8fa;
+/* 액센트 위에 얹는 글자색. 다크의 액센트는 밝은 파랑이라 흰 글자가 안 읽힌다. */
+--on-accent:#ffffff; --on-danger:#ffffff;
+--chip-bg:#eef0f2; --ghost:#e8ebee; --ghost-hover:#dde1e5;
+--accent:#2563eb; --accent-soft:#eef4ff; --accent-border:#bcd3fb; --accent-ink:#12356e;
+--danger:#c0262c; --danger-soft:#fdf4f4; --danger-border:#f0cdcd;
+--danger-ink:#7d1d21; --danger-hover:#fbebeb;
+--warn-bg:#fff4e5; --warn-ink:#8a5300; --ok-bg:#e8f5ec; --ok-ink:#1c6b3c;
+/* 라운딩 원칙: 만지는 것과 떠 있는 것만 둥글게, 구조는 각지게.
+   --pill  분류 태그(배지·칩·필터) - 형태 자체가 '태그'라는 신호
+   --ctl   폼 컨트롤(입력·버튼·셀렉트·페이저) - 누를 수 있다는 신호
+   0       구조 컨테이너(표 카드·패널·검색 박스) - 문서는 각져야 문서로 읽힌다
+   50%     진짜 원(상태 점·닫기 버튼)만 */
+--ctl:6px; --pill:999px;
+--shadow-sm:0 1px 2px rgba(16,24,40,.05);
+--shadow:0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);"""
+
+# 순수 검정(#000)을 쓰지 않는다 - 깊이가 죽고 OLED 에서 번짐이 생긴다.
+# 티어 색(--tc/--tf)은 두 모드에서 동일하다. 등급 색은 이 프로젝트의 도메인
+# 팔레트이고, 모드에 따라 등급이 달라 보이면 판정이 흔들리는 것처럼 읽힌다.
+_TOKENS_DARK = """--bg:#101315; --surface:#171b1e; --surface-2:#1c2124; --surface-3:#1f2427;
+/* --border 는 장식 구분선(면제), --border-strong 은 입력·버튼 경계라
+   WCAG 1.4.11 의 3:1 을 넘겨야 한다. */
+--border:#2b3236; --border-strong:#67737a; --border-hover:#8b979e;
+--text:#e7eaec; --muted:#9aa4ab; --muted-2:#78838a; --faint:#4e585e;
+--row-hover:#1c2124; --sel:#16263a; --sel-hover:#1b2f47; --th-hover:#242a2e;
+--text-2:#c3cad0; --hair:#242a2e; --th-bg:#1f2427;
+--on-accent:#0d1520; --on-danger:#2a1010;
+--chip-bg:#252c30; --ghost:#2b3236; --ghost-hover:#3a4247;
+--accent:#6ea3ff; --accent-soft:#16263a; --accent-border:#2f4f7d; --accent-ink:#b9d3ff;
+--danger:#f3736c; --danger-soft:#2a1918; --danger-border:#5c2a28;
+--danger-ink:#f7b0ab; --danger-hover:#331d1c;
+--warn-bg:#33260f; --warn-ink:#f0c887; --ok-bg:#14291d; --ok-ink:#8fd6a8;
+--shadow-sm:0 1px 2px rgba(0,0,0,.5);
+--shadow:0 1px 3px rgba(0,0,0,.6), 0 1px 2px rgba(0,0,0,.4);"""
+
+# 다크에서 밝은 티어 색은 그대로 두면 눈을 찌른다. 채도만 살짝 낮춘다.
+_DARK_TWEAK = ".tier-chip,.badge.active,.tier-swatch{filter:saturate(.92)}"
+
+_TIER_CSS = """/* 티어 색의 단일 진원지 — 배지 점·배지 활성·표 칩·범례 칩이 모두 상속 */
+[data-tier="무감미료"]{--tc:#4caf50;--tf:#0d0f11}
+[data-tier="S"]{--tc:#8bc34a;--tf:#14210a}
+[data-tier="A"]{--tc:#cddc39;--tf:#1f2408}
+[data-tier="B"]{--tc:#ffc107;--tf:#2b2000}
+[data-tier="C"]{--tc:#ff9800;--tf:#2b1800}
+[data-tier="D"]{--tc:#f4511e;--tf:#0d0f11}
+[data-tier="F"]{--tc:#cc0000;--tf:#ffffff}
+[data-tier="?"]{--tc:#9aa1ab;--tf:#0d0f11}"""
+
+# 자동 모드는 미디어 쿼리로, 명시 선택은 속성 선택자로 적용한다.
+# :not([data-theme="light"]) 가 'OS 는 다크인데 사용자가 라이트를 골랐다' 를 잡는다.
+_PALETTE_CSS = (
+    ":root{color-scheme:light dark;\n" + _TOKENS_LIGHT + "\n}\n"
+    ':root[data-theme="light"]{color-scheme:light}\n'
+    ':root[data-theme="dark"]{color-scheme:dark}\n'
+    "@media (prefers-color-scheme: dark){\n"
+    '  :root:not([data-theme="light"]){\n' + _TOKENS_DARK + "\n  }\n"
+    '  :root:not([data-theme="light"]) ' + _DARK_TWEAK + "\n}\n"
+    ':root[data-theme="dark"]{\n' + _TOKENS_DARK + "\n}\n"
+    ':root[data-theme="dark"] ' + _DARK_TWEAK + "\n"
+    + _TIER_CSS
+)
+
+# 첫 페인트 전에 저장된 선택을 반영한다. 이 스크립트가 <head> 안에서 동기로
+# 돌지 않으면 라이트 -> 다크로 번쩍이는 FOUC 가 생긴다. async/defer 금지.
+_THEME_BOOT_JS = (
+    "<script>(function(){try{var m=localStorage.getItem('zdt-theme');"
+    "if(m==='dark'||m==='light')document.documentElement.setAttribute('data-theme',m);}"
+    "catch(e){}})();</script>"
+)
+
+
+# 우측 상단 톱니바퀴. 라이트/다크/자동 3택.
+# aria-pressed 로 현재 선택을 읽어 주고, 자동은 '브라우저 설정을 따름'이라고 밝힌다.
+_THEME_UI = """<div class="themer">
+  <button type="button" class="theme-btn" id="themeBtn" aria-haspopup="true" aria-expanded="false"
+          aria-label="화면 테마 설정" title="화면 테마">
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v2.6M12 18.8v2.6M4.3 4.3l1.9 1.9M17.8 17.8l1.9 1.9M2.6 12h2.6M18.8 12h2.6M4.3 19.7l1.9-1.9M17.8 6.2l1.9-1.9"/></svg>
+  </button>
+  <div class="theme-menu" id="themeMenu" role="group" aria-label="화면 테마" hidden>
+    <button type="button" data-theme-set="light" aria-pressed="false">라이트</button>
+    <button type="button" data-theme-set="dark" aria-pressed="false">다크</button>
+    <button type="button" data-theme-set="auto" aria-pressed="false">자동<span>브라우저 설정</span></button>
+  </div>
+</div>"""
+
+_THEME_CSS = """
+/* 톱니바퀴는 내용이 아니라 설정이다. 시선을 끌지 않게 muted 로 두고 hover 에만 살린다 */
+.themer{position:relative;margin-left:auto;flex:none}
+.theme-btn{display:flex;align-items:center;justify-content:center;width:30px;height:30px;
+  border:1px solid var(--border);background:var(--surface);color:var(--muted);
+  border-radius:var(--ctl);cursor:pointer;padding:0}
+.theme-btn svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.theme-btn:hover{color:var(--text);border-color:var(--border-hover)}
+.theme-btn[aria-expanded="true"]{color:var(--accent);border-color:var(--accent)}
+.theme-menu{position:absolute;top:34px;right:0;z-index:20;min-width:148px;padding:4px;
+  background:var(--surface);border:1px solid var(--border-strong);box-shadow:var(--shadow)}
+.theme-menu button{display:flex;align-items:baseline;gap:7px;width:100%;padding:7px 9px;
+  border:0;background:none;color:var(--text);font:inherit;font-size:12.5px;text-align:left;cursor:pointer}
+.theme-menu button span{color:var(--muted);font-size:11px}
+.theme-menu button:hover{background:var(--row-hover)}
+.theme-menu button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink);font-weight:700}
+.theme-menu button[aria-pressed="true"]::after{content:"\\2713";margin-left:auto;font-weight:700}
+"""
+
+_THEME_JS = """<script>
+(function () {
+  var btn = document.getElementById('themeBtn'), menu = document.getElementById('themeMenu');
+  if (!btn || !menu) return;
+  var KEY = 'zdt-theme';
+  function read() { try { return localStorage.getItem(KEY) || 'auto'; } catch (e) { return 'auto'; } }
+  function paint(mode) {
+    // 'auto' 는 속성을 지워 미디어 쿼리에 넘긴다 - 자동이 곧 '브라우저 설정 추종'이다.
+    if (mode === 'auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', mode);
+    var bs = menu.querySelectorAll('[data-theme-set]');
+    for (var i = 0; i < bs.length; i++)
+      bs[i].setAttribute('aria-pressed', String(bs[i].getAttribute('data-theme-set') === mode));
+  }
+  function open(v) { menu.hidden = !v; btn.setAttribute('aria-expanded', String(v)); }
+  paint(read());
+  btn.addEventListener('click', function (e) { e.stopPropagation(); open(menu.hidden); });
+  menu.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-theme-set]'); if (!b) return;
+    var m = b.getAttribute('data-theme-set');
+    try { m === 'auto' ? localStorage.removeItem(KEY) : localStorage.setItem(KEY, m); } catch (err) {}
+    paint(m); open(false);
+  });
+  document.addEventListener('click', function () { open(false); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !menu.hidden) { open(false); btn.focus(); }
+  });
+})();
+</script>"""
+
+
 # ── Step 5: 단일 파일 HTML 리포트 ────────────────────────────
 _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="ko">
@@ -1040,68 +1190,9 @@ __GA__
 }
 </script>
 __FAQ_LD__
+__THEME_BOOT__
 <style>
-  :root{
-    color-scheme: light dark;
-    /* 색은 전부 토큰이다. 하드코딩 hex 를 CSS 에 두면 다크모드가 성립하지 않는다. */
-    --bg:#f4f5f7; --surface:#fff; --surface-2:#fbfcfd; --surface-3:#f7f8fa;
-    --border:#e4e7eb; --border-strong:#d3d8de; --border-hover:#b9c0c9;
-    --text:#16191d; --muted:#6b7280; --muted-2:#8a919b; --faint:#c3c8cf;
-    --row-hover:#f7f9fc; --sel:#f4f8fd; --sel-hover:#eef4fb; --th-hover:#f1f3f5;
-    /* 정적 페이지와 공유: 본문 보조색·머리카락 구분선·표 헤더 배경 */
-    --text-2:#3d4450; --hair:#eef0f2; --th-bg:#f7f8fa;
-    /* 액센트 위에 얹는 글자색. 다크의 액센트는 밝은 파랑이라 흰 글자가 안 읽힌다. */
-    --on-accent:#ffffff;
-    --chip-bg:#eef0f2; --ghost:#e8ebee; --ghost-hover:#dde1e5;
-    --accent:#2563eb; --accent-soft:#eef4ff; --accent-border:#bcd3fb; --accent-ink:#12356e;
-    --danger:#c0262c; --danger-soft:#fdf4f4; --danger-border:#f0cdcd;
-    --danger-ink:#7d1d21; --danger-hover:#fbebeb;
-    --warn-bg:#fff4e5; --warn-ink:#8a5300; --ok-bg:#e8f5ec; --ok-ink:#1c6b3c;
-    /* 라운딩 원칙: 만지는 것과 떠 있는 것만 둥글게, 구조는 각지게.
-       --pill  분류 태그(배지·칩·필터) - 형태 자체가 '태그'라는 신호
-       --ctl   폼 컨트롤(입력·버튼·셀렉트·페이저) - 누를 수 있다는 신호
-       0       구조 컨테이너(표 카드·패널·검색 박스) - 문서는 각져야 문서로 읽힌다
-       50%     진짜 원(상태 점·닫기 버튼)만 */
-    --ctl:6px; --pill:999px;
-    --shadow-sm:0 1px 2px rgba(16,24,40,.05);
-    --shadow:0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
-  }
-
-  /* 다크모드. 브라우저 설정을 그대로 따른다 (토글 없음 - 상태를 저장할 곳이 없는
-     정적 파일이고, OS 설정을 존중하는 것이 사용자가 기대하는 동작이다).
-     순수 검정(#000)을 쓰지 않는다 - 깊이가 죽고 OLED 에서 번짐이 생긴다.
-     티어 색(--tc/--tf)은 두 모드에서 동일하다. 등급 색은 이 프로젝트의 도메인
-     팔레트이고, 모드에 따라 등급이 달라 보이면 판정이 흔들리는 것처럼 읽힌다. */
-  @media (prefers-color-scheme: dark){
-    :root{
-      --bg:#101315; --surface:#171b1e; --surface-2:#1c2124; --surface-3:#1f2427;
-      /* --border 는 장식 구분선(면제), --border-strong 은 입력·버튼 경계라
-         WCAG 1.4.11 의 3:1 을 넘겨야 한다. */
-      --border:#2b3236; --border-strong:#67737a; --border-hover:#8b979e;
-      --text:#e7eaec; --muted:#9aa4ab; --muted-2:#78838a; --faint:#4e585e;
-      --row-hover:#1c2124; --sel:#16263a; --sel-hover:#1b2f47; --th-hover:#242a2e;
-      --text-2:#c3cad0; --hair:#242a2e; --th-bg:#1f2427;
-      --on-accent:#0d1520;
-      --chip-bg:#252c30; --ghost:#2b3236; --ghost-hover:#3a4247;
-      --accent:#6ea3ff; --accent-soft:#16263a; --accent-border:#2f4f7d; --accent-ink:#b9d3ff;
-      --danger:#f3736c; --danger-soft:#2a1918; --danger-border:#5c2a28;
-      --danger-ink:#f7b0ab; --danger-hover:#331d1c;
-      --warn-bg:#33260f; --warn-ink:#f0c887; --ok-bg:#14291d; --ok-ink:#8fd6a8;
-      --shadow-sm:0 1px 2px rgba(0,0,0,.5);
-      --shadow:0 1px 3px rgba(0,0,0,.6), 0 1px 2px rgba(0,0,0,.4);
-    }
-    /* 다크에서 밝은 티어 색은 그대로 두면 눈을 찌른다. 채도만 살짝 낮춘다. */
-    .tier-chip,.badge.active,.tier-swatch{filter:saturate(.92)}
-  }
-  /* 티어 색의 단일 진원지 — 배지 점·배지 활성·표 칩·범례 칩이 모두 상속 */
-  [data-tier="무감미료"]{--tc:#4caf50;--tf:#0d0f11}
-  [data-tier="S"]{--tc:#8bc34a;--tf:#14210a}
-  [data-tier="A"]{--tc:#cddc39;--tf:#1f2408}
-  [data-tier="B"]{--tc:#ffc107;--tf:#2b2000}
-  [data-tier="C"]{--tc:#ff9800;--tf:#2b1800}
-  [data-tier="D"]{--tc:#f4511e;--tf:#0d0f11}
-  [data-tier="F"]{--tc:#cc0000;--tf:#ffffff}
-  [data-tier="?"]{--tc:#9aa1ab;--tf:#0d0f11}
+__PALETTE__
 
   *{box-sizing:border-box}
   body{margin:0;padding:20px 18px 44px;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;
@@ -1111,13 +1202,16 @@ __FAQ_LD__
 
   header{margin-bottom:14px}
   /* 구글식 진입: 로고 -> 한 줄 설명 -> 검색창. 들어온 사람이 바로 검색한다. */
+  /* 설정은 내용 위에 얹지 않는다. 헤로보다 위, 오른쪽 끝 */
+  .topbar{display:flex;justify-content:flex-end;height:30px}
+__THEME_CSS__
   .brandbar{display:flex;flex-direction:column;align-items:center;text-align:center;
             padding:34px 0 20px;gap:10px}
   .mark{display:flex;align-items:flex-end;gap:4px;height:44px;position:relative}
   .m-bar{width:11px;height:var(--h);border-radius:3px 3px 0 0;background:var(--accent);
          opacity:.9}
-  .m-bar:nth-child(2){background:#4caf50}
-  .m-bar:nth-child(3){background:#ffc107}
+  /* 로고 바도 티어 색이다. [data-tier] 로 토큰을 상속받아 하드코딩을 피한다 */
+  .m-bar[data-tier]{background:var(--tc)}
   .m-drop{position:absolute;right:-9px;bottom:2px;width:11px;height:11px;
           border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--text)}
   .brandbar h1{font-size:27px;letter-spacing:-.03em;margin:0}
@@ -1156,11 +1250,11 @@ __FAQ_LD__
   .clear-tiers:hover:not(:disabled){color:var(--text);border-color:var(--border-hover)}
   .clear-tiers:disabled{opacity:.4;cursor:default;box-shadow:none}
 
-  .warn{display:flex;gap:9px;align-items:flex-start;background:var(--danger-soft);border:1px solid #f0cdcd;
+  .warn{display:flex;gap:9px;align-items:flex-start;background:var(--danger-soft);border:1px solid var(--danger-border);
         border-left:4px solid var(--danger);border-radius:var(--ctl);padding:10px 13px;margin:0 0 12px;
         cursor:pointer;font-size:12.5px;color:var(--danger-ink);box-shadow:var(--shadow-sm)}
   .warn:hover{background:var(--danger-hover)}
-  .warn::before{content:"!";flex:none;width:16px;height:16px;border-radius:50%;background:var(--danger);color:#fff;
+  .warn::before{content:"!";flex:none;width:16px;height:16px;border-radius:50%;background:var(--danger);color:var(--on-danger);
                 font-size:11px;font-weight:700;line-height:16px;text-align:center;margin-top:1px}
 
   details.panel{background:var(--surface);border:1px solid var(--border);
@@ -1198,7 +1292,7 @@ __FAQ_LD__
                      -webkit-appearance:none;appearance:none}
   input[type=search]::-webkit-search-cancel-button{display:none}
   input[type=search]::placeholder{color:var(--muted-2)}
-  input[type=search]:focus{border-color:var(--accent);background:#fff;
+  input[type=search]:focus{border-color:var(--accent);background:var(--surface);
                            box-shadow:0 0 0 4px rgba(37,99,235,.13)}
   .s-clear{position:absolute;right:8px;width:26px;height:26px;border:0;border-radius:50%;
            background:var(--ghost);color:var(--muted);font-size:15px;line-height:1;cursor:pointer;
@@ -1214,7 +1308,7 @@ __FAQ_LD__
            border:1px solid var(--border);border-radius:var(--ctl);padding:10px 12px;
            margin:0 0 12px;box-shadow:var(--shadow-sm)}
   .chks{display:flex;gap:7px;flex-wrap:wrap;align-items:center;min-width:0}
-  .chk{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fbfcfd;
+  .chk{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface-2);
        border-radius:var(--pill);padding:5px 11px;font-size:12.5px;cursor:pointer;color:var(--muted);
        transition:background .12s,border-color .12s,color .12s}
   .chk:hover{border-color:var(--border-strong);color:var(--text)}
@@ -1225,7 +1319,7 @@ __FAQ_LD__
   .sortsel select{font-family:inherit;font-size:12.5px;padding:5px 8px;border-radius:var(--ctl);
                   border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text)}
   .sortsel button{width:30px;height:28px;border:1px solid var(--border-strong);border-radius:var(--ctl);
-                  background:#fbfcfd;color:var(--text);cursor:pointer;font-size:11px}
+                  background:var(--surface-2);color:var(--text);cursor:pointer;font-size:11px}
 
   .tablecard{background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow)}
   table{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
@@ -1274,7 +1368,7 @@ __FAQ_LD__
       background:var(--surface);border-radius:var(--ctl);font-family:inherit;font-size:12.5px;
       color:var(--text);cursor:pointer;box-shadow:var(--shadow-sm)}
   .pg:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
-  .pg.cur{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;cursor:default}
+  .pg.cur{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700;cursor:default}
   .pg:disabled{opacity:.4;cursor:default;box-shadow:none}
   .pg-gap{color:var(--muted-2);align-self:center;padding:0 2px}
   .pager-info{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
@@ -1357,11 +1451,12 @@ __FAQ_LD__
 </head>
 <body>
 <div class="page">
+<div class="topbar">__THEME_UI__</div>
 <header>
   <div class="brandbar">
     <div class="mark" aria-hidden="true">
-      <span class="m-bar" style="--h:60%"></span><span class="m-bar" style="--h:82%"></span>
-      <span class="m-bar" style="--h:44%"></span><span class="m-drop"></span>
+      <span class="m-bar" style="--h:60%"></span><span class="m-bar" style="--h:82%" data-tier="무감미료"></span>
+      <span class="m-bar" style="--h:44%" data-tier="B"></span><span class="m-drop"></span>
     </div>
     <h1>제로 음료 감미료 조회</h1>
     <p class="tagline">찾는 음료에 어떤 대체당이 들어 있는지 <b>식약처 신고 원재료</b>로 확인하세요.
@@ -1772,6 +1867,7 @@ document.querySelectorAll('th[data-key]').forEach(function(th) {
 renderMakers();
 render();
 </script>
+__THEME_JS__
 </body>
 </html>
 """
@@ -1858,6 +1954,11 @@ def write_html(records, meta, meta_info, path):
     html = html.replace("__BADGES__", badges_html)
     html = html.replace("__ZERO_TOTAL__", str(zero_total))
     html = html.replace("__FAKE_ZERO__", str(fake_zero))
+    html = html.replace("__PALETTE__", _PALETTE_CSS)
+    html = html.replace("__THEME_CSS__", _THEME_CSS)
+    html = html.replace("__THEME_UI__", _THEME_UI)
+    html = html.replace("__THEME_JS__", _THEME_JS)
+    html = html.replace("__THEME_BOOT__", _THEME_BOOT_JS)
     html = html.replace("__DATA_JSON__", data_json)
     html = html.replace("__RANK_JSON__", rank_json)
     html = html.replace("__MAKERS_JSON__", makers_json)
@@ -2222,66 +2323,8 @@ PUSH_PATHS = [
 # 그래서 빌드 때 무JS 정적 페이지를 같이 뽑는다. 답변엔진·생성엔진은 표를
 # 구조화된 사실로 파싱하므로, 질문 하나당 페이지 하나 원칙으로 만든다.
 
-_STATIC_CSS = """
-/* 팔레트는 _HTML_TEMPLATE 의 :root 를 그대로 옮긴 것이다. 색을 두 군데서 고치면
-   다크모드가 한쪽만 적용되는 사고가 난다 - 반드시 템플릿 쪽을 먼저 고치고 복사할 것. */
-:root{
-  color-scheme: light dark;
-  /* 색은 전부 토큰이다. 하드코딩 hex 를 CSS 에 두면 다크모드가 성립하지 않는다. */
-  --bg:#f4f5f7; --surface:#fff; --surface-2:#fbfcfd; --surface-3:#f7f8fa;
-  --border:#e4e7eb; --border-strong:#d3d8de; --border-hover:#b9c0c9;
-  --text:#16191d; --muted:#6b7280; --muted-2:#8a919b; --faint:#c3c8cf;
-  --row-hover:#f7f9fc; --sel:#f4f8fd; --sel-hover:#eef4fb; --th-hover:#f1f3f5;
-  /* 정적 페이지와 공유: 본문 보조색·머리카락 구분선·표 헤더 배경 */
-  --text-2:#3d4450; --hair:#eef0f2; --th-bg:#f7f8fa;
-  /* 액센트 위에 얹는 글자색. 다크의 액센트는 밝은 파랑이라 흰 글자가 안 읽힌다. */
-  --on-accent:#ffffff;
-  --chip-bg:#eef0f2; --ghost:#e8ebee; --ghost-hover:#dde1e5;
-  --accent:#2563eb; --accent-soft:#eef4ff; --accent-border:#bcd3fb; --accent-ink:#12356e;
-  --danger:#c0262c; --danger-soft:#fdf4f4; --danger-border:#f0cdcd;
-  --danger-ink:#7d1d21; --danger-hover:#fbebeb;
-  --warn-bg:#fff4e5; --warn-ink:#8a5300; --ok-bg:#e8f5ec; --ok-ink:#1c6b3c;
-  /* 라운딩 원칙: 만지는 것과 떠 있는 것만 둥글게, 구조는 각지게.
-     --pill  분류 태그(배지·칩·필터) - 형태 자체가 '태그'라는 신호
-     --ctl   폼 컨트롤(입력·버튼·셀렉트·페이저) - 누를 수 있다는 신호
-     0       구조 컨테이너(표 카드·패널·검색 박스) - 문서는 각져야 문서로 읽힌다
-     50%     진짜 원(상태 점·닫기 버튼)만 */
-  --ctl:6px; --pill:999px;
-  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
-  --shadow:0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
-}
-
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#101315; --surface:#171b1e; --surface-2:#1c2124; --surface-3:#1f2427;
-    /* --border 는 장식 구분선(면제), --border-strong 은 입력·버튼 경계라
-       WCAG 1.4.11 의 3:1 을 넘겨야 한다. */
-    --border:#2b3236; --border-strong:#67737a; --border-hover:#8b979e;
-    --text:#e7eaec; --muted:#9aa4ab; --muted-2:#78838a; --faint:#4e585e;
-    --row-hover:#1c2124; --sel:#16263a; --sel-hover:#1b2f47; --th-hover:#242a2e;
-    --text-2:#c3cad0; --hair:#242a2e; --th-bg:#1f2427;
-    --on-accent:#0d1520;
-    --chip-bg:#252c30; --ghost:#2b3236; --ghost-hover:#3a4247;
-    --accent:#6ea3ff; --accent-soft:#16263a; --accent-border:#2f4f7d; --accent-ink:#b9d3ff;
-    --danger:#f3736c; --danger-soft:#2a1918; --danger-border:#5c2a28;
-    --danger-ink:#f7b0ab; --danger-hover:#331d1c;
-    --warn-bg:#33260f; --warn-ink:#f0c887; --ok-bg:#14291d; --ok-ink:#8fd6a8;
-    --shadow-sm:0 1px 2px rgba(0,0,0,.5);
-    --shadow:0 1px 3px rgba(0,0,0,.6), 0 1px 2px rgba(0,0,0,.4);
-  }
-  /* 다크에서 밝은 티어 색은 그대로 두면 눈을 찌른다. 채도만 살짝 낮춘다. */
-  .tier-chip,.badge.active,.tier-swatch{filter:saturate(.92)}
-}
-
-/* 티어 색의 단일 진원지 — 배지 점·배지 활성·표 칩·범례 칩이 모두 상속 */
-[data-tier="무감미료"]{--tc:#4caf50;--tf:#0d0f11}
-[data-tier="S"]{--tc:#8bc34a;--tf:#14210a}
-[data-tier="A"]{--tc:#cddc39;--tf:#1f2408}
-[data-tier="B"]{--tc:#ffc107;--tf:#2b2000}
-[data-tier="C"]{--tc:#ff9800;--tf:#2b1800}
-[data-tier="D"]{--tc:#f4511e;--tf:#0d0f11}
-[data-tier="F"]{--tc:#cc0000;--tf:#ffffff}
-[data-tier="?"]{--tc:#9aa1ab;--tf:#0d0f11}
+# 팔레트는 _PALETTE_CSS 하나를 공유한다 (복사본을 두지 말 것).
+_STATIC_CSS = _PALETTE_CSS + _THEME_CSS + """
 
 *{box-sizing:border-box}
 body{font-family:-apple-system,"Malgun Gothic",sans-serif;margin:0;padding:20px 16px 56px;
@@ -2321,8 +2364,9 @@ th{background:var(--th-bg);font-weight:700;font-size:12px;white-space:nowrap;\n 
 td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .t{display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border-radius:var(--pill);
    font-weight:700;font-size:11.5px;color:var(--text)}
-nav{font-size:13px;margin:0 0 16px}
-nav a{color:var(--accent);margin-right:12px}
+/* 톱니바퀴가 오른쪽 끝에 붙으려면 nav 가 flex 여야 한다 (block 이면 아래로 밀린다) */
+nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;margin:0 0 16px}
+nav a{color:var(--accent)}
 footer{margin-top:34px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:14px}
 footer div{margin-bottom:5px}
 .q{font-weight:700;margin-top:14px}
@@ -2575,11 +2619,12 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
 <meta name="twitter:description" content="{_esc(desc)}">
 <meta name="twitter:image" content="{PAGE_URL}og-card.png">
 {ld_html}{_GA_SNIPPET.replace("__GA_ID__", GA_ID) if GA_ID else ""}
+{_THEME_BOOT_JS}
 <style>{_STATIC_CSS}</style>
 </head>
 <body>
 <main>
-<nav><a href="{PAGE_URL}">&larr; 전체 리포트(검색·필터)</a><a href="{PAGE_URL}products.html">616개 전체 목록</a></nav>
+<nav><a href="{PAGE_URL}">&larr; 전체 리포트(검색·필터)</a><a href="{PAGE_URL}products.html">616개 전체 목록</a>{_THEME_UI}</nav>
 <h1>{h1}</h1>
 {finder_html}
 <h2 class="first">요약</h2>
@@ -2596,6 +2641,7 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
 </footer>
 </main>
 {_FINDER_JS}
+{_THEME_JS}
 </body>
 </html>
 """

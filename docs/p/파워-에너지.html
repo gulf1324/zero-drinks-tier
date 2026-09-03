@@ -86,57 +86,72 @@
   gtag('config', 'G-8QMBBJ4EXD');
 })();
 </script>
-<style>
-/* 팔레트는 _HTML_TEMPLATE 의 :root 를 그대로 옮긴 것이다. 색을 두 군데서 고치면
-   다크모드가 한쪽만 적용되는 사고가 난다 - 반드시 템플릿 쪽을 먼저 고치고 복사할 것. */
-:root{
-  color-scheme: light dark;
-  /* 색은 전부 토큰이다. 하드코딩 hex 를 CSS 에 두면 다크모드가 성립하지 않는다. */
-  --bg:#f4f5f7; --surface:#fff; --surface-2:#fbfcfd; --surface-3:#f7f8fa;
-  --border:#e4e7eb; --border-strong:#d3d8de; --border-hover:#b9c0c9;
-  --text:#16191d; --muted:#6b7280; --muted-2:#8a919b; --faint:#c3c8cf;
-  --row-hover:#f7f9fc; --sel:#f4f8fd; --sel-hover:#eef4fb; --th-hover:#f1f3f5;
-  /* 정적 페이지와 공유: 본문 보조색·머리카락 구분선·표 헤더 배경 */
-  --text-2:#3d4450; --hair:#eef0f2; --th-bg:#f7f8fa;
-  /* 액센트 위에 얹는 글자색. 다크의 액센트는 밝은 파랑이라 흰 글자가 안 읽힌다. */
-  --on-accent:#ffffff;
-  --chip-bg:#eef0f2; --ghost:#e8ebee; --ghost-hover:#dde1e5;
-  --accent:#2563eb; --accent-soft:#eef4ff; --accent-border:#bcd3fb; --accent-ink:#12356e;
-  --danger:#c0262c; --danger-soft:#fdf4f4; --danger-border:#f0cdcd;
-  --danger-ink:#7d1d21; --danger-hover:#fbebeb;
-  --warn-bg:#fff4e5; --warn-ink:#8a5300; --ok-bg:#e8f5ec; --ok-ink:#1c6b3c;
-  /* 라운딩 원칙: 만지는 것과 떠 있는 것만 둥글게, 구조는 각지게.
-     --pill  분류 태그(배지·칩·필터) - 형태 자체가 '태그'라는 신호
-     --ctl   폼 컨트롤(입력·버튼·셀렉트·페이저) - 누를 수 있다는 신호
-     0       구조 컨테이너(표 카드·패널·검색 박스) - 문서는 각져야 문서로 읽힌다
-     50%     진짜 원(상태 점·닫기 버튼)만 */
-  --ctl:6px; --pill:999px;
-  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
-  --shadow:0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
+<script>(function(){try{var m=localStorage.getItem('zdt-theme');if(m==='dark'||m==='light')document.documentElement.setAttribute('data-theme',m);}catch(e){}})();</script>
+<style>:root{color-scheme:light dark;
+color-scheme: light dark;
+/* 색은 전부 토큰이다. 하드코딩 hex 를 CSS 에 두면 다크모드가 성립하지 않는다. */
+--bg:#f4f5f7; --surface:#fff; --surface-2:#fbfcfd; --surface-3:#f7f8fa;
+--border:#e4e7eb; --border-strong:#d3d8de; --border-hover:#b9c0c9;
+--text:#16191d; --muted:#6b7280; --muted-2:#8a919b; --faint:#c3c8cf;
+--row-hover:#f7f9fc; --sel:#f4f8fd; --sel-hover:#eef4fb; --th-hover:#f1f3f5;
+/* 정적 페이지와 공유: 본문 보조색·머리카락 구분선·표 헤더 배경 */
+--text-2:#3d4450; --hair:#eef0f2; --th-bg:#f7f8fa;
+/* 액센트 위에 얹는 글자색. 다크의 액센트는 밝은 파랑이라 흰 글자가 안 읽힌다. */
+--on-accent:#ffffff; --on-danger:#ffffff;
+--chip-bg:#eef0f2; --ghost:#e8ebee; --ghost-hover:#dde1e5;
+--accent:#2563eb; --accent-soft:#eef4ff; --accent-border:#bcd3fb; --accent-ink:#12356e;
+--danger:#c0262c; --danger-soft:#fdf4f4; --danger-border:#f0cdcd;
+--danger-ink:#7d1d21; --danger-hover:#fbebeb;
+--warn-bg:#fff4e5; --warn-ink:#8a5300; --ok-bg:#e8f5ec; --ok-ink:#1c6b3c;
+/* 라운딩 원칙: 만지는 것과 떠 있는 것만 둥글게, 구조는 각지게.
+   --pill  분류 태그(배지·칩·필터) - 형태 자체가 '태그'라는 신호
+   --ctl   폼 컨트롤(입력·버튼·셀렉트·페이저) - 누를 수 있다는 신호
+   0       구조 컨테이너(표 카드·패널·검색 박스) - 문서는 각져야 문서로 읽힌다
+   50%     진짜 원(상태 점·닫기 버튼)만 */
+--ctl:6px; --pill:999px;
+--shadow-sm:0 1px 2px rgba(16,24,40,.05);
+--shadow:0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
 }
-
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark}
 @media (prefers-color-scheme: dark){
-  :root{
-    --bg:#101315; --surface:#171b1e; --surface-2:#1c2124; --surface-3:#1f2427;
-    /* --border 는 장식 구분선(면제), --border-strong 은 입력·버튼 경계라
-       WCAG 1.4.11 의 3:1 을 넘겨야 한다. */
-    --border:#2b3236; --border-strong:#67737a; --border-hover:#8b979e;
-    --text:#e7eaec; --muted:#9aa4ab; --muted-2:#78838a; --faint:#4e585e;
-    --row-hover:#1c2124; --sel:#16263a; --sel-hover:#1b2f47; --th-hover:#242a2e;
-    --text-2:#c3cad0; --hair:#242a2e; --th-bg:#1f2427;
-    --on-accent:#0d1520;
-    --chip-bg:#252c30; --ghost:#2b3236; --ghost-hover:#3a4247;
-    --accent:#6ea3ff; --accent-soft:#16263a; --accent-border:#2f4f7d; --accent-ink:#b9d3ff;
-    --danger:#f3736c; --danger-soft:#2a1918; --danger-border:#5c2a28;
-    --danger-ink:#f7b0ab; --danger-hover:#331d1c;
-    --warn-bg:#33260f; --warn-ink:#f0c887; --ok-bg:#14291d; --ok-ink:#8fd6a8;
-    --shadow-sm:0 1px 2px rgba(0,0,0,.5);
-    --shadow:0 1px 3px rgba(0,0,0,.6), 0 1px 2px rgba(0,0,0,.4);
+  :root:not([data-theme="light"]){
+--bg:#101315; --surface:#171b1e; --surface-2:#1c2124; --surface-3:#1f2427;
+/* --border 는 장식 구분선(면제), --border-strong 은 입력·버튼 경계라
+   WCAG 1.4.11 의 3:1 을 넘겨야 한다. */
+--border:#2b3236; --border-strong:#67737a; --border-hover:#8b979e;
+--text:#e7eaec; --muted:#9aa4ab; --muted-2:#78838a; --faint:#4e585e;
+--row-hover:#1c2124; --sel:#16263a; --sel-hover:#1b2f47; --th-hover:#242a2e;
+--text-2:#c3cad0; --hair:#242a2e; --th-bg:#1f2427;
+--on-accent:#0d1520; --on-danger:#2a1010;
+--chip-bg:#252c30; --ghost:#2b3236; --ghost-hover:#3a4247;
+--accent:#6ea3ff; --accent-soft:#16263a; --accent-border:#2f4f7d; --accent-ink:#b9d3ff;
+--danger:#f3736c; --danger-soft:#2a1918; --danger-border:#5c2a28;
+--danger-ink:#f7b0ab; --danger-hover:#331d1c;
+--warn-bg:#33260f; --warn-ink:#f0c887; --ok-bg:#14291d; --ok-ink:#8fd6a8;
+--shadow-sm:0 1px 2px rgba(0,0,0,.5);
+--shadow:0 1px 3px rgba(0,0,0,.6), 0 1px 2px rgba(0,0,0,.4);
   }
-  /* 다크에서 밝은 티어 색은 그대로 두면 눈을 찌른다. 채도만 살짝 낮춘다. */
-  .tier-chip,.badge.active,.tier-swatch{filter:saturate(.92)}
+  :root:not([data-theme="light"]) .tier-chip,.badge.active,.tier-swatch{filter:saturate(.92)}
 }
-
+:root[data-theme="dark"]{
+--bg:#101315; --surface:#171b1e; --surface-2:#1c2124; --surface-3:#1f2427;
+/* --border 는 장식 구분선(면제), --border-strong 은 입력·버튼 경계라
+   WCAG 1.4.11 의 3:1 을 넘겨야 한다. */
+--border:#2b3236; --border-strong:#67737a; --border-hover:#8b979e;
+--text:#e7eaec; --muted:#9aa4ab; --muted-2:#78838a; --faint:#4e585e;
+--row-hover:#1c2124; --sel:#16263a; --sel-hover:#1b2f47; --th-hover:#242a2e;
+--text-2:#c3cad0; --hair:#242a2e; --th-bg:#1f2427;
+--on-accent:#0d1520; --on-danger:#2a1010;
+--chip-bg:#252c30; --ghost:#2b3236; --ghost-hover:#3a4247;
+--accent:#6ea3ff; --accent-soft:#16263a; --accent-border:#2f4f7d; --accent-ink:#b9d3ff;
+--danger:#f3736c; --danger-soft:#2a1918; --danger-border:#5c2a28;
+--danger-ink:#f7b0ab; --danger-hover:#331d1c;
+--warn-bg:#33260f; --warn-ink:#f0c887; --ok-bg:#14291d; --ok-ink:#8fd6a8;
+--shadow-sm:0 1px 2px rgba(0,0,0,.5);
+--shadow:0 1px 3px rgba(0,0,0,.6), 0 1px 2px rgba(0,0,0,.4);
+}
+:root[data-theme="dark"] .tier-chip,.badge.active,.tier-swatch{filter:saturate(.92)}
 /* 티어 색의 단일 진원지 — 배지 점·배지 활성·표 칩·범례 칩이 모두 상속 */
 [data-tier="무감미료"]{--tc:#4caf50;--tf:#0d0f11}
 [data-tier="S"]{--tc:#8bc34a;--tf:#14210a}
@@ -146,6 +161,23 @@
 [data-tier="D"]{--tc:#f4511e;--tf:#0d0f11}
 [data-tier="F"]{--tc:#cc0000;--tf:#ffffff}
 [data-tier="?"]{--tc:#9aa1ab;--tf:#0d0f11}
+/* 톱니바퀴는 내용이 아니라 설정이다. 시선을 끌지 않게 muted 로 두고 hover 에만 살린다 */
+.themer{position:relative;margin-left:auto;flex:none}
+.theme-btn{display:flex;align-items:center;justify-content:center;width:30px;height:30px;
+  border:1px solid var(--border);background:var(--surface);color:var(--muted);
+  border-radius:var(--ctl);cursor:pointer;padding:0}
+.theme-btn svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.theme-btn:hover{color:var(--text);border-color:var(--border-hover)}
+.theme-btn[aria-expanded="true"]{color:var(--accent);border-color:var(--accent)}
+.theme-menu{position:absolute;top:34px;right:0;z-index:20;min-width:148px;padding:4px;
+  background:var(--surface);border:1px solid var(--border-strong);box-shadow:var(--shadow)}
+.theme-menu button{display:flex;align-items:baseline;gap:7px;width:100%;padding:7px 9px;
+  border:0;background:none;color:var(--text);font:inherit;font-size:12.5px;text-align:left;cursor:pointer}
+.theme-menu button span{color:var(--muted);font-size:11px}
+.theme-menu button:hover{background:var(--row-hover)}
+.theme-menu button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink);font-weight:700}
+.theme-menu button[aria-pressed="true"]::after{content:"\2713";margin-left:auto;font-weight:700}
+
 
 *{box-sizing:border-box}
 body{font-family:-apple-system,"Malgun Gothic",sans-serif;margin:0;padding:20px 16px 56px;
@@ -193,8 +225,9 @@ th.sorted::after{content:" " attr(data-dir);font-size:9px}
 td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .t{display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border-radius:var(--pill);
    font-weight:700;font-size:11.5px;color:var(--text)}
-nav{font-size:13px;margin:0 0 16px}
-nav a{color:var(--accent);margin-right:12px}
+/* 톱니바퀴가 오른쪽 끝에 붙으려면 nav 가 flex 여야 한다 (block 이면 아래로 밀린다) */
+nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;margin:0 0 16px}
+nav a{color:var(--accent)}
 footer{margin-top:34px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:14px}
 footer div{margin-bottom:5px}
 .q{font-weight:700;margin-top:14px}
@@ -236,7 +269,17 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
 </head>
 <body>
 <main>
-<nav><a href="https://zero-drinks-tier.vercel.app/">&larr; 전체 리포트(검색·필터)</a><a href="https://zero-drinks-tier.vercel.app/products.html">616개 전체 목록</a></nav>
+<nav><a href="https://zero-drinks-tier.vercel.app/">&larr; 전체 리포트(검색·필터)</a><a href="https://zero-drinks-tier.vercel.app/products.html">616개 전체 목록</a><div class="themer">
+  <button type="button" class="theme-btn" id="themeBtn" aria-haspopup="true" aria-expanded="false"
+          aria-label="화면 테마 설정" title="화면 테마">
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v2.6M12 18.8v2.6M4.3 4.3l1.9 1.9M17.8 17.8l1.9 1.9M2.6 12h2.6M18.8 12h2.6M4.3 19.7l1.9-1.9M17.8 6.2l1.9-1.9"/></svg>
+  </button>
+  <div class="theme-menu" id="themeMenu" role="group" aria-label="화면 테마" hidden>
+    <button type="button" data-theme-set="light" aria-pressed="false">라이트</button>
+    <button type="button" data-theme-set="dark" aria-pressed="false">다크</button>
+    <button type="button" data-theme-set="auto" aria-pressed="false">자동<span>브라우저 설정</span></button>
+  </div>
+</div></nav>
 <h1>파워 에너지</h1>
 <form class="finder" action="https://zero-drinks-tier.vercel.app/products.html" method="get">
   <div class="finder-in">
@@ -360,6 +403,35 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
   q.addEventListener('keydown', function (e) { if (e.key === 'Escape') { q.value = ''; run(); } });
   qc.addEventListener('click', function () { q.value = ''; q.focus(); run(); });
   run();
+})();
+</script>
+<script>
+(function () {
+  var btn = document.getElementById('themeBtn'), menu = document.getElementById('themeMenu');
+  if (!btn || !menu) return;
+  var KEY = 'zdt-theme';
+  function read() { try { return localStorage.getItem(KEY) || 'auto'; } catch (e) { return 'auto'; } }
+  function paint(mode) {
+    // 'auto' 는 속성을 지워 미디어 쿼리에 넘긴다 - 자동이 곧 '브라우저 설정 추종'이다.
+    if (mode === 'auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', mode);
+    var bs = menu.querySelectorAll('[data-theme-set]');
+    for (var i = 0; i < bs.length; i++)
+      bs[i].setAttribute('aria-pressed', String(bs[i].getAttribute('data-theme-set') === mode));
+  }
+  function open(v) { menu.hidden = !v; btn.setAttribute('aria-expanded', String(v)); }
+  paint(read());
+  btn.addEventListener('click', function (e) { e.stopPropagation(); open(menu.hidden); });
+  menu.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-theme-set]'); if (!b) return;
+    var m = b.getAttribute('data-theme-set');
+    try { m === 'auto' ? localStorage.removeItem(KEY) : localStorage.setItem(KEY, m); } catch (err) {}
+    paint(m); open(false);
+  });
+  document.addEventListener('click', function () { open(false); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !menu.hidden) { open(false); btn.focus(); }
+  });
 })();
 </script>
 </body>
