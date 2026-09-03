@@ -201,9 +201,14 @@ python zero_soda_scan.py --mode ping                                # IndexNow �
 (사이트맵 규격이 요구한다). **제품명이 바뀌면 URL 이 바뀐다** — 이전 주소가 404 가
 되므로 이름이 바뀌는 변경은 `--mode ping` 과 함께 한다.
 
-색 팔레트는 `_HTML_TEMPLATE` 의 `:root` 가 진원지이고 `_STATIC_CSS` 는 그 복사본이다.
-**한쪽만 고치지 말 것** — 다크모드가 리포트에만 먹는 사고가 났다. `PaletteSyncTests`
-가 두 블록의 갈라짐과 정적 CSS 의 하드코딩 색을 막는다.
+색은 `_PALETTE_CSS` 상수 하나에서만 나온다. 리포트(`__PALETTE__` 자리)와 정적
+페이지(`_STATIC_CSS`)가 같은 문자열을 공유하므로 `_TOKENS_LIGHT`/`_TOKENS_DARK` 만
+고치면 된다. **CSS 에 hex 를 직접 쓰지 말 것** — `PaletteSyncTests` 가 막는다.
+
+테마는 자동(기본)·라이트·다크 3택이고 `<html data-theme>` 로 표현한다. `_THEME_BOOT_JS`
+는 **`<style>` 앞 `<head>` 에서 동기로** 돌아야 한다 (FOUC 방지, `defer`/`async` 금지).
+색을 만질 때는 **두 모드에서 다 확인할 것** — 라이트만 보면 정상으로 보인다
+(다크에서 검색 입력이 흰 배경+흰 글자가 되는 버그가 실제로 배포됐다).
 
 라운딩은 `--ctl`(폼 컨트롤) / `--pill`(분류 태그) / `50%`(원)만 쓴다. 표 카드·패널
 같은 **구조 컨테이너는 각지게** 둔다.
