@@ -975,6 +975,10 @@ _GA_SNIPPET = """<script>
 </script>"""
 
 
+# 사이트 이름. og:site_name / WebSite.name / <title> 세 곳이 같아야
+# 검색엔진이 사이트명을 채택한다. 엔티티(Person·Dataset) 이름은 여기서 갈린다.
+_STATIC_PAGE_SITE_NAME = "제로 음료 티어"
+
 # ── 색 팔레트: 단일 진원지 ───────────────────────────────────
 # 리포트(_HTML_TEMPLATE)와 정적 페이지(_STATIC_CSS)가 이 문자열 하나를 공유한다.
 # 예전에는 팔레트를 두 곳에 복사해 두었다가 다크모드가 리포트에만 먹는 사고가 났다.
@@ -2633,7 +2637,7 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,{_FAVICON_B64}">
 <meta property="og:type" content="article">
 <meta property="og:locale" content="ko_KR">
-<meta property="og:site_name" content="제로 음료 티어">
+<meta property="og:site_name" content="{_STATIC_PAGE_SITE_NAME}">
 <meta property="og:title" content="{_esc(title)}">
 <meta property="og:description" content="{_esc(desc)}">
 <meta property="og:url" content="{PAGE_URL}{slug}">

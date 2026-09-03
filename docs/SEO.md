@@ -89,6 +89,35 @@
 `_static_page()` 를 부르면 자동으로 갈린다. GET 폼이라 JS 없이 동작하고
 목록 쪽은 `?q=` 를 읽어 프리필한다.
 
+## 이름은 '전부 통일'이 답이 아니다 — 2026-09-03
+
+세 종류를 구분한다. 사이트 이름만 통일하고 엔티티 이름은 일부러 다르게 둔다.
+
+|종류|슬롯|통일?|
+|---|---|---|
+|사이트 이름|`og:site_name`, `WebSite.name`, `<title>` 접미|**반드시 일치**. 검색엔진이 교차 검증하고, 갈리면 판단을 포기하고 도메인명을 쓴다|
+|데이터셋 이름|`Dataset.name`|아니요. Dataset Search 는 **서술적 제목**을 선호한다. `alternateName` 으로 사이트명과 연결한다|
+|발행 주체|`publisher`, `creator`|**절대 아니요**. 사이트 이름과 같은 문자열을 쓰면 Knowledge Graph 에서 사이트와 조직이 뭉개지고 `sameAs` 로 검증할 대상이 사라진다|
+
+사이트 이름은 `_STATIC_PAGE_SITE_NAME` 상수와 `WebSite.name` 을 함께 고친다.
+`SiteIdentityTests` 가 세 슬롯 일치와 엔티티 이름 분리를 동시에 막는다.
+
+### 고친 두 가지
+
+- **`WebSite` 노드가 없었다.** 사이트명을 주장하는 정식 슬롯이 비어 있었고
+  `Dataset` 은 site name 소스가 아니다. `@graph` 에 `WebSite`(#website)를 넣고
+  `Dataset` 은 `isPartOf` 로 연결했다.
+- **`publisher` 가 실체 없는 `Organization`('대체당 제로 음료 티어')이었다.**
+  `creator` 는 `Person gulf1324` 인데 발행 주체만 가짜 조직이었고, 사이트 이름과
+  문자열이 같아 엔티티가 겹쳤다. `Person`(#author)로 정정하고 `@id` 로 공유한다.
+
+### SearchAction 은 선언 전에 URL 이 동작해야 한다
+
+`products.html?q=` 는 이미 동작하는 GET 검색이었는데 선언만 빠져 있었다
+(sitelinks searchbox 후보). **`urlTemplate` 의 파라미터 이름이 `_FINDER_JS` 의
+프리필(`get('q')`)과 같아야 한다** — 다르면 검색창이 붙어도 결과가 걸러지지 않는다.
+테스트가 둘을 함께 검사한다.
+
 ## 색 팔레트는 파이썬 상수 하나다 — 2026-09-03 정정
 
 `_PALETTE_CSS` 를 리포트(`_HTML_TEMPLATE` 의 `__PALETTE__` 자리)와 정적 페이지

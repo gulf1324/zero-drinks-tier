@@ -5,6 +5,7 @@
 import tempfile
 import shutil
 import os
+import json
 import re
 import unittest
 
@@ -681,4 +682,56 @@ class ProductPageTests(unittest.TestCase):
         sweet, sugar = z._sweetener_rows(rec)
         self.assertEqual([w for w, _ in sweet], ["수크랄로스", "아세설팜"])
         self.assertEqual([w for w, _ in sugar], ["농축과즙"])
+
+class SiteIdentityTests(unittest.TestCase):
+    """사이트 이름은 통일하고 엔티티 이름은 구분한다.
+
+    'SEO 에 좋으니 전부 통일하자' 는 반쯤만 맞다. 검색엔진이 교차 검증하는 것은
+    사이트 이름(og:site_name / WebSite.name / title 접미)뿐이다. Organization·
+    Person·Dataset 은 서로 다른 엔티티이고, 같은 문자열로 두면 Knowledge Graph
+    에서 뭉개진다.
+    """
+
+    def setUp(self):
+        self.tpl = re.search(r'_HTML_TEMPLATE = r"""(.*?)\n"""',
+                             open('zero_soda_scan.py', encoding='utf-8').read(), re.S).group(1)
+        head = self.tpl.split("</head>")[0]
+        self.ld = json.loads(
+            re.search(r'<script type="application/ld\+json">(.*?)</script>', head, re.S)
+            .group(1).replace("__TOTAL__", "616").replace("__PAGE_URL__", z.PAGE_URL)
+            .replace("__GENERATED_DATE__", "2026-01-01"))
+        self.nodes = {n["@type"]: n for n in self.ld["@graph"]}
+
+    def test_site_name_matches_across_every_slot(self):
+        name = self.nodes["WebSite"]["name"]
+        self.assertEqual(re.search(r'og:site_name" content="(.*?)"', self.tpl).group(1), name)
+        title = re.search(r"<title>(.*?)</title>", self.tpl).group(1)
+        self.assertTrue(title.startswith(name) or title.endswith(name),
+                        f"title 이 사이트명을 담지 않는다: {title}")
+        # 정적 페이지도 같은 사이트다
+        self.assertEqual(z._STATIC_PAGE_SITE_NAME, name)
+
+    def test_entity_names_stay_distinct(self):
+        site = self.nodes["WebSite"]["name"]
+        self.assertNotEqual(self.nodes["Person"]["name"], site,
+                            "발행 주체 이름이 사이트 이름과 같으면 엔티티가 겹친다")
+        self.assertNotEqual(self.nodes["Dataset"]["name"], site,
+                            "Dataset 은 서술적 제목을 쓴다 - alternateName 으로 연결한다")
+        self.assertEqual(self.nodes["Dataset"]["alternateName"], site)
+
+    def test_publisher_is_a_real_referenced_entity(self):
+        # 실체 없는 Organization 을 발행 주체로 세워 두면 안 된다
+        for node in ("WebSite", "Dataset"):
+            ref = self.nodes[node]["publisher"]["@id"]
+            self.assertEqual(ref, self.nodes["Person"]["@id"],
+                             f"{node}.publisher 가 정의된 엔티티를 가리키지 않는다")
+        self.assertIn("github.com/gulf1324", self.nodes["Person"]["sameAs"][0])
+
+    def test_search_action_points_at_a_working_query_url(self):
+        tpl = self.nodes["WebSite"]["potentialAction"]["target"]["urlTemplate"]
+        self.assertIn("{search_term_string}", tpl)
+        # 선언한 파라미터 이름이 실제 프리필 코드와 같아야 한다. 다르면 Google 이
+        # 검색창을 붙여도 결과가 걸러지지 않는다.
+        self.assertIn("?q={search_term_string}", tpl)
+        self.assertIn("get('q')", z._FINDER_JS)
 
