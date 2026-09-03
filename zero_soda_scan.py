@@ -1131,23 +1131,23 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>제로 탄산음료 감미료 티어 리포트 | 식약처 원재료 데이터 기반 __TOTAL__개 제품 분석</title>
-<meta name="description" content="국내 유통 제로·무당류 탄산음료 __TOTAL__개의 감미료 구성을 식약처 품목제조보고 원재료 데이터로 분석해 S~F 티어로 분류합니다. 알룰로스·스테비아·수크랄로스·아스파탐·에리스리톨 등 성분별 연구 근거와 제로 표기 사칭 여부까지 확인하세요.">
+<title>제로 음료 티어 | 식약처 데이터 &amp; 논문 기반</title>
+<meta name="description" content="국내 유통 __TOTAL__개 제품의 감미료 구성을 S~F 티어로 분류합니다. 알룰로스·스테비아·수크랄로스·아스파탐·에리스리톨 등 성분별 연구 근거와 제로 표기 사칭 여부까지 확인하세요.">
 <meta name="robots" content="index, follow">
 <meta name="naver-site-verification" content="a3a82e491e9f40e89ab9e12d3306aab7">
 __FAVICON__
 <link rel="canonical" href="__PAGE_URL__">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ko_KR">
-<meta property="og:title" content="제로 탄산음료 감미료 티어 리포트">
+<meta property="og:title" content="제로 음료 티어">
 <meta property="og:description" content="식약처 원재료 데이터로 분류한 국내 제로·무당류 탄산음료 __TOTAL__개의 감미료 티어(S~F). 알룰로스부터 아스파탐까지 성분별 근거를 확인하세요.">
 <meta property="og:url" content="__PAGE_URL__">
-<meta property="og:site_name" content="대체당 제로 음료 티어">
+<meta property="og:site_name" content="제로 음료 티어">
 <meta property="og:image" content="__PAGE_URL__og-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="제로 탄산음료 감미료 티어 리포트">
+<meta name="twitter:title" content="제로 음료 티어">
 <meta name="twitter:description" content="식약처 원재료 데이터로 분류한 국내 제로·무당류 탄산음료 __TOTAL__개의 감미료 티어(S~F).">
 <meta name="twitter:image" content="__PAGE_URL__og-card.png">
 __GA__
@@ -1156,7 +1156,7 @@ __GA__
   "@context": "https://schema.org",
   "@type": "Dataset",
   "name": "대체당 제로 음료 티어",
-  "alternateName": "제로 탄산음료 감미료 티어 리포트",
+  "alternateName": "제로 음료 티어",
   "description": "국내 유통 제로·무당류 탄산음료와 탄산수 __TOTAL__개 제품의 대체당(감미료) 구성을 식품의약품안전처 품목제조보고 원재료 전문으로 수집하고, 피어리뷰 메타분석 근거에 따라 S~F 티어로 분류한 데이터셋입니다. 알룰로스·스테비올배당체·수크랄로스·아스파탐·에리스리톨 등 감미료별 탐지 결과와 제로 표기 대비 실제 당류 포함 여부를 담고 있습니다.",
   "url": "__PAGE_URL__",
   "inLanguage": "ko",
@@ -2609,7 +2609,7 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,{_FAVICON_B64}">
 <meta property="og:type" content="article">
 <meta property="og:locale" content="ko_KR">
-<meta property="og:site_name" content="대체당 제로 음료 티어">
+<meta property="og:site_name" content="제로 음료 티어">
 <meta property="og:title" content="{_esc(title)}">
 <meta property="og:description" content="{_esc(desc)}">
 <meta property="og:url" content="{PAGE_URL}{slug}">
