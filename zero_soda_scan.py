@@ -1154,11 +1154,36 @@ __GA__
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
+  "@graph": [
+  {
+    "@type": "Person",
+    "@id": "__PAGE_URL__#author",
+    "name": "gulf1324",
+    "url": "https://github.com/gulf1324",
+    "sameAs": ["https://github.com/gulf1324", "https://github.com/gulf1324/zero-drinks-tier"]
+  },
+  {
+    "@type": "WebSite",
+    "@id": "__PAGE_URL__#website",
+    "name": "제로 음료 티어",
+    "url": "__PAGE_URL__",
+    "inLanguage": "ko",
+    "description": "국내 유통 __TOTAL__개 제품의 감미료 구성을 식약처 신고 원재료로 확인하고 S~F 티어로 분류합니다.",
+    "publisher": {"@id": "__PAGE_URL__#author"},
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {"@type": "EntryPoint", "urlTemplate": "__PAGE_URL__products.html?q={search_term_string}"},
+      "query-input": "required name=search_term_string"
+    }
+  },
+  {
   "@type": "Dataset",
+  "@id": "__PAGE_URL__#dataset",
   "name": "대체당 제로 음료 티어",
   "alternateName": "제로 음료 티어",
   "description": "국내 유통 제로·무당류 탄산음료와 탄산수 __TOTAL__개 제품의 대체당(감미료) 구성을 식품의약품안전처 품목제조보고 원재료 전문으로 수집하고, 피어리뷰 메타분석 근거에 따라 S~F 티어로 분류한 데이터셋입니다. 알룰로스·스테비올배당체·수크랄로스·아스파탐·에리스리톨 등 감미료별 탐지 결과와 제로 표기 대비 실제 당류 포함 여부를 담고 있습니다.",
   "url": "__PAGE_URL__",
+  "isPartOf": {"@id": "__PAGE_URL__#website"},
   "inLanguage": "ko",
   "dateModified": "__GENERATED_DATE__",
   "datePublished": "2026-08-09",
@@ -1169,11 +1194,8 @@ __GA__
   "isAccessibleForFree": true,
   "keywords": ["제로음료", "대체당", "감미료", "알룰로스", "스테비아", "수크랄로스", "아스파탐", "에리스리톨", "탄산음료", "식품영양", "오픈데이터"],
   "variableMeasured": ["티어", "감미료 조합", "원재료 전문", "열량", "당류", "카페인 함유", "아스파탐 함유", "제로 표기 여부"],
-  "creator": {"@type": "Person", "name": "gulf1324", "url": "https://github.com/gulf1324",
-              "sameAs": ["https://github.com/gulf1324", "https://github.com/gulf1324/zero-drinks-tier"]},
-  "publisher": {"@type": "Organization", "@id": "__PAGE_URL__#publisher", "name": "대체당 제로 음료 티어",
-                "url": "__PAGE_URL__", "logo": "__PAGE_URL__apple-touch-icon.png",
-                "sameAs": ["https://github.com/gulf1324/zero-drinks-tier"]},
+  "creator": {"@id": "__PAGE_URL__#author"},
+  "publisher": {"@id": "__PAGE_URL__#author"},
   "sourceOrganization": {"@type": "GovernmentOrganization", "name": "식품의약품안전처", "url": "https://www.mfds.go.kr/"},
   "isBasedOn": [
     "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002",
@@ -1186,6 +1208,8 @@ __GA__
     {"@type": "DataDownload", "encodingFormat": "text/html", "contentUrl": "__PAGE_URL__"},
     {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": "https://raw.githubusercontent.com/gulf1324/zero-drinks-tier/main/zero_soda_raw.json"},
     {"@type": "DataDownload", "encodingFormat": "text/markdown", "contentUrl": "__PAGE_URL__llms-full.txt"}
+  ]
+  }
   ]
 }
 </script>

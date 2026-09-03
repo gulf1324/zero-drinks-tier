@@ -42,11 +42,36 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
+  "@graph": [
+  {
+    "@type": "Person",
+    "@id": "https://zero-drinks-tier.vercel.app/#author",
+    "name": "gulf1324",
+    "url": "https://github.com/gulf1324",
+    "sameAs": ["https://github.com/gulf1324", "https://github.com/gulf1324/zero-drinks-tier"]
+  },
+  {
+    "@type": "WebSite",
+    "@id": "https://zero-drinks-tier.vercel.app/#website",
+    "name": "제로 음료 티어",
+    "url": "https://zero-drinks-tier.vercel.app/",
+    "inLanguage": "ko",
+    "description": "국내 유통 616개 제품의 감미료 구성을 식약처 신고 원재료로 확인하고 S~F 티어로 분류합니다.",
+    "publisher": {"@id": "https://zero-drinks-tier.vercel.app/#author"},
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {"@type": "EntryPoint", "urlTemplate": "https://zero-drinks-tier.vercel.app/products.html?q={search_term_string}"},
+      "query-input": "required name=search_term_string"
+    }
+  },
+  {
   "@type": "Dataset",
+  "@id": "https://zero-drinks-tier.vercel.app/#dataset",
   "name": "대체당 제로 음료 티어",
   "alternateName": "제로 음료 티어",
   "description": "국내 유통 제로·무당류 탄산음료와 탄산수 616개 제품의 대체당(감미료) 구성을 식품의약품안전처 품목제조보고 원재료 전문으로 수집하고, 피어리뷰 메타분석 근거에 따라 S~F 티어로 분류한 데이터셋입니다. 알룰로스·스테비올배당체·수크랄로스·아스파탐·에리스리톨 등 감미료별 탐지 결과와 제로 표기 대비 실제 당류 포함 여부를 담고 있습니다.",
   "url": "https://zero-drinks-tier.vercel.app/",
+  "isPartOf": {"@id": "https://zero-drinks-tier.vercel.app/#website"},
   "inLanguage": "ko",
   "dateModified": "2026-09-03",
   "datePublished": "2026-08-09",
@@ -57,11 +82,8 @@
   "isAccessibleForFree": true,
   "keywords": ["제로음료", "대체당", "감미료", "알룰로스", "스테비아", "수크랄로스", "아스파탐", "에리스리톨", "탄산음료", "식품영양", "오픈데이터"],
   "variableMeasured": ["티어", "감미료 조합", "원재료 전문", "열량", "당류", "카페인 함유", "아스파탐 함유", "제로 표기 여부"],
-  "creator": {"@type": "Person", "name": "gulf1324", "url": "https://github.com/gulf1324",
-              "sameAs": ["https://github.com/gulf1324", "https://github.com/gulf1324/zero-drinks-tier"]},
-  "publisher": {"@type": "Organization", "@id": "https://zero-drinks-tier.vercel.app/#publisher", "name": "대체당 제로 음료 티어",
-                "url": "https://zero-drinks-tier.vercel.app/", "logo": "https://zero-drinks-tier.vercel.app/apple-touch-icon.png",
-                "sameAs": ["https://github.com/gulf1324/zero-drinks-tier"]},
+  "creator": {"@id": "https://zero-drinks-tier.vercel.app/#author"},
+  "publisher": {"@id": "https://zero-drinks-tier.vercel.app/#author"},
   "sourceOrganization": {"@type": "GovernmentOrganization", "name": "식품의약품안전처", "url": "https://www.mfds.go.kr/"},
   "isBasedOn": [
     "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002",
@@ -74,6 +96,8 @@
     {"@type": "DataDownload", "encodingFormat": "text/html", "contentUrl": "https://zero-drinks-tier.vercel.app/"},
     {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": "https://raw.githubusercontent.com/gulf1324/zero-drinks-tier/main/zero_soda_raw.json"},
     {"@type": "DataDownload", "encodingFormat": "text/markdown", "contentUrl": "https://zero-drinks-tier.vercel.app/llms-full.txt"}
+  ]
+  }
   ]
 }
 </script>
@@ -507,7 +531,7 @@ color-scheme: light dark;
       <span class="hint">행을 누르면 원재료 전문이 열립니다</span>
       <a class="alllink" href="https://zero-drinks-tier.vercel.app/products.html">전체 목록 한 페이지로 보기</a>
     </div>
-    <div class="genmeta">생성 2026-09-03 22:17:01 · 대상 탄산음료, 탄산수 · 설탕이 든 일반 음료는 제외했으나, 제로를 표방하면서 당류가 있는 제품은 F 티어로 남겼습니다.</div>
+    <div class="genmeta">생성 2026-09-03 22:22:20 · 대상 탄산음료, 탄산수 · 설탕이 든 일반 음료는 제외했으나, 제로를 표방하면서 당류가 있는 제품은 F 티어로 남겼습니다.</div>
   </section>
   <div class="badges" id="badges"><button class="badge" data-tier="무감미료"><span class="dot"></span>무감미료<span class="cnt">5</span></button><button class="badge" data-tier="S"><span class="dot"></span>S<span class="cnt">3</span></button><button class="badge" data-tier="A"><span class="dot"></span>A<span class="cnt">23</span></button><button class="badge" data-tier="B"><span class="dot"></span>B<span class="cnt">315</span></button><button class="badge" data-tier="C"><span class="dot"></span>C<span class="cnt">255</span></button><button class="badge" data-tier="F"><span class="dot"></span>F<span class="cnt">15</span></button><button class="clear-tiers" id="clearTiers" disabled>전체 해제</button></div>
   <div class="warn" id="fakeZeroBanner">제로 표기 제품 315개 중 15개는 신고 원재료에 당류가 있습니다</div>
