@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""zero_soda_scan.py 분류기·통합·파생플래그 테스트. 네트워크 0, 픽스처 0."""
+"""z.py 분류기·통합·파생플래그 테스트. 네트워크 0, 픽스처 0."""
 
 import tempfile
 import shutil
@@ -605,3 +605,59 @@ class LabelIngredientTests(unittest.TestCase):
         z.annotate(recs)
         self.assertEqual(recs[0]["티어"], "무감미료")
         self.assertEqual(recs[0]["감미료미표기"], "")
+
+class PaletteSyncTests(unittest.TestCase):
+    """_STATIC_CSS 의 팔레트는 _HTML_TEMPLATE 에서 복사한 것이다.
+
+    한쪽만 고치면 다크모드가 정적 페이지에만 안 먹는 사고가 난다 (실제로 났다).
+    """
+
+    def _blocks(self, css):
+        import re
+        root = re.search(r':root\{(.*?)\n\s*\}', css, re.S).group(1)
+        dark = re.search(r'@media \(prefers-color-scheme: dark\)\{\s*:root\{(.*?)\n\s*\}',
+                         css, re.S).group(1)
+        pair = lambda s: dict(re.findall(r'(--[a-z0-9-]+):([^;]+);', s))
+        return pair(root), pair(dark)
+
+    def test_static_and_report_palettes_match(self):
+        import re
+        tpl = re.search(r'_HTML_TEMPLATE = r"""(.*?)\n"""',
+                        open('zero_soda_scan.py', encoding='utf-8').read(), re.S).group(1)
+        tcss = re.search(r'<style>(.*?)</style>', tpl, re.S).group(1)
+        scss = z._STATIC_CSS
+        troot, tdark = self._blocks(tcss)
+        sroot, sdark = self._blocks(scss)
+        for name, a, b in (("light", troot, sroot), ("dark", tdark, sdark)):
+            for k, v in b.items():
+                self.assertIn(k, a, f"{name}: 정적 CSS 의 {k} 가 템플릿에 없다")
+                self.assertEqual(a[k].strip(), v.strip(), f"{name}: {k} 값이 갈라졌다")
+
+    def test_static_css_has_no_hardcoded_colors(self):
+        import re
+        css = z._STATIC_CSS
+        pal = css.split("*{box-sizing", 1)[0]
+        rest = css.split("*{box-sizing", 1)[1]
+        self.assertEqual(re.findall(r"#[0-9a-fA-F]{3,6}", rest), [],
+                         "정적 CSS 본문에 하드코딩 색이 남았다 - 토큰을 쓸 것")
+        self.assertIn("prefers-color-scheme", pal)
+
+
+class ProductPageTests(unittest.TestCase):
+    def test_slugs_are_unique_and_url_safe(self):
+        import re
+        recs = [{"제품명": "코카콜라 제로"}, {"제품명": "코카콜라·제로"},
+                {"제품명": "A/B (테스트)"}, {"제품명": "코카콜라 제로"}]
+        z.assign_slugs(recs)
+        slugs = [r["슬러그"] for r in recs]
+        self.assertEqual(len(set(slugs)), len(slugs), f"슬러그 충돌: {slugs}")
+        for s in slugs:
+            self.assertNotRegex(s, r'[\\/:*?"<>|#%&]', f"파일명·URL 에 위험한 문자: {s}")
+            self.assertTrue(s)
+
+    def test_sugar_tokens_are_not_called_sweeteners(self):
+        rec = {"감미료": "수크랄로스(B,5) / 아세설팜(B,19) / 농축과즙(SUGAR,11)"}
+        sweet, sugar = z._sweetener_rows(rec)
+        self.assertEqual([w for w, _ in sweet], ["수크랄로스", "아세설팜"])
+        self.assertEqual([w for w, _ in sugar], ["농축과즙"])
+

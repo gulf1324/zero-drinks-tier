@@ -1048,6 +1048,10 @@ __FAQ_LD__
     --border:#e4e7eb; --border-strong:#d3d8de; --border-hover:#b9c0c9;
     --text:#16191d; --muted:#6b7280; --muted-2:#8a919b; --faint:#c3c8cf;
     --row-hover:#f7f9fc; --sel:#f4f8fd; --sel-hover:#eef4fb; --th-hover:#f1f3f5;
+    /* 정적 페이지와 공유: 본문 보조색·머리카락 구분선·표 헤더 배경 */
+    --text-2:#3d4450; --hair:#eef0f2; --th-bg:#f7f8fa;
+    /* 액센트 위에 얹는 글자색. 다크의 액센트는 밝은 파랑이라 흰 글자가 안 읽힌다. */
+    --on-accent:#ffffff;
     --chip-bg:#eef0f2; --ghost:#e8ebee; --ghost-hover:#dde1e5;
     --accent:#2563eb; --accent-soft:#eef4ff; --accent-border:#bcd3fb; --accent-ink:#12356e;
     --danger:#c0262c; --danger-soft:#fdf4f4; --danger-border:#f0cdcd;
@@ -1076,6 +1080,8 @@ __FAQ_LD__
       --border:#2b3236; --border-strong:#67737a; --border-hover:#8b979e;
       --text:#e7eaec; --muted:#9aa4ab; --muted-2:#78838a; --faint:#4e585e;
       --row-hover:#1c2124; --sel:#16263a; --sel-hover:#1b2f47; --th-hover:#242a2e;
+      --text-2:#c3cad0; --hair:#242a2e; --th-bg:#1f2427;
+      --on-accent:#0d1520;
       --chip-bg:#252c30; --ghost:#2b3236; --ghost-hover:#3a4247;
       --accent:#6ea3ff; --accent-soft:#16263a; --accent-border:#2f4f7d; --accent-ink:#b9d3ff;
       --danger:#f3736c; --danger-soft:#2a1918; --danger-border:#5c2a28;
@@ -1255,6 +1261,7 @@ __FAQ_LD__
   .detail-cell{width:0;min-width:100%}
   .detail-box{padding:11px 13px;border-left:3px solid var(--accent);white-space:pre-wrap;line-height:1.65;
               animation:detailIn .14s cubic-bezier(.16,1,.3,1)}
+  .detail-link{display:inline-block;margin-top:4px;color:var(--accent);font-weight:600;text-decoration:none;border-bottom:1px solid currentColor}
   .detail-raw{color:var(--text);margin-bottom:6px}
   .detail-box a{color:var(--accent)}
   .detail-box div{color:var(--muted)}
@@ -1569,6 +1576,11 @@ function detailHtml(r) {
              '): ' + escapeHtml(r['표시원재료']) + '</div>' +
              '<div>위 신고 원재료는 식품첨가물혼합제제로 뭉뚱그려져 감미료가 보이지 않습니다. 티어는 고시 표시 원재료로 판정했습니다.</div>';
   }
+  if (r['슬러그']) {
+    // 이 제품만 다루는 페이지. 검색·공유·크롤러가 도달하는 정식 주소다.
+    extra += '<div><a class="detail-link" href="p/' + encodeURIComponent(r['슬러그']) +
+             '.html">' + escapeHtml(r['제품명']) + ' 전용 페이지 열기 \u2192</a></div>';
+  }
   if (r['카페인수동'] === 'Y') {
     // 신고 원재료에 카페인이 안 보이는 제품이다. 손으로 판단했음을 숨기지 않는다.
     extra += '<div>카페인 유무는 신고 원재료가 혼합제제로 뭉뚱그려져 확인할 수 없어, 널리 알려진 제품 정보를 근거로 <b>손으로 표시</b>했습니다. 함량은 다루지 않습니다.</div>';
@@ -1778,6 +1790,7 @@ def write_html(records, meta, meta_info, path):
         "표시원재료": r["표시원재료"],
         "제로사칭": r["제로사칭"], "카페인": r["카페인"], "카페인수동": r.get("카페인수동", ""), "아스파탐": r["아스파탐"],
         "일반판": r["일반판"], "일반판티어": r["일반판티어"], "이력": r["이력"],
+        "슬러그": r.get("슬러그", ""),
     } for r in records]
 
     data_json = json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
@@ -1919,6 +1932,8 @@ def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False
         "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "types": types or sorted({r["식품유형"] for r in records if r["식품유형"]}),
     }
+    # 리포트가 제품별 페이지로 링크하므로 슬러그를 여기서 확정한다.
+    assign_slugs(records)
     write_html(records, meta, meta_info, out_html)
 
     print(f"\n완료: {len(records):,}개 제품 -> {out_csv}, {out_html}")
@@ -2207,47 +2222,142 @@ PUSH_PATHS = [
 # 그래서 빌드 때 무JS 정적 페이지를 같이 뽑는다. 답변엔진·생성엔진은 표를
 # 구조화된 사실로 파싱하므로, 질문 하나당 페이지 하나 원칙으로 만든다.
 
-_STATIC_CSS = """*{box-sizing:border-box}
+_STATIC_CSS = """
+/* 팔레트는 _HTML_TEMPLATE 의 :root 를 그대로 옮긴 것이다. 색을 두 군데서 고치면
+   다크모드가 한쪽만 적용되는 사고가 난다 - 반드시 템플릿 쪽을 먼저 고치고 복사할 것. */
+:root{
+  color-scheme: light dark;
+  /* 색은 전부 토큰이다. 하드코딩 hex 를 CSS 에 두면 다크모드가 성립하지 않는다. */
+  --bg:#f4f5f7; --surface:#fff; --surface-2:#fbfcfd; --surface-3:#f7f8fa;
+  --border:#e4e7eb; --border-strong:#d3d8de; --border-hover:#b9c0c9;
+  --text:#16191d; --muted:#6b7280; --muted-2:#8a919b; --faint:#c3c8cf;
+  --row-hover:#f7f9fc; --sel:#f4f8fd; --sel-hover:#eef4fb; --th-hover:#f1f3f5;
+  /* 정적 페이지와 공유: 본문 보조색·머리카락 구분선·표 헤더 배경 */
+  --text-2:#3d4450; --hair:#eef0f2; --th-bg:#f7f8fa;
+  /* 액센트 위에 얹는 글자색. 다크의 액센트는 밝은 파랑이라 흰 글자가 안 읽힌다. */
+  --on-accent:#ffffff;
+  --chip-bg:#eef0f2; --ghost:#e8ebee; --ghost-hover:#dde1e5;
+  --accent:#2563eb; --accent-soft:#eef4ff; --accent-border:#bcd3fb; --accent-ink:#12356e;
+  --danger:#c0262c; --danger-soft:#fdf4f4; --danger-border:#f0cdcd;
+  --danger-ink:#7d1d21; --danger-hover:#fbebeb;
+  --warn-bg:#fff4e5; --warn-ink:#8a5300; --ok-bg:#e8f5ec; --ok-ink:#1c6b3c;
+  /* 라운딩 원칙: 만지는 것과 떠 있는 것만 둥글게, 구조는 각지게.
+     --pill  분류 태그(배지·칩·필터) - 형태 자체가 '태그'라는 신호
+     --ctl   폼 컨트롤(입력·버튼·셀렉트·페이저) - 누를 수 있다는 신호
+     0       구조 컨테이너(표 카드·패널·검색 박스) - 문서는 각져야 문서로 읽힌다
+     50%     진짜 원(상태 점·닫기 버튼)만 */
+  --ctl:6px; --pill:999px;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+  --shadow:0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#101315; --surface:#171b1e; --surface-2:#1c2124; --surface-3:#1f2427;
+    /* --border 는 장식 구분선(면제), --border-strong 은 입력·버튼 경계라
+       WCAG 1.4.11 의 3:1 을 넘겨야 한다. */
+    --border:#2b3236; --border-strong:#67737a; --border-hover:#8b979e;
+    --text:#e7eaec; --muted:#9aa4ab; --muted-2:#78838a; --faint:#4e585e;
+    --row-hover:#1c2124; --sel:#16263a; --sel-hover:#1b2f47; --th-hover:#242a2e;
+    --text-2:#c3cad0; --hair:#242a2e; --th-bg:#1f2427;
+    --on-accent:#0d1520;
+    --chip-bg:#252c30; --ghost:#2b3236; --ghost-hover:#3a4247;
+    --accent:#6ea3ff; --accent-soft:#16263a; --accent-border:#2f4f7d; --accent-ink:#b9d3ff;
+    --danger:#f3736c; --danger-soft:#2a1918; --danger-border:#5c2a28;
+    --danger-ink:#f7b0ab; --danger-hover:#331d1c;
+    --warn-bg:#33260f; --warn-ink:#f0c887; --ok-bg:#14291d; --ok-ink:#8fd6a8;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.5);
+    --shadow:0 1px 3px rgba(0,0,0,.6), 0 1px 2px rgba(0,0,0,.4);
+  }
+  /* 다크에서 밝은 티어 색은 그대로 두면 눈을 찌른다. 채도만 살짝 낮춘다. */
+  .tier-chip,.badge.active,.tier-swatch{filter:saturate(.92)}
+}
+
+/* 티어 색의 단일 진원지 — 배지 점·배지 활성·표 칩·범례 칩이 모두 상속 */
+[data-tier="무감미료"]{--tc:#4caf50;--tf:#0d0f11}
+[data-tier="S"]{--tc:#8bc34a;--tf:#14210a}
+[data-tier="A"]{--tc:#cddc39;--tf:#1f2408}
+[data-tier="B"]{--tc:#ffc107;--tf:#2b2000}
+[data-tier="C"]{--tc:#ff9800;--tf:#2b1800}
+[data-tier="D"]{--tc:#f4511e;--tf:#0d0f11}
+[data-tier="F"]{--tc:#cc0000;--tf:#ffffff}
+[data-tier="?"]{--tc:#9aa1ab;--tf:#0d0f11}
+
+*{box-sizing:border-box}
 body{font-family:-apple-system,"Malgun Gothic",sans-serif;margin:0;padding:20px 16px 56px;
-     background:#f4f5f7;color:#16191d;line-height:1.7}
+     background:var(--bg);color:var(--text);line-height:1.7}
 main{max-width:1000px;margin:0 auto}
 h1{font-size:23px;margin:0 0 10px;line-height:1.35}
 h2{font-size:17px;margin:30px 0 8px}\nh2.first{margin-top:18px}
-.finder{position:sticky;top:0;z-index:5;background:#f4f5f7;padding:10px 0 8px;margin:0 0 4px;
-        border-bottom:1px solid #e4e7eb}
+.finder{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 8px;margin:0 0 4px;
+        border-bottom:1px solid var(--border)}
 .finder-in{position:relative;display:flex;align-items:center}
-.f-ico{position:absolute;left:12px;width:17px;height:17px;fill:none;stroke:#8a919b;stroke-width:2;
+.f-ico{position:absolute;left:12px;width:17px;height:17px;fill:none;stroke:var(--muted-2);stroke-width:2;
        stroke-linecap:round;pointer-events:none}
 .finder input{width:100%;padding:11px 38px 11px 37px;font-size:15px;font-family:inherit;
-              border:1px solid #d3d8de;border-radius:10px;background:#fff;color:#16191d;
+              border:1px solid var(--border-strong);border-radius:10px;background:var(--surface);color:var(--text);
               box-shadow:0 1px 2px rgba(16,24,40,.04)}
-.finder input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.13)}
+.finder input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.13)}
 .finder button{position:absolute;right:7px;width:26px;height:26px;border:0;border-radius:50%;
-               background:#eef0f2;color:#6b7280;font-size:17px;line-height:1;cursor:pointer}
-.finder button:hover{background:#e2e5e9;color:#16191d}
-.finder-n{font-size:12.5px;color:#6b7280;margin-top:6px;min-height:16px;
+               background:var(--hair);color:var(--muted);font-size:17px;line-height:1;cursor:pointer}
+.finder button:hover{background:var(--hair);color:var(--text)}
+.finder .f-go{background:var(--accent);color:var(--on-accent);font-size:15px;font-weight:700}
+.finder .f-go:hover{background:var(--accent);filter:brightness(1.12);color:var(--on-accent)}
+.finder-n{font-size:12.5px;color:var(--muted);margin-top:6px;min-height:16px;
           font-variant-numeric:tabular-nums}
 tr[hidden]{display:none}
 .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 0 8px;
     border-radius:8px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
 .tw table{box-shadow:none;border-radius:0;min-width:640px}
-.nohit{font-size:13px;color:#6b7280;background:#fff;border:1px dashed #d3d8de;
-       border-radius:8px;padding:14px;text-align:center;margin:0 0 8px}\n.howto{background:#fff;border:1px solid #e4e7eb;border-radius:8px;\n       padding:12px 14px;margin:0 0 16px;font-size:13.5px;color:#3d4450}
-.lead{font-size:16px;font-weight:600;background:#eef4ff;border-left:4px solid #2563eb;
+.nohit{font-size:13px;color:var(--muted);background:var(--surface);border:1px dashed var(--border-strong);
+       border-radius:8px;padding:14px;text-align:center;margin:0 0 8px}\n.howto{background:var(--surface);border:1px solid var(--border);border-radius:8px;\n       padding:12px 14px;margin:0 0 16px;font-size:13.5px;color:var(--text-2)}
+.lead{font-size:16px;font-weight:600;background:var(--accent-soft);border-left:4px solid var(--accent);
       padding:12px 14px;margin:0 0 14px;border-radius:0 8px 8px 0}
-.meta{color:#6b7280;font-size:13px;margin:0 0 20px}
-table{border-collapse:collapse;width:100%;background:#fff;font-size:13px;
+.meta{color:var(--muted);font-size:13px;margin:0 0 20px}
+table{border-collapse:collapse;width:100%;background:var(--surface);font-size:13px;
       box-shadow:0 1px 3px rgba(16,24,40,.06);border-radius:8px;overflow:hidden}
-th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #e4e7eb;vertical-align:top}
-th{background:#f7f8fa;font-weight:700;font-size:12px;white-space:nowrap;\n   cursor:pointer;user-select:none;position:relative}\nth:hover{background:#eef0f3;color:#2563eb}\nth:focus-visible{outline:2px solid #2563eb;outline-offset:-2px}\nth.sorted{color:#2563eb}\nth.sorted::after{content:" " attr(data-dir);font-size:9px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+th{background:var(--th-bg);font-weight:700;font-size:12px;white-space:nowrap;\n   cursor:pointer;user-select:none;position:relative}\nth:hover{background:var(--hair);color:var(--accent)}\nth:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}\nth.sorted{color:var(--accent)}\nth.sorted::after{content:" " attr(data-dir);font-size:9px}
 td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .t{display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border-radius:999px;
-   font-weight:700;font-size:11.5px;color:#16191d}
+   font-weight:700;font-size:11.5px;color:var(--text)}
 nav{font-size:13px;margin:0 0 16px}
-nav a{color:#2563eb;margin-right:12px}
-footer{margin-top:34px;font-size:12px;color:#6b7280;border-top:1px solid #e4e7eb;padding-top:14px}
+nav a{color:var(--accent);margin-right:12px}
+footer{margin-top:34px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:14px}
 footer div{margin-bottom:5px}
-.q{font-weight:700;margin-top:14px}\n.caveat{background:#fdf4f4;border-left:4px solid #c0262c;padding:10px 12px;\n        margin:0 0 12px;font-size:13px;border-radius:0 6px 6px 0}
+.q{font-weight:700;margin-top:14px}
+/* 제품 상세: 라벨-값 그리드. 기계가 읽기 좋고 사람도 훑기 좋다 */
+.kvs{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1px;
+     background:var(--border);border:1px solid var(--border);margin:0 0 22px}
+.kv{background:var(--surface);padding:13px 15px}
+.kv dt{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:5px}
+.kv dd{margin:0;font-size:14.5px;font-weight:600}
+.kv-tier{margin-left:6px;font-weight:700}
+.kv-note{display:block;font-size:11.5px;color:var(--muted);font-weight:400;margin-top:4px}
+.swl{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:7px}
+.swl li{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600}
+.raw{background:var(--surface);border:1px solid var(--border);padding:13px 15px;font-size:13.5px;
+     line-height:1.75;margin:0 0 8px;word-break:keep-all;overflow-wrap:anywhere}
+.cav{font-size:12.5px;color:var(--muted);margin:0 0 22px;line-height:1.6}
+.ansub{display:block;margin-top:7px;font-size:13.5px;font-weight:400;color:var(--text-2)}
+.hist{border:1px solid var(--border);background:var(--surface)}
+.hr{display:grid;grid-template-columns:88px 132px 1fr;gap:12px;padding:11px 15px;
+    font-size:12.5px;align-items:start}
+.hr+.hr{border-top:1px solid var(--hair)}
+.hd{font-weight:700} .hn{color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace}
+.hraw{color:var(--text-2);line-height:1.6;overflow-wrap:anywhere}
+.rel{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px;
+     margin:0 0 22px}
+.rel a{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);
+       padding:11px 13px;text-decoration:none;color:var(--text);font-size:13.5px}
+.rel a:hover{border-color:var(--accent);color:var(--accent)}
+/* 목록 -> 제품 페이지. 표 안이라 밑줄을 항상 긋지 않고 hover 에만 준다 */
+a.pl{color:var(--text);text-decoration:none;border-bottom:1px solid var(--border-strong)}
+a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
+@media(max-width:640px){
+  .kvs{grid-template-columns:1fr}
+  .hr{grid-template-columns:1fr;gap:4px}
+}\n.caveat{background:var(--danger-soft);border-left:4px solid var(--danger);padding:10px 12px;\n        margin:0 0 12px;font-size:13px;border-radius:0 6px 6px 0}
 @media(max-width:720px){table{font-size:12px}th,td{padding:6px 7px}h1{font-size:20px}}"""
 
 _TIER_BG = {"무감미료": "#4caf50", "S": "#8bc34a", "A": "#cddc39", "B": "#ffc107",
@@ -2256,6 +2366,35 @@ _TIER_BG = {"무감미료": "#4caf50", "S": "#8bc34a", "A": "#cddc39", "B": "#ff
 
 # 정적 페이지의 제품 검색. 표는 이미 HTML 에 전부 있고 이 스크립트는 행을 숨기기만
 # 한다 - 크롤러가 보는 내용은 변하지 않는다(점진적 향상). 외부 리소스 0 을 지킨다.
+_SEARCH_ICON = ('<svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true">'
+                '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>')
+
+# 표가 있는 페이지: 그 표를 즉시 걸러낸다.
+_FINDER_FILTER = f"""<div class="finder">
+  <div class="finder-in">
+    {_SEARCH_ICON}
+    <input type="search" id="q" autocomplete="off" spellcheck="false"
+           placeholder="제품명 · 제조사 · 감미료로 검색 (예: 코카콜라, 아스파탐)"
+           aria-label="이 표에서 제품 검색">
+    <button type="button" id="qc" aria-label="검색어 지우기" hidden>&times;</button>
+  </div>
+  <div class="finder-n" id="qn" role="status" aria-live="polite"></div>
+</div>"""
+
+# 표가 없는 페이지(제품 상세): 전체 목록으로 질의를 넘긴다.
+# GET 폼이라 JS 가 죽어도 동작한다 - 크롤러도 링크로 따라갈 수 있다.
+_FINDER_JUMP = f"""<form class="finder" action="{{PAGE_URL}}products.html" method="get">
+  <div class="finder-in">
+    {_SEARCH_ICON}
+    <input type="search" name="q" autocomplete="off" spellcheck="false"
+           placeholder="다른 제품 검색 (예: 밀키스 제로, 아스파탐)"
+           aria-label="전체 목록에서 제품 검색">
+    <button type="submit" class="f-go" aria-label="검색">&rarr;</button>
+  </div>
+  <div class="finder-n">전체 목록 페이지에서 결과를 보여줍니다</div>
+</form>"""
+
+
 _FINDER_JS = """<script>
 (function () {
   var q = document.getElementById('q'), qc = document.getElementById('qc'),
@@ -2275,6 +2414,9 @@ _FINDER_JS = """<script>
     return { tb: tb, rows: rows, empty: empty };
   });
   var total = groups.reduce(function (n, g) { return n + g.rows.length; }, 0);
+  // 제품 상세 페이지의 검색 폼이 ?q= 로 넘겨준다. GET 이라 JS 가 없어도 페이지는 열린다.
+  var pre = new URLSearchParams(location.search).get('q');
+  if (pre) q.value = pre;
 
   function run() {
     var s = q.value.replace(/\\s+/g, '').toLowerCase();
@@ -2386,6 +2528,9 @@ def _rows_table(records, cols=("티어", "제품명", "업소명", "감미료", 
                 cells.append(f"<td>{_tier_badge(v)}</td>")
             elif c in ("열량", "당류"):
                 cells.append(f'<td class="n">{_esc(v) if v != "" else "&mdash;"}</td>')
+            elif c == "제품명" and r.get("슬러그"):
+                cells.append(f'<td><a class="pl" href="{PAGE_URL}p/{r["슬러그"]}.html">'
+                             f"{_esc(v)}</a></td>")
             else:
                 cells.append(f"<td>{_esc(v) if v != '' else '&mdash;'}</td>")
         out.append("<tr>" + "".join(cells) + "</tr>")
@@ -2393,13 +2538,17 @@ def _rows_table(records, cols=("티어", "제품명", "업소명", "감미료", 
     return "\n".join(out)
 
 
-def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None):
+def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
+                 depth=0, has_table=True):
     """무JS 정적 페이지 한 장. 가시 텍스트와 JSON-LD 를 어긋나게 만들지 않는다.
 
     순서를 h1 -> 요약 -> 읽는 법 -> 기준일 -> 표 로 고정한다. 읽는 법을 표 아래에
     두면 수백 행을 지나야 '절반은 확인 불가' 같은 한계가 보인다 - 읽는 사람이
     못 보는 경고는 없는 경고다. 답변엔진도 첫 화면에서 답을 추출한다.
     """
+    # 표가 없는 페이지에 필터형 검색을 붙이면 '전체 0개'만 뜬다. 그때는 전체 목록으로
+    # 질의를 넘기는 GET 폼을 쓴다.
+    finder_html = _FINDER_FILTER if has_table else _FINDER_JUMP.replace("{PAGE_URL}", PAGE_URL)
     ld_html = ""
     if ld:
         ld_html = ('<script type="application/ld+json">'
@@ -2432,16 +2581,7 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None):
 <main>
 <nav><a href="{PAGE_URL}">&larr; 전체 리포트(검색·필터)</a><a href="{PAGE_URL}products.html">616개 전체 목록</a></nav>
 <h1>{h1}</h1>
-<div class="finder">
-  <div class="finder-in">
-    <svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-    <input type="search" id="q" autocomplete="off" spellcheck="false"
-           placeholder="제품명 · 제조사 · 감미료로 검색 (예: 코카콜라, 아스파탐)"
-           aria-label="이 표에서 제품 검색">
-    <button type="button" id="qc" aria-label="검색어 지우기" hidden>&times;</button>
-  </div>
-  <div class="finder-n" id="qn" role="status" aria-live="polite"></div>
-</div>
+{finder_html}
 <h2 class="first">요약</h2>
 <p class="lead">{summary}</p>
 <h2>읽는 법</h2>
@@ -2614,6 +2754,231 @@ def seo_landing_specs(records):
     ]
 
 
+# -- SEO: 제품별 상세 페이지 ------------------------------------
+# 이 사이트의 목적은 "검색엔진에서 특정 음료를 찾은 사람의 궁금증을 즉시 해소"다.
+# 그러려면 제품 하나가 URL 하나를 가져야 한다. 들어와서 검색하게 만들면 이미 늦다.
+# 각 페이지는 원재료 전문·감미료·영양·배합 이력이라는 고유 데이터를 싣기 때문에
+# 얇은 양산 페이지가 아니다.
+
+_SLUG_DROP = str.maketrans({c: None for c in '\\/:*?"<>|#%&+\'`,;!@$^={}[]~'})
+
+
+def product_slug(name):
+    """URL·파일명에 안전한 한글 슬러그. 한국어 검색에서 키워드가 URL 에 남는 쪽이 낫다."""
+    s = name.strip().translate(_SLUG_DROP)
+    s = s.replace(".", "").replace("(", " ").replace(")", " ")
+    s = re.sub(r"\s+", "-", s).strip("-.")
+    return s or "product"
+
+
+def assign_slugs(records):
+    """제품마다 고유 슬러그를 붙인다. 충돌하면 뒤에 번호를 단다.
+
+    제품명이 바뀌면 URL 도 바뀐다(유통명 반영으로 실제로 바뀐 적이 있다). 그때는
+    이전 URL 이 404 가 되므로, 이름을 바꾸는 변경은 사이트맵 재제출과 함께 해야 한다.
+    """
+    used = {}
+    for r in sorted(records, key=lambda r: r["제품명"]):
+        base = product_slug(r["제품명"])
+        n = used.get(base, 0) + 1
+        used[base] = n
+        r["슬러그"] = base if n == 1 else f"{base}-{n}"
+    return records
+
+
+def _sweetener_rows(rec):
+    """탐지 표기를 (감미료, 당류) 로 나눠 돌려준다.
+
+    '농축과즙(SUGAR,11)' 같은 당류 토큰을 감미료로 묶어 말하면 부정확하다.
+    나랑드사이다 제로는 착향용 레몬농축과즙 때문에 당류 토큰이 잡히지만 실측
+    당류는 0g 이고 등급도 B 다. 둘을 갈라 놓아야 문장이 사실이 된다.
+    """
+    sweet, sugar = [], []
+    for part in (rec.get("감미료") or "").split(" / "):
+        m = re.match(r"(.+?)\((.+?),(\d+)\)$", part.strip())
+        if not m:
+            continue
+        word, tier = m.group(1), m.group(2)
+        (sugar if tier in ("SUGAR", "F") else sweet).append((word, tier))
+    return sweet, sugar
+
+
+def _kcal_total(rec):
+    """100mL당 열량을 용량 기준으로 환산. 라벨(한 병 기준)과 대조할 수 있게 한다."""
+    try:
+        kcal = float(rec["열량"])
+        vol = float(re.sub(r"[^\d.]", "", str(rec["용량"])))
+    except (TypeError, ValueError):
+        return None
+    if not vol:
+        return None
+    return round(kcal * vol / 100)
+
+
+_TIER_WHY = {
+    "무감미료": "신고 원재료에 감미료가 없습니다. 원재료가 식품첨가물혼합제제로 뭉뚱그려져 "
+             "확인할 수 없는 제품도 이 등급에 들어갑니다.",
+    "S": "알룰로스·타가토스는 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 메타분석 "
+         "결과가 있어 이 리포트에서 가장 높은 등급입니다.",
+    "A": "스테비올배당체·나한과는 0 kcal 이고 혈당에 영향을 주지 않습니다. 다만 근거의 "
+         "강도는 S 보다 약합니다.",
+    "B": "수크랄로스·아세설팜칼륨·아스파탐·사카린은 RCT 21건 메타분석에서 공복 인슐린과 "
+         "HbA1c 상승 신호가 보고됐습니다.",
+    "C": "에리스리톨·자일리톨은 혈당에는 무해하지만 혈소판 반응성·심혈관 사건 신호가 "
+         "관찰연구에서 제기됐습니다. 인과관계는 확정되지 않았습니다.",
+    "D": "말티톨·소르비톨 등 당알코올은 실제 2~2.6 kcal/g 이고 혈당을 올립니다.",
+    "F": "제로를 표방하지만 신고 원재료에 당류가 있습니다. 제로칼로리 표시 기준은 100mL당 "
+         "4kcal 미만이라 표시 기준 위반은 아닙니다.",
+    "?": "원재료가 뭉뚱그려져 감미료를 확인할 수 없습니다.",
+}
+
+
+def _kv(label, value, note=""):
+    if value in ("", None):
+        return ""
+    n = f'<span class="kv-note">{note}</span>' if note else ""
+    return f'<div class="kv"><dt>{_esc(label)}</dt><dd>{value}{n}</dd></div>'
+
+
+def product_page(rec, records, lastmod):
+    """제품 한 장. 첫 화면에서 '무엇이 들었고 몇 등급인가'가 끝나야 한다."""
+    name = rec["제품명"]
+    tier = rec["티어"]
+    sw, sugar = _sweetener_rows(rec)
+    maker = rec["업소명"]
+    total = _kcal_total(rec)
+
+    if sw:
+        words = [w for w, _ in sw]
+        listed = ", ".join(f"<b>{_esc(w)}</b>" for w in words)
+        # 조사는 마지막 낱말의 종성으로 정한다. 손으로 박으면 반드시 틀린다.
+        answer = (f"{_esc(name)}에는 {listed}{_josa(words[-1], '이', '가')} 들어 있습니다. "
+                  f"감미료 등급은 {_tier_badge(tier)} 입니다.")
+        if sugar:
+            sg = ", ".join(_esc(w) for w, _ in sugar)
+            zero = str(rec.get("당류") or "").strip()
+            tail = (f" 신고 영양성분상 당류는 {_esc(zero)}g 입니다."
+                    if zero not in ("", "None") else "")
+            answer += (f' <span class="ansub">원재료에 {sg}{_josa(sugar[-1][0], "이", "가")} '
+                       f'있지만 착향 목적의 미량으로 봅니다.{tail}</span>')
+    elif rec.get("감미료미표기") == "Y":
+        answer = (f"{_esc(name)}의 신고 원재료는 <b>식품첨가물혼합제제</b>로 뭉뚱그려져 있어 "
+                  f"어떤 감미료를 썼는지 <b>확인할 수 없습니다</b>. 등급은 {_tier_badge(tier)} 입니다.")
+    else:
+        answer = (f"{_esc(name)}의 신고 원재료에는 감미료가 없습니다. "
+                  f"등급은 {_tier_badge(tier)} 입니다.")
+
+    sw_html = "".join(
+        f'<li>{_tier_badge(t)} <span>{_esc(w)}</span></li>' for w, t in sw)
+    sugar_html = "".join(f'<li><span>{_esc(w)}</span></li>' for w, _ in sugar)
+    base = rec.get("기준량") or "100ml"
+
+    rows = [
+        _kv("감미료 등급", f'{_tier_badge(tier)} <span class="kv-tier">{_esc(tier)}</span>'),
+        _kv("탐지된 감미료", f'<ul class="swl">{sw_html}</ul>' if sw else "없음"),
+        _kv("원재료의 당류 표기", f'<ul class="swl">{sugar_html}</ul>',
+            "실측 당류가 0g 이면 착향용 미량으로 보고 등급을 내리지 않습니다") if sugar else "",
+        _kv("열량", f'{_esc(rec["열량"])} kcal / {_esc(base)}',
+            f'{_esc(rec["용량"])} 한 개 약 {total} kcal (계산값)' if total is not None else ""),
+        _kv("당류", f'{_esc(rec["당류"])} g / {_esc(base)}'),
+        _kv("용량", _esc(rec["용량"])),
+        _kv("제조사", _esc(maker)),
+        _kv("식품유형", _esc(rec["식품유형"])),
+        _kv("보고일자", _esc(rec["보고일자"])),
+        _kv("품목제조보고 등록명", _esc(rec["등록명"])) if rec.get("등록명") else "",
+    ]
+    body = ['<dl class="kvs">' + "".join(r for r in rows if r) + "</dl>"]
+
+    body.append(f'<h2>신고 원재료 전문</h2><p class="raw">{_esc(rec["원재료전문"])}</p>')
+    if rec.get("표시원재료"):
+        src = rec.get("유통명출처")
+        link = (f' (<a href="{_esc(src)}" target="_blank" rel="noopener nofollow">판매처 표시사항</a>)'
+                if src else "")
+        body.append(f'<h2>판매처 표시 원재료{link}</h2><p class="raw">{_esc(rec["표시원재료"])}</p>'
+                    '<p class="cav">위 신고 원재료가 뭉뚱그려져 감미료가 보이지 않아, 판매처 '
+                    '표시사항으로 판정했습니다.</p>')
+    if rec.get("일반판"):
+        reg = rec["일반판"]
+        body.append(f'<h2>일반판과 비교</h2><p>같은 제품군의 일반판 <b>{_esc(reg)}</b>'
+                    f'{_josa(reg, "은", "는")} {_tier_badge(rec["일반판티어"])} 등급입니다.</p>')
+    hist = [h for h in (rec.get("이력") or [])]
+    if len(hist) > 1:
+        hl = "".join(f'<div class="hr"><span class="hd">{_esc(h["보고일자"])}</span>'
+                     f'<span class="hn">{_esc(h["보고번호"])}</span>'
+                     f'<span class="hraw">{_esc(h["원재료전문"])}</span></div>' for h in hist)
+        body.append(f'<h2>배합 신고 이력 {len(hist)}건</h2><div class="hist">{hl}</div>'
+                    '<p class="cav">위 표의 값은 가장 최근 보고 기준입니다. 배합은 자주 바뀝니다.</p>')
+    body.append(f'<h2>{_esc(tier)} 등급인 이유</h2><p>{_TIER_WHY.get(tier, "")}</p>'
+                '<p class="cav">한 제품에 여러 감미료가 있으면 <b>가장 나쁜 등급</b>이 최종 등급입니다.</p>')
+
+    # 내부 링크: 같은 제조사, 같은 등급. 크롤러의 탐색 경로이자 사용자의 다음 행동이다.
+    same_maker = [r for r in records
+                  if r["업소명"] == maker and r["제품명"] != name][:6]
+    same_tier = [r for r in records
+                 if r["티어"] == tier and r["업소명"] != maker and r["제품명"] != name][:6]
+    def links(items):
+        return "".join(f'<a href="{PAGE_URL}p/{r["슬러그"]}.html">{_tier_badge(r["티어"])}'
+                       f'<span>{_esc(r["제품명"])}</span></a>' for r in items)
+    if same_maker:
+        body.append(f'<h2>같은 제조사의 다른 제품</h2><div class="rel">{links(same_maker)}</div>')
+    if same_tier:
+        body.append(f'<h2>{_esc(tier)} 등급의 다른 제품</h2><div class="rel">{links(same_tier)}</div>')
+
+    props = [{"@type": "PropertyValue", "name": "감미료 등급", "value": tier}]
+    if sw:
+        props.append({"@type": "PropertyValue", "name": "탐지된 감미료",
+                      "value": ", ".join(w for w, _ in sw)})
+    if sugar:
+        props.append({"@type": "PropertyValue", "name": "원재료의 당류 표기",
+                      "value": ", ".join(w for w, _ in sugar)})
+    for lab, key in (("열량", "열량"), ("당류", "당류")):
+        if rec.get(key) not in ("", None):
+            props.append({"@type": "PropertyValue", "name": f"{lab} ({base}당)",
+                          "value": str(rec[key])})
+    ld = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {"@type": "Product", "name": name,
+             "brand": {"@type": "Organization", "name": maker},
+             "category": rec["식품유형"],
+             "description": f"{name}의 감미료 구성과 등급. 식약처 품목제조보고 원재료 기준.",
+             "url": f"{PAGE_URL}p/{rec['슬러그']}.html",
+             "additionalProperty": props,
+             "isBasedOn": f"{PAGE_URL}"},
+            {"@type": "BreadcrumbList", "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "제로 음료 감미료 조회",
+                 "item": PAGE_URL},
+                {"@type": "ListItem", "position": 2, "name": f"{tier} 등급",
+                 "item": f"{PAGE_URL}products.html"},
+                {"@type": "ListItem", "position": 3, "name": name}]},
+        ],
+    }
+    desc = (f"{name}에 들어간 감미료와 등급({tier}). "
+            + (f"탐지된 감미료: {', '.join(w for w, _ in sw)}. " if sw else "")
+            + f"제조사 {maker.split(' 외')[0]}. 식약처 품목제조보고 원재료 전문 기준입니다.")
+    return _static_page(
+        f"p/{rec['슬러그']}.html",
+        f"{name} 감미료 · 등급 {tier} | 식약처 원재료 기준",
+        desc[:150],
+        _esc(name),
+        answer,
+        f"이 페이지의 값은 제조사가 식약처에 신고한 <b>품목제조보고 원재료 전문</b>에서 "
+        f"감미료를 탐지한 결과입니다. 추정으로 채우지 않으며, 열량·당류는 <b>{_esc(base)}당</b> "
+        f"값이라 제품 라벨(한 병 전체 기준)과 달라 보일 수 있습니다.",
+        "".join(body), lastmod, ld, depth=1, has_table=False)
+
+
+def write_product_pages(docs_dir, records, lastmod):
+    d = os.path.join(docs_dir, "p")
+    os.makedirs(d, exist_ok=True)
+    for rec in records:
+        with open(os.path.join(d, f"{rec['슬러그']}.html"), "w",
+                  encoding="utf-8", newline="\n") as f:
+            f.write(product_page(rec, records, lastmod))
+    print(f"[seo] 제품별 페이지 {len(records)}장 생성 -> {d}/")
+    return [f"p/{r['슬러그']}.html" for r in records]
+
+
 def write_seo_pages(docs_dir, records, lastmod):
     """정적 목록·의도 랜딩 페이지를 쓰고 생성한 slug 목록을 돌려준다."""
     written = []
@@ -2776,11 +3141,15 @@ def write_seo_files(docs_dir, lastmod, records):
         # 사이트맵을 1 URL 로 덮어쓰고 정적 페이지를 낡은 채 남기는 사고를 막는다.
         raise ValueError("write_seo_files 에는 records 가 필요합니다 "
                          "(build()/sync() 가 돌려주는 stats['records'])")
+    assign_slugs(records)
     slugs = write_seo_pages(docs_dir, records, lastmod)
+    prod = write_product_pages(docs_dir, records, lastmod)
     write_llms_files(docs_dir, records, lastmod)
 
     urls = [(PAGE_URL, "1.0", "monthly")]
     urls += [(f"{PAGE_URL}{s}", "0.8", "monthly") for s in slugs]
+    # 제품별 페이지가 이 사이트의 롱테일이다. 사이트맵에 전부 넣는다.
+    urls += [(f"{PAGE_URL}{s}", "0.6", "monthly") for s in prod]
     body = "".join(
         f"  <url>\n    <loc>{loc}</loc>\n    <lastmod>{lastmod}</lastmod>\n"
         f"    <changefreq>{freq}</changefreq>\n    <priority>{pri}</priority>\n  </url>\n"
