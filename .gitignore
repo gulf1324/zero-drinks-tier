@@ -20,3 +20,6 @@ _enrich_runner.log
 
 # 손으로 캡처한 라벨 이미지 (제3자 상품 사진이라 추적하지 않는다. 출처는 zero_soda_label.json 에 있다)
 무감미료_수동찾기/
+
+# UI 시안 (배포 대상 아님)
+_mockups/

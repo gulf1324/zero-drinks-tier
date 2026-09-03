@@ -1042,22 +1042,60 @@ __GA__
 __FAQ_LD__
 <style>
   :root{
-    --bg:#f4f5f7; --surface:#fff; --border:#e4e7eb; --border-strong:#d3d8de;
-    --text:#16191d; --muted:#6b7280; --muted-2:#8a919b;
-    --accent:#2563eb; --accent-soft:#eef4ff; --danger:#c0262c; --danger-soft:#fdf4f4;
-    --radius:10px; --radius-sm:7px; --pill:999px;
+    color-scheme: light dark;
+    /* 색은 전부 토큰이다. 하드코딩 hex 를 CSS 에 두면 다크모드가 성립하지 않는다. */
+    --bg:#f4f5f7; --surface:#fff; --surface-2:#fbfcfd; --surface-3:#f7f8fa;
+    --border:#e4e7eb; --border-strong:#d3d8de; --border-hover:#b9c0c9;
+    --text:#16191d; --muted:#6b7280; --muted-2:#8a919b; --faint:#c3c8cf;
+    --row-hover:#f7f9fc; --sel:#f4f8fd; --sel-hover:#eef4fb; --th-hover:#f1f3f5;
+    --chip-bg:#eef0f2; --ghost:#e8ebee; --ghost-hover:#dde1e5;
+    --accent:#2563eb; --accent-soft:#eef4ff; --accent-border:#bcd3fb; --accent-ink:#12356e;
+    --danger:#c0262c; --danger-soft:#fdf4f4; --danger-border:#f0cdcd;
+    --danger-ink:#7d1d21; --danger-hover:#fbebeb;
+    --warn-bg:#fff4e5; --warn-ink:#8a5300; --ok-bg:#e8f5ec; --ok-ink:#1c6b3c;
+    /* 라운딩 원칙: 만지는 것과 떠 있는 것만 둥글게, 구조는 각지게.
+       --pill  분류 태그(배지·칩·필터) - 형태 자체가 '태그'라는 신호
+       --ctl   폼 컨트롤(입력·버튼·셀렉트·페이저) - 누를 수 있다는 신호
+       0       구조 컨테이너(표 카드·패널·검색 박스) - 문서는 각져야 문서로 읽힌다
+       50%     진짜 원(상태 점·닫기 버튼)만 */
+    --ctl:6px; --pill:999px;
     --shadow-sm:0 1px 2px rgba(16,24,40,.05);
     --shadow:0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
   }
+
+  /* 다크모드. 브라우저 설정을 그대로 따른다 (토글 없음 - 상태를 저장할 곳이 없는
+     정적 파일이고, OS 설정을 존중하는 것이 사용자가 기대하는 동작이다).
+     순수 검정(#000)을 쓰지 않는다 - 깊이가 죽고 OLED 에서 번짐이 생긴다.
+     티어 색(--tc/--tf)은 두 모드에서 동일하다. 등급 색은 이 프로젝트의 도메인
+     팔레트이고, 모드에 따라 등급이 달라 보이면 판정이 흔들리는 것처럼 읽힌다. */
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#101315; --surface:#171b1e; --surface-2:#1c2124; --surface-3:#1f2427;
+      /* --border 는 장식 구분선(면제), --border-strong 은 입력·버튼 경계라
+         WCAG 1.4.11 의 3:1 을 넘겨야 한다. */
+      --border:#2b3236; --border-strong:#67737a; --border-hover:#8b979e;
+      --text:#e7eaec; --muted:#9aa4ab; --muted-2:#78838a; --faint:#4e585e;
+      --row-hover:#1c2124; --sel:#16263a; --sel-hover:#1b2f47; --th-hover:#242a2e;
+      --chip-bg:#252c30; --ghost:#2b3236; --ghost-hover:#3a4247;
+      --accent:#6ea3ff; --accent-soft:#16263a; --accent-border:#2f4f7d; --accent-ink:#b9d3ff;
+      --danger:#f3736c; --danger-soft:#2a1918; --danger-border:#5c2a28;
+      --danger-ink:#f7b0ab; --danger-hover:#331d1c;
+      --warn-bg:#33260f; --warn-ink:#f0c887; --ok-bg:#14291d; --ok-ink:#8fd6a8;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.5);
+      --shadow:0 1px 3px rgba(0,0,0,.6), 0 1px 2px rgba(0,0,0,.4);
+    }
+    /* 다크에서 밝은 티어 색은 그대로 두면 눈을 찌른다. 채도만 살짝 낮춘다. */
+    .tier-chip,.badge.active,.tier-swatch{filter:saturate(.92)}
+  }
   /* 티어 색의 단일 진원지 — 배지 점·배지 활성·표 칩·범례 칩이 모두 상속 */
-  [data-tier="무감미료"]{--tc:#4caf50;--tf:#ffffff}
+  [data-tier="무감미료"]{--tc:#4caf50;--tf:#0d0f11}
   [data-tier="S"]{--tc:#8bc34a;--tf:#14210a}
   [data-tier="A"]{--tc:#cddc39;--tf:#1f2408}
   [data-tier="B"]{--tc:#ffc107;--tf:#2b2000}
   [data-tier="C"]{--tc:#ff9800;--tf:#2b1800}
-  [data-tier="D"]{--tc:#f4511e;--tf:#ffffff}
+  [data-tier="D"]{--tc:#f4511e;--tf:#0d0f11}
   [data-tier="F"]{--tc:#cc0000;--tf:#ffffff}
-  [data-tier="?"]{--tc:#9aa1ab;--tf:#ffffff}
+  [data-tier="?"]{--tc:#9aa1ab;--tf:#0d0f11}
 
   *{box-sizing:border-box}
   body{margin:0;padding:20px 18px 44px;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;
@@ -1066,19 +1104,42 @@ __FAQ_LD__
   .page{max-width:1320px;margin:0 auto}
 
   header{margin-bottom:14px}
+  /* 구글식 진입: 로고 -> 한 줄 설명 -> 검색창. 들어온 사람이 바로 검색한다. */
+  .brandbar{display:flex;flex-direction:column;align-items:center;text-align:center;
+            padding:34px 0 20px;gap:10px}
+  .mark{display:flex;align-items:flex-end;gap:4px;height:44px;position:relative}
+  .m-bar{width:11px;height:var(--h);border-radius:3px 3px 0 0;background:var(--accent);
+         opacity:.9}
+  .m-bar:nth-child(2){background:#4caf50}
+  .m-bar:nth-child(3){background:#ffc107}
+  .m-drop{position:absolute;right:-9px;bottom:2px;width:11px;height:11px;
+          border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--text)}
+  .brandbar h1{font-size:27px;letter-spacing:-.03em;margin:0}
+  .tagline{margin:0;max-width:52ch;font-size:14.5px;color:var(--muted);line-height:1.65}
+  .tagline b{color:var(--text);font-weight:650}
+  .genmeta{margin-top:9px;font-size:11.5px;color:var(--muted-2);line-height:1.6;
+           text-align:center;max-width:76ch;margin-left:auto;margin-right:auto}
+  .alllink{color:var(--accent);text-decoration:none;font-size:12.5px;
+                              font-weight:600;white-space:nowrap}
+  .alllink:hover{text-decoration:underline}
+  @media (max-width:640px){
+    .brandbar{padding:22px 0 16px}
+    .brandbar h1{font-size:22px}
+    .tagline{font-size:13.5px}
+  }
   h1{font-size:22px;line-height:1.25;letter-spacing:-.01em;margin:0 0 5px;font-weight:700}
   .meta{color:var(--muted);font-size:12.5px;margin:0 0 12px}
   .meta-note{color:var(--muted-2);font-size:11.5px}
 
   .tier-chip{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:20px;padding:0 7px;
-             border-radius:var(--radius-sm);font-size:11.5px;font-weight:700;white-space:nowrap;
+             border-radius:var(--ctl);font-size:11.5px;font-weight:700;white-space:nowrap;
              background:var(--tc,#9aa1ab);color:var(--tf,#fff)}
 
   .badges{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
   .badge{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-strong);background:var(--surface);
          border-radius:var(--pill);padding:5px 12px 5px 10px;font-size:12.5px;font-weight:600;color:var(--text);
          cursor:pointer;box-shadow:var(--shadow-sm);transition:background .12s,border-color .12s,box-shadow .12s}
-  .badge:hover{border-color:#b9c0c9;box-shadow:var(--shadow)}
+  .badge:hover{border-color:var(--border-hover);box-shadow:var(--shadow)}
   .badge .dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--tc,#9aa1ab)}
   .badge .cnt{color:var(--muted);font-variant-numeric:tabular-nums}
   .badge.active{background:var(--tc,#4b5563);color:var(--tf,#fff);border-color:transparent;box-shadow:var(--shadow)}
@@ -1086,24 +1147,24 @@ __FAQ_LD__
   .badge.active .dot{background:var(--tf,#fff);opacity:.85}
   .clear-tiers{border:1px solid var(--border-strong);background:var(--surface);border-radius:var(--pill);
                padding:5px 12px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;box-shadow:var(--shadow-sm)}
-  .clear-tiers:hover:not(:disabled){color:var(--text);border-color:#b9c0c9}
+  .clear-tiers:hover:not(:disabled){color:var(--text);border-color:var(--border-hover)}
   .clear-tiers:disabled{opacity:.4;cursor:default;box-shadow:none}
 
   .warn{display:flex;gap:9px;align-items:flex-start;background:var(--danger-soft);border:1px solid #f0cdcd;
-        border-left:4px solid var(--danger);border-radius:var(--radius-sm);padding:10px 13px;margin:0 0 12px;
-        cursor:pointer;font-size:12.5px;color:#7d1d21;box-shadow:var(--shadow-sm)}
-  .warn:hover{background:#fbebeb}
+        border-left:4px solid var(--danger);border-radius:var(--ctl);padding:10px 13px;margin:0 0 12px;
+        cursor:pointer;font-size:12.5px;color:var(--danger-ink);box-shadow:var(--shadow-sm)}
+  .warn:hover{background:var(--danger-hover)}
   .warn::before{content:"!";flex:none;width:16px;height:16px;border-radius:50%;background:var(--danger);color:#fff;
                 font-size:11px;font-weight:700;line-height:16px;text-align:center;margin-top:1px}
 
-  details.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  details.panel{background:var(--surface);border:1px solid var(--border);
                 margin:0 0 12px;box-shadow:var(--shadow-sm);font-size:12.5px}
   details.panel>summary{cursor:pointer;padding:10px 14px;font-weight:600;list-style:none;user-select:none;color:var(--text)}
   details.panel>summary::-webkit-details-marker{display:none}
   details.panel>summary::before{content:"\25B8";display:inline-block;margin-right:7px;color:var(--muted-2);
                                 transition:transform .15s}
   details.panel[open]>summary::before{transform:rotate(90deg)}
-  details.panel>summary:hover{background:#fafbfc;border-radius:var(--radius) var(--radius) 0 0}
+  details.panel>summary:hover{background:var(--surface-2)}
   .panel-body{padding:2px 14px 12px}
 
   .tier-row{display:grid;grid-template-columns:30px 96px minmax(190px,1.1fr) minmax(240px,2fr);gap:10px;
@@ -1115,11 +1176,11 @@ __FAQ_LD__
 
   .maker-row{display:flex;align-items:center;gap:10px;margin:4px 0}
   .maker-name{width:230px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
-  .maker-bar{flex:1;height:14px;background:#eef0f2;border-radius:var(--radius-sm);overflow:hidden;display:flex}
+  .maker-bar{flex:1;height:14px;background:var(--chip-bg);border-radius:var(--ctl);overflow:hidden;display:flex}
   .maker-bar span{height:100%}
 
   /* ── 검색: 이 사이트의 주 진입 동선이라 가장 크고 먼저 온다 ── */
-  .searchbar{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  .searchbar{background:var(--surface);border:1px solid var(--border);
              padding:13px 14px 11px;margin:0 0 11px;box-shadow:var(--shadow)}
   .searchfield{position:relative;display:flex;align-items:center}
   .s-icon{position:absolute;left:14px;width:18px;height:18px;fill:none;stroke:var(--muted-2);
@@ -1127,16 +1188,16 @@ __FAQ_LD__
   .searchfield:focus-within .s-icon{stroke:var(--accent)}
   input[type=search]{width:100%;padding:13px 42px 13px 42px;font-size:16px;font-family:inherit;
                      border:1.5px solid var(--border-strong);border-radius:var(--pill);
-                     background:#fbfcfd;color:var(--text);outline:none;
+                     background:var(--surface-2);color:var(--text);outline:none;
                      -webkit-appearance:none;appearance:none}
   input[type=search]::-webkit-search-cancel-button{display:none}
   input[type=search]::placeholder{color:var(--muted-2)}
   input[type=search]:focus{border-color:var(--accent);background:#fff;
                            box-shadow:0 0 0 4px rgba(37,99,235,.13)}
   .s-clear{position:absolute;right:8px;width:26px;height:26px;border:0;border-radius:50%;
-           background:#e8ebee;color:var(--muted);font-size:15px;line-height:1;cursor:pointer;
+           background:var(--ghost);color:var(--muted);font-size:15px;line-height:1;cursor:pointer;
            display:flex;align-items:center;justify-content:center}
-  .s-clear:hover{background:#dde1e5;color:var(--text)}
+  .s-clear:hover{background:var(--ghost-hover);color:var(--text)}
   .s-clear[hidden]{display:none}
   .searchmeta{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:9px 2px 0}
   .count-pill{color:var(--muted);font-size:12.5px;white-space:nowrap}
@@ -1144,7 +1205,7 @@ __FAQ_LD__
   .hint{color:var(--muted-2);font-size:11.5px}
 
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--surface);
-           border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;
+           border:1px solid var(--border);border-radius:var(--ctl);padding:10px 12px;
            margin:0 0 12px;box-shadow:var(--shadow-sm)}
   .chks{display:flex;gap:7px;flex-wrap:wrap;align-items:center;min-width:0}
   .chk{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fbfcfd;
@@ -1152,32 +1213,30 @@ __FAQ_LD__
        transition:background .12s,border-color .12s,color .12s}
   .chk:hover{border-color:var(--border-strong);color:var(--text)}
   .chk input{accent-color:var(--accent);margin:0;cursor:pointer}
-  .chk:has(input:checked){background:var(--accent-soft);border-color:#bcd3fb;color:#12356e;font-weight:600}
+  .chk:has(input:checked){background:var(--accent-soft);border-color:var(--accent-border);color:var(--accent-ink);font-weight:600}
   /* 정렬 컨트롤 — 데스크톱은 표 헤더 클릭으로 하므로 좁은 화면에서만 노출 */
   .sortsel{display:none;align-items:center;gap:6px;margin-left:auto;color:var(--muted);font-size:12px}
-  .sortsel select{font-family:inherit;font-size:12.5px;padding:5px 8px;border-radius:var(--radius-sm);
-                  border:1px solid var(--border-strong);background:#fbfcfd;color:var(--text)}
-  .sortsel button{width:30px;height:28px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  .sortsel select{font-family:inherit;font-size:12.5px;padding:5px 8px;border-radius:var(--ctl);
+                  border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text)}
+  .sortsel button{width:30px;height:28px;border:1px solid var(--border-strong);border-radius:var(--ctl);
                   background:#fbfcfd;color:var(--text);cursor:pointer;font-size:11px}
 
-  .tablecard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .tablecard{background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow)}
   table{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
   th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--border)}
-  th{position:sticky;top:0;z-index:2;background:#f7f8fa;color:var(--muted);font-size:11.5px;font-weight:700;
+  th{position:sticky;top:0;z-index:2;background:var(--surface-3);color:var(--muted);font-size:11.5px;font-weight:700;
      letter-spacing:.02em;white-space:nowrap;cursor:pointer;user-select:none;
      box-shadow:inset 0 -1px 0 var(--border-strong)}
-  th:hover{color:var(--text);background:#f1f3f5}
+  th:hover{color:var(--text);background:var(--th-hover)}
   .th-unit{display:block;font-size:9px;font-weight:600;color:var(--muted-2);letter-spacing:0;margin-top:1px}
-  th:first-child{border-top-left-radius:var(--radius)}
-  th:last-child{border-top-right-radius:var(--radius)}
   th.sorted{color:var(--accent)}
   th.sorted::after{content:" " attr(data-dir);font-size:9px}
   tbody tr:last-child td{border-bottom:0}
   tr.row{cursor:pointer}
-  tr.row:hover td{background:#f7f9fc}
+  tr.row:hover td{background:var(--row-hover)}
   tr.fake-zero td:first-child{box-shadow:inset 3px 0 0 var(--danger)}
-  tr.row.expanded td{background:#f4f8fd}
-  tr.row.expanded:hover td{background:#eef4fb}
+  tr.row.expanded td{background:var(--sel)}
+  tr.row.expanded:hover td{background:var(--sel-hover)}
   tr.row.expanded td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
   tr.fake-zero.row.expanded td:first-child{box-shadow:inset 3px 0 0 var(--accent),inset 6px 0 0 var(--danger)}
   td.c-name .pname{font-weight:600}
@@ -1187,12 +1246,12 @@ __FAQ_LD__
   td.c-sweet{color:var(--muted);font-size:12px;max-width:280px}
   td.c-combo{white-space:nowrap}
   .combo-plus{color:var(--muted-2);margin:0 3px;font-size:11px}
-  .na{color:#c3c8cf}
-  .chip{display:inline-block;background:#eef0f2;color:var(--muted);border-radius:var(--pill);padding:1px 7px;
+  .na{color:var(--faint)}
+  .chip{display:inline-block;background:var(--chip-bg);color:var(--muted);border-radius:var(--pill);padding:1px 7px;
         font-size:10.5px;font-weight:600;margin-left:5px;vertical-align:1px}
-  .chip.warn-chip{background:#fff4e5;color:#8a5300;cursor:help}
-  .chip.ok-chip{background:#e8f5ec;color:#1c6b3c;cursor:help}
-  tr.detail td{background:#f4f8fd;font-size:12px;padding:0}
+  .chip.warn-chip{background:var(--warn-bg);color:var(--warn-ink);cursor:help}
+  .chip.ok-chip{background:var(--ok-bg);color:var(--ok-ink);cursor:help}
+  tr.detail td{background:var(--sel);font-size:12px;padding:0}
   .detail-cell{width:0;min-width:100%}
   .detail-box{padding:11px 13px;border-left:3px solid var(--accent);white-space:pre-wrap;line-height:1.65;
               animation:detailIn .14s cubic-bezier(.16,1,.3,1)}
@@ -1205,7 +1264,7 @@ __FAQ_LD__
   .pager{margin:14px 0 0;display:flex;flex-direction:column;align-items:center;gap:7px}
   .pager-btns{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
   .pg{min-width:34px;height:34px;padding:0 10px;border:1px solid var(--border-strong);
-      background:var(--surface);border-radius:var(--radius-sm);font-family:inherit;font-size:12.5px;
+      background:var(--surface);border-radius:var(--ctl);font-family:inherit;font-size:12.5px;
       color:var(--text);cursor:pointer;box-shadow:var(--shadow-sm)}
   .pg:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
   .pg.cur{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;cursor:default}
@@ -1220,13 +1279,13 @@ __FAQ_LD__
   .guides ul{list-style:none;padding:0;margin:0;display:grid;gap:7px;
              grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
   .guides a{display:block;background:var(--surface);border:1px solid var(--border);
-            border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);
+            border-radius:var(--ctl);padding:10px 12px;color:var(--text);
             text-decoration:none;font-size:13px;box-shadow:var(--shadow-sm)}
   .guides a:hover{border-color:var(--accent);color:var(--accent)}
   .guides span{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
   .faq{margin:26px 0 0}
   .faq details{background:var(--surface);border:1px solid var(--border);
-               border-radius:var(--radius-sm);padding:9px 12px;margin-bottom:6px;font-size:13px}
+               border-radius:var(--ctl);padding:9px 12px;margin-bottom:6px;font-size:13px}
   .faq summary{cursor:pointer;font-weight:600}
   .faq p{margin:8px 0 2px;color:var(--muted);line-height:1.7}
 
@@ -1246,7 +1305,7 @@ __FAQ_LD__
     body{padding:14px 12px 36px;font-size:13.5px}
     h1{font-size:19px}
     .meta{font-size:12px}
-    .searchbar{padding:11px 11px 9px;border-radius:12px}
+    .searchbar{padding:11px 11px 9px}
     .badges{gap:6px}
     .badge{padding:5px 10px 5px 9px;font-size:12px}
     .sortsel{display:flex;margin-left:0;width:100%}
@@ -1254,7 +1313,7 @@ __FAQ_LD__
     .maker-name{width:106px;font-size:12px}
     .panel-body{padding:2px 11px 11px}
 
-    .tablecard{border-radius:12px;padding:2px 0}
+    .tablecard{padding:2px 0}
     table,tbody,tr,td{display:block;width:auto}
     thead{display:none}                      /* 정렬은 .sortsel 로 대체 */
     tbody tr.row{position:relative;padding:11px 13px 12px;border-bottom:1px solid var(--border)}
@@ -1276,7 +1335,7 @@ __FAQ_LD__
     tr.fake-zero td:first-child{box-shadow:none}
     tr.fake-zero::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
                          background:var(--danger)}
-    tr.row.expanded{background:#f4f8fd}
+    tr.row.expanded{background:var(--sel)}
     tr.row.expanded td:first-child{box-shadow:none}
     tr.row.expanded::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
                             background:var(--accent)}
@@ -1292,8 +1351,15 @@ __FAQ_LD__
 <body>
 <div class="page">
 <header>
-  <h1>제로 탄산음료 티어 리포트</h1>
-  <div class="meta">생성 __GENERATED_AT__ · 대상 식품유형 __TYPES__ · 당류 없는 음료와 제로 표기 제품 __TOTAL__개<br><span class="meta-note">설탕이 들어간 일반 음료는 제외했습니다. 단, 제로를 표방하면서 당류가 있는 제품은 F 티어로 남겼습니다.</span></div>
+  <div class="brandbar">
+    <div class="mark" aria-hidden="true">
+      <span class="m-bar" style="--h:60%"></span><span class="m-bar" style="--h:82%"></span>
+      <span class="m-bar" style="--h:44%"></span><span class="m-drop"></span>
+    </div>
+    <h1>제로 음료 감미료 조회</h1>
+    <p class="tagline">찾는 음료에 어떤 대체당이 들어 있는지 <b>식약처 신고 원재료</b>로 확인하세요.
+      제품 <b>__TOTAL__개</b>를 감미료 기준 S~F 티어로 나눴습니다.</p>
+  </div>
   <section class="searchbar">
     <div class="searchfield">
       <svg class="s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -1304,7 +1370,9 @@ __FAQ_LD__
     <div class="searchmeta">
       <span class="count-pill"><b id="shownCount">0</b>개 검색됨</span>
       <span class="hint">행을 누르면 원재료 전문이 열립니다</span>
+      <a class="alllink" href="__PAGE_URL__products.html">전체 목록 한 페이지로 보기</a>
     </div>
+    <div class="genmeta">생성 __GENERATED_AT__ · 대상 __TYPES__ · 설탕이 든 일반 음료는 제외했으나, 제로를 표방하면서 당류가 있는 제품은 F 티어로 남겼습니다.</div>
   </section>
   <div class="badges" id="badges">__BADGES__<button class="clear-tiers" id="clearTiers" disabled>전체 해제</button></div>
   <div class="warn" id="fakeZeroBanner">제로 표기 제품 __ZERO_TOTAL__개 중 __FAKE_ZERO__개는 신고 원재료에 당류가 있습니다</div>
