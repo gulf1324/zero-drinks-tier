@@ -77,6 +77,43 @@
      "name": "아임얼라이브 무쿠핏"
     }
    ]
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "아임얼라이브 무쿠핏에 어떤 감미료가 들어 있나요?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "신고 원재료에서 알룰로오스, 효소처리스테비아가 탐지됐습니다. 이 가운데 가장 나쁜 등급을 따라 전체 등급은 A입니다."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "아임얼라이브 무쿠핏은 칼로리가 얼마인가요?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "신고 영양성분 기준 11 kcal / 100ml이고 당류는 0.40 g / 100ml입니다. 155ml 한 개로는 약 17 kcal 입니다(계산값)."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "아임얼라이브 무쿠핏에 아스파탐이 들어 있나요?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "신고 원재료에서 아스파탐은 탐지되지 않았습니다."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "아임얼라이브 무쿠핏의 감미료 등급은 왜 A인가요?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "스테비올배당체·나한과는 0 kcal 이고 혈당에 영향을 주지 않습니다. 다만 근거의 강도는 S 보다 약합니다."
+     }
+    }
+   ]
   }
  ]
 }</script>
@@ -255,6 +292,11 @@ footer div{margin-bottom:5px}
      line-height:1.75;margin:0 0 8px;word-break:keep-all;overflow-wrap:anywhere}
 .cav{font-size:12.5px;color:var(--muted);margin:0 0 22px;line-height:1.6}
 .ansub{display:block;margin-top:7px;font-size:13.5px;font-weight:400;color:var(--text-2)}
+/* FAQ: 질문은 굵게, 답은 바로 아래. 아코디언으로 접지 않는다 - 접힌 답은
+   크롤러가 보긴 해도 사용자가 못 보고, AI 인용에도 불리하다 */
+.faq{border:1px solid var(--border);background:var(--surface);padding:4px 15px 14px;margin:0 0 22px}
+.faq .q{font-weight:700;font-size:14px;margin:16px 0 5px}
+.faq .a{margin:0;font-size:13.5px;color:var(--text-2);line-height:1.7}
 .hist{border:1px solid var(--border);background:var(--surface)}
 .hr{display:grid;grid-template-columns:88px 132px 1fr;gap:12px;padding:11px 15px;
     font-size:12.5px;align-items:start}
@@ -305,8 +347,8 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
 <p class="lead">아임얼라이브 무쿠핏에는 <b>알룰로오스</b>, <b>효소처리스테비아</b>가 들어 있습니다. 감미료 등급은 <span class="t" style="background:#cddc39">A</span> 입니다.</p>
 <h2>읽는 법</h2>
 <div class="howto">이 페이지의 값은 제조사가 식약처에 신고한 <b>품목제조보고 원재료 전문</b>에서 감미료를 탐지한 결과입니다. 추정으로 채우지 않으며, 열량·당류는 <b>100ml당</b> 값이라 제품 라벨(한 병 전체 기준)과 달라 보일 수 있습니다.</div>
-<div class="meta">기준일 2026-09-03 &middot; 출처 식품의약품안전처 품목제조보고(C002) &middot; 열량·당류는 공공데이터포털 전국통합식품영양성분정보(15100066)</div>
-<dl class="kvs"><div class="kv"><dt>감미료 등급</dt><dd><span class="t" style="background:#cddc39">A</span> <span class="kv-tier">A</span></dd></div><div class="kv"><dt>탐지된 감미료</dt><dd><ul class="swl"><li><span class="t" style="background:#8bc34a">S</span> <span>알룰로오스</span></li><li><span class="t" style="background:#cddc39">A</span> <span>효소처리스테비아</span></li></ul></dd></div><div class="kv"><dt>열량</dt><dd>11 kcal / 100ml<span class="kv-note">155ml 한 개 약 17 kcal (계산값)</span></dd></div><div class="kv"><dt>당류</dt><dd>0.40 g / 100ml</dd></div><div class="kv"><dt>용량</dt><dd>155ml</dd></div><div class="kv"><dt>제조사</dt><dd>(주)코아바이오</dd></div><div class="kv"><dt>식품유형</dt><dd>탄산음료</dd></div><div class="kv"><dt>보고일자</dt><dd>20260612</dd></div></dl><h2>신고 원재료 전문</h2><p class="raw">헤스페리딘, 과.채가공품, DL-사과산, 향료, 향료, 효소처리스테비아, 향료, 이산화탄소, 구연산삼나트륨, 비타민C, 과.채가공품, 알룰로오스, 기타발효음료, 정제수</p><h2>A 등급인 이유</h2><p>스테비올배당체·나한과는 0 kcal 이고 혈당에 영향을 주지 않습니다. 다만 근거의 강도는 S 보다 약합니다.</p><p class="cav">한 제품에 여러 감미료가 있으면 <b>가장 나쁜 등급</b>이 최종 등급입니다.</p><h2>같은 제조사의 다른 제품</h2><div class="rel"><a href="https://zero-drinks-tier.vercel.app/p/%EC%9D%B8%EC%B2%9C-%EB%A8%BC%EB%B0%94%EB%8B%A4-%EC%B2%AB-%EC%82%AC%EC%9D%B4%EB%8B%A4.html"><span class="t" style="background:#ff9800">C</span><span>인천 먼바다 첫 사이다</span></a><a href="https://zero-drinks-tier.vercel.app/p/%EC%9D%B8%EC%B2%9C-%EC%95%9E%EB%B0%94%EB%8B%A4-%EC%B2%AB-%EC%82%AC%EC%9D%B4%EB%8B%A4.html"><span class="t" style="background:#ff9800">C</span><span>인천 앞바다 첫 사이다</span></a></div><h2>A 등급의 다른 제품</h2><div class="rel"><a href="https://zero-drinks-tier.vercel.app/p/HITE-ZERO-000-POMELO-FLAVOR-%ED%95%98%EC%9D%B4%ED%8A%B8%EC%A0%9C%EB%A1%9C-000-%ED%8F%AC%EB%A9%9C%EB%A1%9C%ED%96%A5.html"><span class="t" style="background:#cddc39">A</span><span>HITE ZERO 0.00 POMELO FLAVOR 하이트제로 0.00 포멜로향</span></a><a href="https://zero-drinks-tier.vercel.app/p/Sunkist-%EB%B3%B4%EB%A6%AC%ED%85%90.html"><span class="t" style="background:#cddc39">A</span><span>Sunkist 보리텐</span></a><a href="https://zero-drinks-tier.vercel.app/p/XS-Elite-%ED%94%BC%EC%B9%98.html"><span class="t" style="background:#cddc39">A</span><span>XS Elite 피치</span></a><a href="https://zero-drinks-tier.vercel.app/p/XS-%EA%B7%B8%EB%A0%88%EC%9D%B4%ED%94%84%ED%9B%84%EB%A5%B4%EC%B8%A0.html"><span class="t" style="background:#cddc39">A</span><span>XS 그레이프후르츠</span></a><a href="https://zero-drinks-tier.vercel.app/p/%EB%B8%8C%EB%A6%AC%EB%B3%B4-%ED%94%84%EB%A6%AC%EB%B0%94%EC%9D%B4%EC%98%A4%ED%8B%B1-%EC%86%8C%EB%8B%A4%EB%B3%B5%EC%88%AD%EC%95%84.html"><span class="t" style="background:#cddc39">A</span><span>브리보 프리바이오틱 소다복숭아</span></a><a href="https://zero-drinks-tier.vercel.app/p/%EB%B8%8C%EB%A6%AC%EB%B3%B4-%ED%94%84%EB%A6%AC%EB%B0%94%EC%9D%B4%EC%98%A4%ED%8B%B1-%EC%86%8C%EB%8B%A4%EC%82%AC%EA%B3%BC.html"><span class="t" style="background:#cddc39">A</span><span>브리보 프리바이오틱 소다사과</span></a></div>
+<div class="meta">기준일 2026-09-04 &middot; 출처 식품의약품안전처 품목제조보고(C002) &middot; 열량·당류는 공공데이터포털 전국통합식품영양성분정보(15100066)</div>
+<dl class="kvs"><div class="kv"><dt>감미료 등급</dt><dd><span class="t" style="background:#cddc39">A</span> <span class="kv-tier">A</span></dd></div><div class="kv"><dt>탐지된 감미료</dt><dd><ul class="swl"><li><span class="t" style="background:#8bc34a">S</span> <span>알룰로오스</span></li><li><span class="t" style="background:#cddc39">A</span> <span>효소처리스테비아</span></li></ul></dd></div><div class="kv"><dt>열량</dt><dd>11 kcal / 100ml<span class="kv-note">155ml 한 개 약 17 kcal (계산값)</span></dd></div><div class="kv"><dt>당류</dt><dd>0.40 g / 100ml</dd></div><div class="kv"><dt>용량</dt><dd>155ml</dd></div><div class="kv"><dt>제조사</dt><dd>(주)코아바이오</dd></div><div class="kv"><dt>식품유형</dt><dd>탄산음료</dd></div><div class="kv"><dt>보고일자</dt><dd>20260612</dd></div></dl><h2>신고 원재료 전문</h2><p class="raw">헤스페리딘, 과.채가공품, DL-사과산, 향료, 향료, 효소처리스테비아, 향료, 이산화탄소, 구연산삼나트륨, 비타민C, 과.채가공품, 알룰로오스, 기타발효음료, 정제수</p><h2>A 등급인 이유</h2><p>스테비올배당체·나한과는 0 kcal 이고 혈당에 영향을 주지 않습니다. 다만 근거의 강도는 S 보다 약합니다.</p><p class="cav">한 제품에 여러 감미료가 있으면 <b>가장 나쁜 등급</b>이 최종 등급입니다.</p><h2>같은 제조사의 다른 제품</h2><div class="rel"><a href="https://zero-drinks-tier.vercel.app/p/%EC%9D%B8%EC%B2%9C-%EB%A8%BC%EB%B0%94%EB%8B%A4-%EC%B2%AB-%EC%82%AC%EC%9D%B4%EB%8B%A4.html"><span class="t" style="background:#ff9800">C</span><span>인천 먼바다 첫 사이다</span></a><a href="https://zero-drinks-tier.vercel.app/p/%EC%9D%B8%EC%B2%9C-%EC%95%9E%EB%B0%94%EB%8B%A4-%EC%B2%AB-%EC%82%AC%EC%9D%B4%EB%8B%A4.html"><span class="t" style="background:#ff9800">C</span><span>인천 앞바다 첫 사이다</span></a></div><h2>A 등급의 다른 제품</h2><div class="rel"><a href="https://zero-drinks-tier.vercel.app/p/HITE-ZERO-000-POMELO-FLAVOR-%ED%95%98%EC%9D%B4%ED%8A%B8%EC%A0%9C%EB%A1%9C-000-%ED%8F%AC%EB%A9%9C%EB%A1%9C%ED%96%A5.html"><span class="t" style="background:#cddc39">A</span><span>HITE ZERO 0.00 POMELO FLAVOR 하이트제로 0.00 포멜로향</span></a><a href="https://zero-drinks-tier.vercel.app/p/Sunkist-%EB%B3%B4%EB%A6%AC%ED%85%90.html"><span class="t" style="background:#cddc39">A</span><span>Sunkist 보리텐</span></a><a href="https://zero-drinks-tier.vercel.app/p/XS-Elite-%ED%94%BC%EC%B9%98.html"><span class="t" style="background:#cddc39">A</span><span>XS Elite 피치</span></a><a href="https://zero-drinks-tier.vercel.app/p/XS-%EA%B7%B8%EB%A0%88%EC%9D%B4%ED%94%84%ED%9B%84%EB%A5%B4%EC%B8%A0.html"><span class="t" style="background:#cddc39">A</span><span>XS 그레이프후르츠</span></a><a href="https://zero-drinks-tier.vercel.app/p/%EB%B8%8C%EB%A6%AC%EB%B3%B4-%ED%94%84%EB%A6%AC%EB%B0%94%EC%9D%B4%EC%98%A4%ED%8B%B1-%EC%86%8C%EB%8B%A4%EB%B3%B5%EC%88%AD%EC%95%84.html"><span class="t" style="background:#cddc39">A</span><span>브리보 프리바이오틱 소다복숭아</span></a><a href="https://zero-drinks-tier.vercel.app/p/%EB%B8%8C%EB%A6%AC%EB%B3%B4-%ED%94%84%EB%A6%AC%EB%B0%94%EC%9D%B4%EC%98%A4%ED%8B%B1-%EC%86%8C%EB%8B%A4%EC%82%AC%EA%B3%BC.html"><span class="t" style="background:#cddc39">A</span><span>브리보 프리바이오틱 소다사과</span></a></div><h2>자주 묻는 질문</h2><div class="faq"><p class="q">아임얼라이브 무쿠핏에 어떤 감미료가 들어 있나요?</p><p class="a">신고 원재료에서 <b>알룰로오스, 효소처리스테비아</b>가 탐지됐습니다. 이 가운데 가장 나쁜 등급을 따라 전체 등급은 <b>A</b>입니다.</p><p class="q">아임얼라이브 무쿠핏은 칼로리가 얼마인가요?</p><p class="a">신고 영양성분 기준 <b>11 kcal / 100ml</b>이고 당류는 <b>0.40 g / 100ml</b>입니다. 155ml 한 개로는 약 17 kcal 입니다(계산값).</p><p class="q">아임얼라이브 무쿠핏에 아스파탐이 들어 있나요?</p><p class="a">신고 원재료에서 아스파탐은 탐지되지 않았습니다.</p><p class="q">아임얼라이브 무쿠핏의 감미료 등급은 왜 A인가요?</p><p class="a">스테비올배당체·나한과는 0 kcal 이고 혈당에 영향을 주지 않습니다. 다만 근거의 강도는 S 보다 약합니다.</p></div>
 <footer>
 <div>이 표의 감미료는 제조사가 식약처에 신고한 <b>품목제조보고 원재료 전문</b>에서 탐지한 것입니다. 추정으로 채우지 않으며 데이터에 없으면 표시하지 않습니다.</div>
 <div>열량·당류는 <b>100mL(또는 100g)당</b> 값입니다. 제품 라벨은 한 병 전체 기준이라 숫자가 달라 보일 수 있습니다.</div>

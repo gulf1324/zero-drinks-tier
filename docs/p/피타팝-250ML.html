@@ -67,6 +67,43 @@
      "name": "피타팝  ( 250ML )"
     }
    ]
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "피타팝  ( 250ML )에 어떤 감미료가 들어 있나요?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "신고 원재료에서 에리스리톨이 탐지됐습니다. 이 가운데 가장 나쁜 등급을 따라 전체 등급은 C입니다."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "피타팝  ( 250ML )는 칼로리가 얼마인가요?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "이 제품은 품목제조보고번호로 영양성분 표준데이터에 조인되지 않아 열량·당류를 확인할 수 없습니다. 0이라는 뜻이 아닙니다."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "피타팝  ( 250ML )에 아스파탐이 들어 있나요?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "신고 원재료에서 아스파탐은 탐지되지 않았습니다."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "피타팝  ( 250ML )의 감미료 등급은 왜 C인가요?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "에리스리톨·자일리톨은 혈당에는 무해하지만 혈소판 반응성·심혈관 사건 신호가 관찰연구에서 제기됐습니다. 인과관계는 확정되지 않았습니다."
+     }
+    }
+   ]
   }
  ]
 }</script>
@@ -245,6 +282,11 @@ footer div{margin-bottom:5px}
      line-height:1.75;margin:0 0 8px;word-break:keep-all;overflow-wrap:anywhere}
 .cav{font-size:12.5px;color:var(--muted);margin:0 0 22px;line-height:1.6}
 .ansub{display:block;margin-top:7px;font-size:13.5px;font-weight:400;color:var(--text-2)}
+/* FAQ: 질문은 굵게, 답은 바로 아래. 아코디언으로 접지 않는다 - 접힌 답은
+   크롤러가 보긴 해도 사용자가 못 보고, AI 인용에도 불리하다 */
+.faq{border:1px solid var(--border);background:var(--surface);padding:4px 15px 14px;margin:0 0 22px}
+.faq .q{font-weight:700;font-size:14px;margin:16px 0 5px}
+.faq .a{margin:0;font-size:13.5px;color:var(--text-2);line-height:1.7}
 .hist{border:1px solid var(--border);background:var(--surface)}
 .hr{display:grid;grid-template-columns:88px 132px 1fr;gap:12px;padding:11px 15px;
     font-size:12.5px;align-items:start}
@@ -295,8 +337,8 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
 <p class="lead">피타팝  ( 250ML )에는 <b>에리스리톨</b>이 들어 있습니다. 감미료 등급은 <span class="t" style="background:#ff9800">C</span> 입니다.</p>
 <h2>읽는 법</h2>
 <div class="howto">이 페이지의 값은 제조사가 식약처에 신고한 <b>품목제조보고 원재료 전문</b>에서 감미료를 탐지한 결과입니다. 추정으로 채우지 않으며, 열량·당류는 <b>100ml당</b> 값이라 제품 라벨(한 병 전체 기준)과 달라 보일 수 있습니다.</div>
-<div class="meta">기준일 2026-09-03 &middot; 출처 식품의약품안전처 품목제조보고(C002) &middot; 열량·당류는 공공데이터포털 전국통합식품영양성분정보(15100066)</div>
-<dl class="kvs"><div class="kv"><dt>감미료 등급</dt><dd><span class="t" style="background:#ff9800">C</span> <span class="kv-tier">C</span></dd></div><div class="kv"><dt>탐지된 감미료</dt><dd><ul class="swl"><li><span class="t" style="background:#ff9800">C</span> <span>에리스리톨</span></li></ul></dd></div><div class="kv"><dt>열량</dt><dd> kcal / 100ml</dd></div><div class="kv"><dt>당류</dt><dd> g / 100ml</dd></div><div class="kv"><dt>제조사</dt><dd>(주)금강비앤에프</dd></div><div class="kv"><dt>식품유형</dt><dd>탄산음료</dd></div><div class="kv"><dt>보고일자</dt><dd>20221025</dd></div></dl><h2>신고 원재료 전문</h2><p class="raw">크랜베리향, 혼합제제, 감귤추출물, 구연산삼나트륨, 정제소금, L-아르기닌(기능성원료인정제2015-19호), 비타민혼합제제, 비타민C, 구연산, 타우린, 과라나추출물분말, 홍차추출분말, 오미자추출농축분말, 복분자농축액, 이산화탄소, 에리스리톨, 정제수, 홍차향, 크랜베리향</p><h2>C 등급인 이유</h2><p>에리스리톨·자일리톨은 혈당에는 무해하지만 혈소판 반응성·심혈관 사건 신호가 관찰연구에서 제기됐습니다. 인과관계는 확정되지 않았습니다.</p><p class="cav">한 제품에 여러 감미료가 있으면 <b>가장 나쁜 등급</b>이 최종 등급입니다.</p><h2>같은 제조사의 다른 제품</h2><div class="rel"><a href="https://zero-drinks-tier.vercel.app/p/%EC%A0%9C%EB%A1%9C%EC%B9%BC%EB%A1%9C%EB%A6%AC-%ED%8F%AC%EB%8F%84-%EC%95%8C%EB%A3%B0%EB%A1%9C%EC%8A%A4-100-CAN.html"><span class="t" style="background:#8bc34a">S</span><span>제로칼로리 포도(알룰로스 100%) CAN</span></a><a href="https://zero-drinks-tier.vercel.app/p/%ED%94%84%EB%A1%9C%ED%8B%B4-%EC%8A%A4%ED%8C%8C%ED%81%B4%EB%A7%81-%EB%A0%88%EB%AA%AC%EB%9D%BC%EC%9E%84.html"><span class="t" style="background:#ffc107">B</span><span>프로틴 스파클링 레몬&amp;라임</span></a><a href="https://zero-drinks-tier.vercel.app/p/%ED%94%84%EB%A1%9C%ED%8B%B4-%EC%8A%A4%ED%8C%8C%ED%81%B4%EB%A7%81-%ED%8F%AC%EB%8F%84.html"><span class="t" style="background:#ffc107">B</span><span>프로틴 스파클링 포도</span></a><a href="https://zero-drinks-tier.vercel.app/p/%ED%94%84%EB%A1%9C%ED%8B%B4-%EC%8A%A4%ED%8C%8C%ED%81%B4%EB%A7%81-%ED%95%91%ED%81%AC%EC%9E%90%EB%AA%BD.html"><span class="t" style="background:#ffc107">B</span><span>프로틴 스파클링 핑크자몽</span></a><a href="https://zero-drinks-tier.vercel.app/p/%EA%B2%BD%EC%9D%B4%EB%A1%9C%EC%9A%B4-%ED%94%84%EB%A1%9C%ED%8B%B4-240ml.html"><span class="t" style="background:#ff9800">C</span><span>경이로운 프로틴 (240ml)</span></a><a href="https://zero-drinks-tier.vercel.app/p/%EB%8D%94%EB%B2%84%ED%94%84-%ED%94%84%EB%A1%9C%ED%8B%B4-%EC%86%8C%EB%8B%A4-%EB%A0%88%EB%AA%AC%EB%9D%BC%EC%9E%84-240ml.html"><span class="t" style="background:#ff9800">C</span><span>더버프 프로틴 소다 레몬라임 (240ml)</span></a></div><h2>C 등급의 다른 제품</h2><div class="rel"><a href="https://zero-drinks-tier.vercel.app/p/815-FIZZ-%EC%98%A4%EB%A0%8C%EC%A7%80.html"><span class="t" style="background:#ff9800">C</span><span>815 FIZZ 오렌지</span></a><a href="https://zero-drinks-tier.vercel.app/p/815-FIZZ-%ED%8F%AC%EB%8F%84.html"><span class="t" style="background:#ff9800">C</span><span>815 FIZZ 포도</span></a><a href="https://zero-drinks-tier.vercel.app/p/HOT6-%EB%8D%94%ED%82%B9%EB%9F%AC%EC%89%AC.html"><span class="t" style="background:#ff9800">C</span><span>HOT6 더킹러쉬</span></a><a href="https://zero-drinks-tier.vercel.app/p/HOT6-%EB%8D%94%ED%82%B9%EC%A0%9C%EB%A1%9C.html"><span class="t" style="background:#ff9800">C</span><span>HOT6 더킹제로</span></a><a href="https://zero-drinks-tier.vercel.app/p/HOT6-%EB%8D%94%ED%82%B9%ED%8F%AC%EC%8A%A4.html"><span class="t" style="background:#ff9800">C</span><span>HOT6 더킹포스</span></a><a href="https://zero-drinks-tier.vercel.app/p/HOT6%EB%8D%94%ED%94%84%EB%A1%9C%EB%A9%80%ED%8B%B0%EB%B9%84%ED%83%80%EB%AF%BC%EC%95%A0%ED%94%8C%EB%A7%9D%EA%B3%A0%ED%96%A5.html"><span class="t" style="background:#ff9800">C</span><span>HOT6더프로멀티비타민애플망고향</span></a></div>
+<div class="meta">기준일 2026-09-04 &middot; 출처 식품의약품안전처 품목제조보고(C002) &middot; 열량·당류는 공공데이터포털 전국통합식품영양성분정보(15100066)</div>
+<dl class="kvs"><div class="kv"><dt>감미료 등급</dt><dd><span class="t" style="background:#ff9800">C</span> <span class="kv-tier">C</span></dd></div><div class="kv"><dt>탐지된 감미료</dt><dd><ul class="swl"><li><span class="t" style="background:#ff9800">C</span> <span>에리스리톨</span></li></ul></dd></div><div class="kv"><dt>열량</dt><dd> kcal / 100ml</dd></div><div class="kv"><dt>당류</dt><dd> g / 100ml</dd></div><div class="kv"><dt>제조사</dt><dd>(주)금강비앤에프</dd></div><div class="kv"><dt>식품유형</dt><dd>탄산음료</dd></div><div class="kv"><dt>보고일자</dt><dd>20221025</dd></div></dl><h2>신고 원재료 전문</h2><p class="raw">크랜베리향, 혼합제제, 감귤추출물, 구연산삼나트륨, 정제소금, L-아르기닌(기능성원료인정제2015-19호), 비타민혼합제제, 비타민C, 구연산, 타우린, 과라나추출물분말, 홍차추출분말, 오미자추출농축분말, 복분자농축액, 이산화탄소, 에리스리톨, 정제수, 홍차향, 크랜베리향</p><h2>C 등급인 이유</h2><p>에리스리톨·자일리톨은 혈당에는 무해하지만 혈소판 반응성·심혈관 사건 신호가 관찰연구에서 제기됐습니다. 인과관계는 확정되지 않았습니다.</p><p class="cav">한 제품에 여러 감미료가 있으면 <b>가장 나쁜 등급</b>이 최종 등급입니다.</p><h2>같은 제조사의 다른 제품</h2><div class="rel"><a href="https://zero-drinks-tier.vercel.app/p/%EC%A0%9C%EB%A1%9C%EC%B9%BC%EB%A1%9C%EB%A6%AC-%ED%8F%AC%EB%8F%84-%EC%95%8C%EB%A3%B0%EB%A1%9C%EC%8A%A4-100-CAN.html"><span class="t" style="background:#8bc34a">S</span><span>제로칼로리 포도(알룰로스 100%) CAN</span></a><a href="https://zero-drinks-tier.vercel.app/p/%ED%94%84%EB%A1%9C%ED%8B%B4-%EC%8A%A4%ED%8C%8C%ED%81%B4%EB%A7%81-%EB%A0%88%EB%AA%AC%EB%9D%BC%EC%9E%84.html"><span class="t" style="background:#ffc107">B</span><span>프로틴 스파클링 레몬&amp;라임</span></a><a href="https://zero-drinks-tier.vercel.app/p/%ED%94%84%EB%A1%9C%ED%8B%B4-%EC%8A%A4%ED%8C%8C%ED%81%B4%EB%A7%81-%ED%8F%AC%EB%8F%84.html"><span class="t" style="background:#ffc107">B</span><span>프로틴 스파클링 포도</span></a><a href="https://zero-drinks-tier.vercel.app/p/%ED%94%84%EB%A1%9C%ED%8B%B4-%EC%8A%A4%ED%8C%8C%ED%81%B4%EB%A7%81-%ED%95%91%ED%81%AC%EC%9E%90%EB%AA%BD.html"><span class="t" style="background:#ffc107">B</span><span>프로틴 스파클링 핑크자몽</span></a><a href="https://zero-drinks-tier.vercel.app/p/%EA%B2%BD%EC%9D%B4%EB%A1%9C%EC%9A%B4-%ED%94%84%EB%A1%9C%ED%8B%B4-240ml.html"><span class="t" style="background:#ff9800">C</span><span>경이로운 프로틴 (240ml)</span></a><a href="https://zero-drinks-tier.vercel.app/p/%EB%8D%94%EB%B2%84%ED%94%84-%ED%94%84%EB%A1%9C%ED%8B%B4-%EC%86%8C%EB%8B%A4-%EB%A0%88%EB%AA%AC%EB%9D%BC%EC%9E%84-240ml.html"><span class="t" style="background:#ff9800">C</span><span>더버프 프로틴 소다 레몬라임 (240ml)</span></a></div><h2>C 등급의 다른 제품</h2><div class="rel"><a href="https://zero-drinks-tier.vercel.app/p/815-FIZZ-%EC%98%A4%EB%A0%8C%EC%A7%80.html"><span class="t" style="background:#ff9800">C</span><span>815 FIZZ 오렌지</span></a><a href="https://zero-drinks-tier.vercel.app/p/815-FIZZ-%ED%8F%AC%EB%8F%84.html"><span class="t" style="background:#ff9800">C</span><span>815 FIZZ 포도</span></a><a href="https://zero-drinks-tier.vercel.app/p/HOT6-%EB%8D%94%ED%82%B9%EB%9F%AC%EC%89%AC.html"><span class="t" style="background:#ff9800">C</span><span>HOT6 더킹러쉬</span></a><a href="https://zero-drinks-tier.vercel.app/p/HOT6-%EB%8D%94%ED%82%B9%EC%A0%9C%EB%A1%9C.html"><span class="t" style="background:#ff9800">C</span><span>HOT6 더킹제로</span></a><a href="https://zero-drinks-tier.vercel.app/p/HOT6-%EB%8D%94%ED%82%B9%ED%8F%AC%EC%8A%A4.html"><span class="t" style="background:#ff9800">C</span><span>HOT6 더킹포스</span></a><a href="https://zero-drinks-tier.vercel.app/p/HOT6%EB%8D%94%ED%94%84%EB%A1%9C%EB%A9%80%ED%8B%B0%EB%B9%84%ED%83%80%EB%AF%BC%EC%95%A0%ED%94%8C%EB%A7%9D%EA%B3%A0%ED%96%A5.html"><span class="t" style="background:#ff9800">C</span><span>HOT6더프로멀티비타민애플망고향</span></a></div><h2>자주 묻는 질문</h2><div class="faq"><p class="q">피타팝  ( 250ML )에 어떤 감미료가 들어 있나요?</p><p class="a">신고 원재료에서 <b>에리스리톨</b>이 탐지됐습니다. 이 가운데 가장 나쁜 등급을 따라 전체 등급은 <b>C</b>입니다.</p><p class="q">피타팝  ( 250ML )는 칼로리가 얼마인가요?</p><p class="a">이 제품은 품목제조보고번호로 영양성분 표준데이터에 조인되지 않아 열량·당류를 확인할 수 없습니다. 0이라는 뜻이 아닙니다.</p><p class="q">피타팝  ( 250ML )에 아스파탐이 들어 있나요?</p><p class="a">신고 원재료에서 아스파탐은 탐지되지 않았습니다.</p><p class="q">피타팝  ( 250ML )의 감미료 등급은 왜 C인가요?</p><p class="a">에리스리톨·자일리톨은 혈당에는 무해하지만 혈소판 반응성·심혈관 사건 신호가 관찰연구에서 제기됐습니다. 인과관계는 확정되지 않았습니다.</p></div>
 <footer>
 <div>이 표의 감미료는 제조사가 식약처에 신고한 <b>품목제조보고 원재료 전문</b>에서 탐지한 것입니다. 추정으로 채우지 않으며 데이터에 없으면 표시하지 않습니다.</div>
 <div>열량·당류는 <b>100mL(또는 100g)당</b> 값입니다. 제품 라벨은 한 병 전체 기준이라 숫자가 달라 보일 수 있습니다.</div>

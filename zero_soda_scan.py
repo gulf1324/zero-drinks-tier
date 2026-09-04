@@ -44,6 +44,7 @@ import csv
 import collections
 import json
 import os
+import html
 import re
 import shutil
 import sys
@@ -2412,6 +2413,11 @@ footer div{margin-bottom:5px}
      line-height:1.75;margin:0 0 8px;word-break:keep-all;overflow-wrap:anywhere}
 .cav{font-size:12.5px;color:var(--muted);margin:0 0 22px;line-height:1.6}
 .ansub{display:block;margin-top:7px;font-size:13.5px;font-weight:400;color:var(--text-2)}
+/* FAQ: 질문은 굵게, 답은 바로 아래. 아코디언으로 접지 않는다 - 접힌 답은
+   크롤러가 보긴 해도 사용자가 못 보고, AI 인용에도 불리하다 */
+.faq{border:1px solid var(--border);background:var(--surface);padding:4px 15px 14px;margin:0 0 22px}
+.faq .q{font-weight:700;font-size:14px;margin:16px 0 5px}
+.faq .a{margin:0;font-size:13.5px;color:var(--text-2);line-height:1.7}
 .hist{border:1px solid var(--border);background:var(--surface)}
 .hr{display:grid;grid-template-columns:88px 132px 1fr;gap:12px;padding:11px 15px;
     font-size:12.5px;align-items:start}
@@ -2611,7 +2617,7 @@ def _rows_table(records, cols=("티어", "제품명", "업소명", "감미료", 
 
 
 def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
-                 depth=0, has_table=True):
+                 depth=0, has_table=True, faqs=None):
     """무JS 정적 페이지 한 장. 가시 텍스트와 JSON-LD 를 어긋나게 만들지 않는다.
 
     순서를 h1 -> 요약 -> 읽는 법 -> 기준일 -> 표 로 고정한다. 읽는 법을 표 아래에
@@ -2621,6 +2627,9 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
     # 표가 없는 페이지에 필터형 검색을 붙이면 '전체 0개'만 뜬다. 그때는 전체 목록으로
     # 질의를 넘기는 GET 폼을 쓴다.
     finder_html = _FINDER_FILTER if has_table else _FINDER_JUMP.replace("{PAGE_URL}", PAGE_URL)
+    # FAQ 는 가시 마크업과 LD 를 같은 쌍에서 만든다 (어긋나면 인용 신뢰가 깎인다).
+    body = body + _faq_block(faqs or [])
+    ld = _merge_ld(ld, faqs or [])
     ld_html = ""
     if ld:
         ld_html = ('<script type="application/ld+json">'
@@ -2692,6 +2701,12 @@ def _item_list_ld(name, desc, slug, records, limit=100):
     }
 
 
+# 단위를 한국어로 읽었을 때 마지막 글자에 종성이 있는가.
+# 긴 것부터 검사해야 'ml' 이 'l' 규칙에 먹히지 않는다.
+_UNIT_FINAL = [("kcal", False), ("kg", False), ("mg", False), ("ml", False),
+               ("cc", False), ("g", False), ("l", False)]
+
+
 def _josa(word, with_final, without_final):
     """마지막 글자의 종성 유무로 조사를 고른다 (이/가, 을/를, 은/는).
 
@@ -2705,6 +2720,16 @@ def _josa(word, with_final, without_final):
         return with_final if (ord(ch) - 0xAC00) % 28 else without_final
     if "\u3131" <= ch <= "\u3163":  # 낱자
         return with_final
+    # 단위는 한국어로 읽은 결과를 따른다. 'ml' 은 글자로 보면 l 로 끝나지만
+    # '밀리리터'로 읽으므로 종성이 없다 - '240ml는' 이 맞고 '240ml은' 은 틀리다.
+    low = word.strip().lower()
+    for unit, has_final in _UNIT_FINAL:
+        if low.endswith(unit):
+            return with_final if has_final else without_final
+    # 숫자는 한국어 읽기의 종성으로 판정한다: 영·일·삼·육·칠·팔 은 종성이 있고
+    # 이·사·오·구 는 없다. '하이트제로 0.00은' 이 맞고 '0.00는' 은 틀리다.
+    if ch.isdigit():
+        return with_final if ch in "0136780"[:7] else without_final
     return with_final if ch.isalpha() and ch.lower() in "lmnr" else without_final
 
 
@@ -3044,7 +3069,8 @@ def product_page(rec, records, lastmod):
         f"이 페이지의 값은 제조사가 식약처에 신고한 <b>품목제조보고 원재료 전문</b>에서 "
         f"감미료를 탐지한 결과입니다. 추정으로 채우지 않으며, 열량·당류는 <b>{_esc(base)}당</b> "
         f"값이라 제품 라벨(한 병 전체 기준)과 달라 보일 수 있습니다.",
-        "".join(body), lastmod, ld, depth=1, has_table=False)
+        "".join(body), lastmod, ld, depth=1, has_table=False,
+        faqs=product_faqs(rec, sw, sugar, total))
 
 
 def write_product_pages(docs_dir, records, lastmod):
@@ -3056,6 +3082,102 @@ def write_product_pages(docs_dir, records, lastmod):
             f.write(product_page(rec, records, lastmod))
     print(f"[seo] 제품별 페이지 {len(records)}장 생성 -> {d}/")
     return [slug_url(r["슬러그"]) for r in records]
+
+
+# ── AEO: 자주 묻는 질문 ───────────────────────────────────────
+# 가시 텍스트와 FAQPage LD 를 **같은 (질문, 답) 쌍에서** 만든다. 두 곳에 따로
+# 쓰면 반드시 어긋나고, 화면과 다른 구조화 데이터는 인용 신뢰를 깎는다.
+# 답은 데이터로 확정되는 것만 쓴다 - 추천·권유·단정('없습니다')은 넣지 않는다.
+
+def _faq_block(pairs):
+    """(질문, 답 HTML) 목록 -> 가시 마크업."""
+    if not pairs:
+        return ""
+    rows = "".join(f'<p class="q">{q}</p><p class="a">{a}</p>' for q, a in pairs)
+    return f'<h2>자주 묻는 질문</h2><div class="faq">{rows}</div>'
+
+
+def _faq_ld(pairs):
+    """같은 쌍 -> FAQPage 노드. LD 는 태그를 벗긴 순수 텍스트로 넣는다."""
+    strip = lambda s: html.unescape(re.sub(r"<[^>]+>", "", s)).strip()
+    return {
+        "@type": "FAQPage",
+        "mainEntity": [
+            {"@type": "Question", "name": strip(q),
+             "acceptedAnswer": {"@type": "Answer", "text": strip(a)}}
+            for q, a in pairs
+        ],
+    }
+
+
+def _merge_ld(ld, faqs):
+    """기존 LD 에 FAQPage 를 합친다. @graph 가 없으면 만들어 준다."""
+    if not faqs:
+        return ld
+    node = _faq_ld(faqs)
+    if not ld:
+        return {"@context": "https://schema.org", "@graph": [node]}
+    if "@graph" in ld:
+        return {**ld, "@graph": list(ld["@graph"]) + [node]}
+    rest = {k: v for k, v in ld.items() if k != "@context"}
+    return {"@context": ld.get("@context", "https://schema.org"), "@graph": [rest, node]}
+
+
+def product_faqs(rec, sweet, sugar, total_kcal):
+    """제품 한 개의 FAQ. 전부 신고 데이터에서 나오므로 616장이 서로 다른 답을 갖는다."""
+    name = rec["제품명"]
+    base = rec.get("기준량") or "100ml"
+    opaque = rec.get("감미료미표기") == "Y"
+    pairs = []
+
+    if sweet:
+        words = [w for w, _ in sweet]
+        pairs.append((
+            f"{_esc(name)}에 어떤 감미료가 들어 있나요?",
+            f"신고 원재료에서 <b>{_esc(', '.join(words))}</b>"
+            f"{_josa(words[-1], '이', '가')} 탐지됐습니다. 이 가운데 가장 나쁜 등급을 따라 "
+            f"전체 등급은 <b>{_esc(rec['티어'])}</b>입니다."))
+    elif opaque:
+        pairs.append((
+            f"{_esc(name)}에 어떤 감미료가 들어 있나요?",
+            "신고 원재료가 <b>식품첨가물혼합제제</b>로 뭉뚱그려져 있어 어떤 감미료를 "
+            "썼는지 확인할 수 없습니다. 감미료가 없다는 뜻이 아닙니다."))
+    else:
+        pairs.append((
+            f"{_esc(name)}에 어떤 감미료가 들어 있나요?",
+            "신고 원재료에서 감미료가 탐지되지 않았습니다."))
+
+    if rec.get("열량") not in ("", None):
+        line = (f"신고 영양성분 기준 <b>{_esc(rec['열량'])} kcal / {_esc(base)}</b>"
+                f"이고 당류는 <b>{_esc(rec['당류'])} g / {_esc(base)}</b>입니다.")
+        if total_kcal is not None:
+            line += f" {_esc(rec['용량'])} 한 개로는 약 {total_kcal} kcal 입니다(계산값)."
+        pairs.append((f"{_esc(name)}{_josa(name, '은', '는')} 칼로리가 얼마인가요?", line))
+    else:
+        pairs.append((
+            f"{_esc(name)}{_josa(name, '은', '는')} 칼로리가 얼마인가요?",
+            "이 제품은 품목제조보고번호로 영양성분 표준데이터에 조인되지 않아 열량·당류를 "
+            "확인할 수 없습니다. 0이라는 뜻이 아닙니다."))
+
+    if rec.get("아스파탐") == "Y":
+        asp = "예, 신고 원재료에 <b>아스파탐</b>이 들어 있습니다."
+    elif opaque:
+        asp = ("원재료가 혼합제제로 가려져 <b>확인할 수 없습니다</b>. "
+               "들어 있지 않다는 뜻이 아닙니다.")
+    else:
+        asp = "신고 원재료에서 아스파탐은 탐지되지 않았습니다."
+    pairs.append((f"{_esc(name)}에 아스파탐이 들어 있나요?", asp))
+
+    pairs.append((f"{_esc(name)}의 감미료 등급은 왜 {_esc(rec['티어'])}인가요?",
+                  _TIER_WHY.get(rec["티어"], "")))
+    if sugar:
+        sg = ", ".join(w for w, _ in sugar)
+        pairs.append((
+            f"{_esc(name)} 원재료에 {_esc(sg)}이 있는데 제로인가요?",
+            f"원재료에 {_esc(sg)}{_josa(sugar[-1][0], '이', '가')} 표기돼 있지만 착향 목적의 "
+            f"미량으로 봅니다. 신고 영양성분상 당류는 "
+            f"<b>{_esc(str(rec.get('당류') or '확인 불가'))} g / {_esc(base)}</b>입니다."))
+    return pairs
 
 
 def write_seo_pages(docs_dir, records, lastmod):
@@ -3084,7 +3206,13 @@ def write_seo_pages(docs_dir, records, lastmod):
                     if sum(1 for r in records if r["티어"] == t)) + "입니다.",
         howto, body, lastmod,
         _item_list_ld(f"제로 탄산음료 {len(records)}개 전체 목록",
-                      "식약처 품목제조보고 원재료 기준 감미료 티어 분류", "products.html", ordered))
+                      "식약처 품목제조보고 원재료 기준 감미료 티어 분류", "products.html", ordered),
+        faqs=landing_faqs(f"제로 탄산음료 {len(records)}개는 어떤 등급으로 나뉘나요",
+                          f"수집·분류한 제품은 <b>{len(records)}개</b>이며 티어 분포는 "
+                          + ", ".join(f"{t} {sum(1 for r in records if r['티어'] == t)}개"
+                                      for t in ("무감미료", "S", "A", "B", "C", "D", "F")
+                                      if sum(1 for r in records if r["티어"] == t))
+                          + "입니다.", [], len(records)))
     with open(os.path.join(docs_dir, "products.html"), "w", encoding="utf-8", newline="\n") as f:
         f.write(page)
     written.append("products.html")
@@ -3100,13 +3228,39 @@ def write_seo_pages(docs_dir, records, lastmod):
             parts.append(_rows_table(subset) if subset else "<p>해당하는 제품이 없습니다.</p>")
         body = "".join(parts)
         page = _static_page(slug, title, desc, h1, lead, note, body, lastmod,
-                            _item_list_ld(h1, desc, slug, all_rows))
+                            _item_list_ld(h1, desc, slug, all_rows),
+                            faqs=landing_faqs(h1, lead, sections, len(records)))
         with open(os.path.join(docs_dir, slug), "w", encoding="utf-8", newline="\n") as f:
             f.write(page)
         written.append(slug)
 
     print(f"[seo] 정적 페이지 {len(written)}장 생성: {', '.join(written)}")
     return written
+
+
+def landing_faqs(h1, lead, sections, total):
+    """의도 랜딩의 FAQ. 페이지가 이미 말하고 있는 것만 질문 형태로 되풀이한다.
+
+    새 주장을 만들지 않는다 - 첫 질문은 h1 그대로이고 답은 직답 문단 그대로다.
+    답변엔진이 페이지의 결론을 문답 쌍으로 집어가게 하는 것이 목적이다.
+    """
+    q1 = h1 if h1.rstrip().endswith("?") else h1.rstrip(".") + "?"
+    pairs = [(q1, lead)]
+    pairs.append((
+        "이 목록은 무엇을 근거로 만들었나요?",
+        f"제조사가 식품의약품안전처에 신고한 <b>품목제조보고 원재료 전문</b>에서 감미료를 "
+        f"탐지한 결과입니다(전체 {total}개 기준). 추정으로 채우지 않으며 데이터에 없으면 "
+        f"표시하지 않습니다. 열량·당류는 공공데이터포털 전국통합식품영양성분정보에서 "
+        f"품목제조보고번호로 조인했습니다."))
+    murky = [s for s in sections if "확인할 수 없" in (s[0] or "")]
+    if murky:
+        n = len(murky[0][2])
+        pairs.append((
+            "'확인할 수 없음'은 들어 있지 않다는 뜻인가요?",
+            f"아니요. 이 페이지의 <b>{n}개</b>는 신고 원재료가 '식품첨가물혼합제제' 등으로 "
+            f"뭉뚱그려져 있어서 해당 성분을 넣었는지 <b>판정할 수 없는</b> 제품입니다. "
+            f"들어 있지 않다는 뜻이 아니므로 확인된 목록과 섞어 보지 마세요."))
+    return pairs
 
 
 def write_llms_files(docs_dir, records, lastmod):

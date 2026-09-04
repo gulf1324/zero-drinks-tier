@@ -5,6 +5,7 @@
 import tempfile
 import shutil
 import os
+import html
 import json
 import re
 import unittest
@@ -734,4 +735,80 @@ class SiteIdentityTests(unittest.TestCase):
         # 검색창을 붙여도 결과가 걸러지지 않는다.
         self.assertIn("?q={search_term_string}", tpl)
         self.assertIn("get('q')", z._FINDER_JS)
+
+class FaqTests(unittest.TestCase):
+    """FAQ 는 가시 텍스트와 LD 가 글자까지 같아야 한다.
+
+    화면에 없는 것을 구조화 데이터가 주장하면 스팸 판정 위험이고, 이 프로젝트의
+    제1원칙(데이터에 없으면 없다고 쓴다)에도 어긋난다.
+    """
+
+    LBL = {"K1": {"유통명": "", "원재료": "", "출처": "", "확인일": ""}}
+
+    def _rec(self, **kw):
+        base = {"제품명": "테스트 제로", "티어": "B", "감미료": "수크랄로스(B,1)",
+                "열량": "0", "당류": "0.00", "용량": "500ml", "기준량": "100ml",
+                "아스파탐": "", "감미료미표기": "", "업소명": "테스트공장"}
+        base.update(kw)
+        return base
+
+    def _strip(self, s):
+        return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", s)).strip())
+
+    def test_visible_block_and_ld_carry_identical_text(self):
+        pairs = [("질문인가요?", "답 <b>강조</b>입니다.")]
+        vis = self._strip(z._faq_block(pairs))
+        node = z._faq_ld(pairs)
+        for q in node["mainEntity"]:
+            self.assertIn(q["name"], vis)
+            self.assertIn(q["acceptedAnswer"]["text"], vis)
+            self.assertNotIn("<b>", q["acceptedAnswer"]["text"], "LD 에 태그가 남았다")
+
+    def test_merge_keeps_existing_graph_nodes(self):
+        ld = {"@context": "https://schema.org",
+              "@graph": [{"@type": "Product", "name": "x"}]}
+        out = z._merge_ld(ld, [("q?", "a")])
+        self.assertEqual([n["@type"] for n in out["@graph"]], ["Product", "FAQPage"])
+        # @graph 가 없는 단일 노드도 감싸 준다
+        out2 = z._merge_ld({"@context": "https://schema.org", "@type": "ItemList"},
+                           [("q?", "a")])
+        self.assertEqual([n["@type"] for n in out2["@graph"]], ["ItemList", "FAQPage"])
+
+    def test_opaque_product_never_claims_absence(self):
+        rec = self._rec(감미료="", 감미료미표기="Y", 아스파탐="")
+        pairs = z.product_faqs(rec, [], [], None)
+        joined = " ".join(a for _, a in pairs)
+        self.assertIn("확인할 수 없", joined)
+        self.assertNotIn("탐지되지 않았습니다", joined,
+                         "원재료가 가려진 제품에 '없다' 계열 답을 쓰면 안 된다")
+
+    def test_missing_nutrition_is_not_reported_as_zero(self):
+        rec = self._rec(열량="", 당류="")
+        pairs = z.product_faqs(rec, [("수크랄로스", "B")], [], None)
+        kcal = [a for q, a in pairs if "칼로리" in q][0]
+        self.assertIn("확인할 수 없습니다", kcal)
+        self.assertIn("0이라는 뜻이 아닙니다", kcal)
+
+    def test_question_particles_follow_the_product_name(self):
+        # '코카콜라 제로은' 같은 오류가 실제로 배포됐다
+        # 숫자는 한국어 읽기(영·일·삼·육·칠·팔에 종성)를, 단위는 읽은 말을 따른다
+        for name, want in (("코카콜라 제로", "제로는"), ("밀키스제로딸기바나나", "바나나는"),
+                           ("하이트제로 0.00", "0.00은"), ("경이로운 프로틴 240ml", "240ml는"),
+                           ("피타팝 250ML", "250ML는")):
+            pairs = z.product_faqs(self._rec(제품명=name), [("수크랄로스", "B")], [], None)
+            q = [q for q, _ in pairs if "칼로리" in q][0]
+            self.assertIn(want, q, f"{name}: {q}")
+
+    def test_landing_faq_reuses_the_pages_own_answer(self):
+        lead = "확인된 것은 <b>10개</b>입니다."
+        pairs = z.landing_faqs("아스파탐이 없는 제로 음료는 무엇인가요?", lead,
+                               [("아스파탐을 넣었는지 확인할 수 없는 3개", "", [1, 2, 3])], 616)
+        self.assertEqual(pairs[0], ("아스파탐이 없는 제로 음료는 무엇인가요?", lead))
+        murky = [a for q, a in pairs if "들어 있지 않다는 뜻인가요" in q][0]
+        self.assertIn("3개", murky)
+        self.assertIn("아니요", murky)
+
+    def test_landing_faq_omits_the_murky_question_when_absent(self):
+        pairs = z.landing_faqs("전체 목록인가요?", "네.", [], 616)
+        self.assertEqual(len(pairs), 2)
 
