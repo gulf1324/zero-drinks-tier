@@ -3028,6 +3028,7 @@ def product_page(rec, records, lastmod):
     if same_tier:
         body.append(f'<h2>{_esc(tier)} 등급의 다른 제품</h2><div class="rel">{links(same_tier)}</div>')
 
+    page_url = f"{PAGE_URL}{slug_url(rec['슬러그'])}"
     props = [{"@type": "PropertyValue", "name": "감미료 등급", "value": tier}]
     if sw:
         props.append({"@type": "PropertyValue", "name": "탐지된 감미료",
@@ -3042,13 +3043,20 @@ def product_page(rec, records, lastmod):
     ld = {
         "@context": "https://schema.org",
         "@graph": [
-            {"@type": "Product", "name": name,
+            # isBasedOn 은 CreativeWork 의 속성이라 Product 에 쓰면 경고가 난다.
+            # 페이지를 WebPage 로 세우고 그쪽에서 사이트·데이터셋에 연결한다.
+            {"@type": "Product", "@id": f"{page_url}#product", "name": name,
              "brand": {"@type": "Organization", "name": maker},
              "category": rec["식품유형"],
              "description": f"{name}의 감미료 구성과 등급. 식약처 품목제조보고 원재료 기준.",
-             "url": f"{PAGE_URL}{slug_url(rec['슬러그'])}",
-             "additionalProperty": props,
-             "isBasedOn": f"{PAGE_URL}"},
+             "url": page_url,
+             "additionalProperty": props},
+            {"@type": "WebPage", "@id": f"{page_url}#webpage",
+             "url": page_url, "name": f"{name} 감미료 · 등급 {tier}",
+             "inLanguage": "ko",
+             "isPartOf": {"@id": f"{PAGE_URL}#website"},
+             "mainEntity": {"@id": f"{page_url}#product"},
+             "isBasedOn": f"{PAGE_URL}#dataset"},
             {"@type": "BreadcrumbList", "itemListElement": [
                 {"@type": "ListItem", "position": 1, "name": "제로 음료 감미료 조회",
                  "item": PAGE_URL},
