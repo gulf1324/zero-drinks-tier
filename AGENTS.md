@@ -182,7 +182,7 @@ I2570 의 제품명 예시 - 지금 등록명보다 오히려 나쁘다:
 | `zero_soda_label.json` | 유통명·표시원재료. **손으로 검증해 넣는다.** 품목보고번호로 C002 에 조인. 자동 생성 금지 |
 | `docs/LABELS.md` | 위 파일을 채우는 절차와 소스별 실증 결과, 남은 작업 목록 |
 | `docs/index.html` | Vercel 이 서빙하는 배포본. `zero_soda_report.html` 의 복사본이다 |
-| `docs/p/*.html` | 제품별 상세 페이지 616장. `write_product_pages()` 가 생성. **`.gitignore` 예외가 필요하다** (`!docs/p/*.html`) — `!docs/*.html` 글롭은 하위 디렉터리를 잡지 못해 커밋에서 빠지고 404 가 난다 |
+| `docs/p/*.html` | 제품별 상세 페이지. `write_product_pages()` 가 생성하고 **현재 슬러그에 없는 파일은 삭제한다** (제품명이 바뀌면 고아 페이지가 쌓인다). **`.gitignore` 예외**(`!docs/p/*.html`)와 **`PUSH_PATHS` 등록**이 둘 다 필요하다 |
 
 ## SEO 산출물 — 배포는 한 경로로만
 
@@ -255,6 +255,27 @@ python zero_soda_scan.py --mode sync --force   # 변경이 없어도 강제 재�
 - `nutrition`/`build`/`diff` 모드는 인증키가 필요 없다 (영양 데이터는 키리스, `build`/`diff`는 오프라인)
 - `.gitignore`는 `*.csv`, `*.json`, `*.html`, `.env`를 막되 `zero_soda_raw.json`,
   `zero_soda_nutrition.json`, `docs/*.html`은 예외로 추적한다. 스냅샷이 없으면 증분 판정이 불가능하다
+
+## 산출물을 늘리면 `PUSH_PATHS` 에 넣을 것 — 2026-09-10 사고
+
+`git_push()`(= `sync`/`update` 가 부르는 것)는 `PUSH_PATHS` 에 적힌 경로만
+`git add` 한다. `docs/p` 가 빠져 있어서 **사이트맵에는 새 URL 이 올라가는데
+제품 페이지는 커밋되지 않는** 상태였다. 제품명이 바뀌는 회차에 그대로 404 가 난다.
+
+새 산출물을 만들면 세 곳을 함께 고친다:
+
+1. `.gitignore` 예외 (`!docs/p/*.html` — 글롭은 하위 디렉터리를 못 잡는다)
+2. `PUSH_PATHS` (디렉터리로 넣으면 추가·수정·삭제가 전부 스테이징된다)
+3. `write_seo_files()` 의 사이트맵 URL 목록
+
+`PublishScopeTests` 가 사이트맵에 들어가는 산출물이 전부 푸시 대상인지 검사한다.
+
+## 수동 등록 성분은 코드가 절대 쓰지 않는다
+
+`zero_soda_label.json` 은 `load_labels()` 로 **읽기만** 한다. 쓰는 코드를 만들지
+말 것 — 손으로 검증해 넣은 93건이 날아간다. `PUSH_PATHS` 에도 넣지 않는다
+(반쯤 입력한 상태가 '데이터 동기화' 커밋에 섞이면 되돌리기 어렵다). 사용자가
+직접 커밋한다. `ManualLabelTests` 가 두 성질을 고정한다.
 
 ## 증분 동기화 규칙 (건드리기 전에 읽을 것)
 
