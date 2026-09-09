@@ -2344,6 +2344,9 @@ PUSH_PATHS = [
     os.path.join(DEFAULT_DOCS_DIR, "no-caffeine.html"),
     os.path.join(DEFAULT_DOCS_DIR, "fake-zero.html"),
     os.path.join(DEFAULT_DOCS_DIR, "hidden-zero.html"),
+    # 제품별 상세 616장. 디렉터리로 넣어야 추가·수정·삭제가 전부 스테이징된다.
+    # 빠뜨리면 사이트맵에는 새 URL 이 올라가는데 페이지가 커밋되지 않아 404 가 난다.
+    os.path.join(DEFAULT_DOCS_DIR, "p"),
 ]
 
 
@@ -3088,7 +3091,14 @@ def write_product_pages(docs_dir, records, lastmod):
         with open(os.path.join(d, f"{rec['슬러그']}.html"), "w",
                   encoding="utf-8", newline="\n") as f:
             f.write(product_page(rec, records, lastmod))
-    print(f"[seo] 제품별 페이지 {len(records)}장 생성 -> {d}/")
+    # 제품명이 바뀌면 슬러그도 바뀐다. 옛 파일을 지우지 않으면 사이트맵에 없는
+    # 고아 페이지가 배포된 채 쌓인다 (색인은 되지만 어디서도 링크되지 않는다).
+    live = {f"{r['슬러그']}.html" for r in records}
+    stale = [f for f in os.listdir(d) if f.endswith(".html") and f not in live]
+    for f in stale:
+        os.remove(os.path.join(d, f))
+    print(f"[seo] 제품별 페이지 {len(records)}장 생성 -> {d}/"
+          + (f" (이름이 바뀌어 사라진 {len(stale)}장 삭제)" if stale else ""))
     return [slug_url(r["슬러그"]) for r in records]
 
 

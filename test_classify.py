@@ -812,3 +812,59 @@ class FaqTests(unittest.TestCase):
         pairs = z.landing_faqs("전체 목록인가요?", "네.", [], 616)
         self.assertEqual(len(pairs), 2)
 
+class PublishScopeTests(unittest.TestCase):
+    """배포 대상과 산출물이 어긋나면 404 가 난다.
+
+    사이트맵은 푸시되는데 제품 페이지가 푸시되지 않아 새 URL 이 404 가 되는
+    사고가 실제로 대기 중이었다 (2026-09-08 발견).
+    """
+
+    def test_product_pages_are_in_push_paths(self):
+        self.assertIn(os.path.join("docs", "p"), z.PUSH_PATHS,
+                      "제품별 페이지가 git_push 대상에서 빠졌다 - 새 URL 이 404 가 된다")
+
+    def test_sitemap_targets_are_all_pushed(self):
+        # 사이트맵에 들어가는 산출물은 전부 푸시 대상이어야 한다
+        for name in ("sitemap.xml", "robots.txt", "products.html", "allulose.html",
+                     "no-aspartame.html", "no-erythritol.html", "no-caffeine.html",
+                     "fake-zero.html", "hidden-zero.html"):
+            self.assertIn(os.path.join("docs", name), z.PUSH_PATHS, name)
+        self.assertIn(z.DEFAULT_DOCS_HTML, z.PUSH_PATHS)
+
+    def test_renamed_product_leaves_no_orphan_page(self):
+        d = tempfile.mkdtemp()
+        try:
+            recs = [{"제품명": "옛 이름 제로", "티어": "B", "감미료": "수크랄로스(B,1)",
+                     "열량": "0", "당류": "0.00", "용량": "500ml", "기준량": "100ml",
+                     "업소명": "공장", "식품유형": "탄산음료", "보고일자": "20260101",
+                     "원재료전문": "정제수", "등록명": "", "이력": []}]
+            z.assign_slugs(recs)
+            z.write_product_pages(d, recs, "2026-01-01")
+            old = os.path.join(d, "p", "옛-이름-제로.html")
+            self.assertTrue(os.path.exists(old))
+
+            recs[0]["제품명"] = "새 이름 제로"
+            z.assign_slugs(recs)
+            z.write_product_pages(d, recs, "2026-01-01")
+            self.assertTrue(os.path.exists(os.path.join(d, "p", "새-이름-제로.html")))
+            self.assertFalse(os.path.exists(old),
+                             "이름이 바뀐 제품의 옛 페이지가 고아로 남았다")
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
+
+class ManualLabelTests(unittest.TestCase):
+    """수동 등록 성분(zero_soda_label.json)은 코드가 절대 쓰지 않는다."""
+
+    def test_label_file_is_read_only_in_source(self):
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        for m in re.finditer(r'open\(([^,]+),\s*["\']w', src):
+            self.assertNotIn("LABEL", m.group(1).upper(),
+                             "라벨 파일을 쓰는 코드가 생겼다 - 수동 입력이 날아간다")
+        self.assertNotIn("DEFAULT_LABEL_FILE, \"w\"", src)
+
+    def test_label_file_is_not_auto_committed(self):
+        # 손으로 검증해 넣는 파일이라 자동 커밋 대상에 넣지 않는다.
+        # 반쯤 입력한 상태가 '데이터 동기화' 커밋에 섞이면 되돌리기 어렵다.
+        self.assertNotIn(z.DEFAULT_LABEL_FILE, z.PUSH_PATHS)
+
