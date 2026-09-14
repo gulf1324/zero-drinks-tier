@@ -198,6 +198,12 @@ python zero_soda_scan.py --mode ping                                # IndexNow �
 `write_seo_files(docs_dir, lastmod, records)` 의 `records` 는 **필수**다. 빼먹으면
 사이트맵이 1 URL 로 줄어드는 사고가 나서 예외를 던지게 해 두었다.
 
+**GitHub 저장소는 public 이어야 한다.** `Dataset.license`(`NOTICE.md`)와
+`Dataset.distribution`(`raw.githubusercontent.com/.../zero_soda_raw.json`),
+`Person.sameAs` 가 그 URL 을 가리킨다. 비공개로 돌리면 라이브에서 404 가 나고
+사이트가 없는 다운로드·없는 라이선스를 주장하게 된다 (2026-09-14 실측).
+비공개가 필요하면 링크만 지우지 말고 `docs/SEO.md` 의 대체 경로를 따를 것.
+
 제품별 페이지의 슬러그는 **한글**이고, URL 로 쓸 때만 `slug_url()` 로 퍼센트 인코딩한다
 (사이트맵 규격이 요구한다). **제품명이 바뀌면 URL 이 바뀐다** — 이전 주소가 404 가
 되므로 이름이 바뀌는 변경은 `--mode ping` 과 함께 한다.

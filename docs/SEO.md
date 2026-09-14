@@ -137,6 +137,33 @@
 `_static_page()` 를 부르면 자동으로 갈린다. GET 폼이라 JS 없이 동작하고
 목록 쪽은 `?q=` 를 읽어 프리필한다.
 
+## 저장소를 private 으로 바꾸면 구조화 데이터가 거짓이 된다 — 2026-09-14
+
+`zero-drinks-tier` 저장소를 비공개로 돌렸을 때 **라이브에서 404 가 3건** 났다.
+링크 하나가 아니라 사이트가 사실 아닌 것을 주장하는 상태가 된다.
+
+|참조|비공개 시 결과|
+|---|---|
+|`Dataset.distribution` (`raw.githubusercontent.com/.../zero_soda_raw.json`)|**없는 다운로드를 제공한다고 주장.** Google Dataset Search 가 `contentUrl` 을 검증한다|
+|`Dataset.license` (`NOTICE.md`)|404 라이선스. `isAccessibleForFree: true` 와 함께 있어 더 나쁘다|
+|`Person.sameAs` / `Dataset.sameAs`|발행 주체를 검증할 유일한 경로. `publisher` 를 Person 으로 정정한 근거가 이 링크다|
+|푸터 링크|랜딩·리포트 템플릿 2곳 -> 배포 페이지 **635장 전부**|
+|`llms.txt` / `llms-full.txt`|"산출 코드 공개: …(MIT)" 문장|
+
+**비공개로 바꿀 거라면 링크만 지우지 말고** `distribution` 을 사이트가 직접
+서빙하는 경로(`/zero_soda_raw.json`)로, `license` 를 사이트 내 페이지로 옮겨야
+한다. 그러지 않으면 데이터셋 개방성 신호를 통째로 잃는다.
+
+확인 명령:
+
+```bash
+for u in https://github.com/gulf1324/zero-drinks-tier \
+         https://github.com/gulf1324/zero-drinks-tier/blob/main/NOTICE.md \
+         https://raw.githubusercontent.com/gulf1324/zero-drinks-tier/main/zero_soda_raw.json; do
+  echo "$(curl -s -o /dev/null -w '%{http_code}' "$u")  $u"
+done
+```
+
 ## 이름은 '전부 통일'이 답이 아니다 — 2026-09-03
 
 세 종류를 구분한다. 사이트 이름만 통일하고 엔티티 이름은 일부러 다르게 둔다.
