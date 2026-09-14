@@ -387,7 +387,7 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
 
 /* 메인은 검색 하나가 주인공이다. 다른 요소가 검색창과 무게를 겨루지 않게 한다 */
 .hero{display:flex;flex-direction:column;align-items:center;text-align:center;
-      padding:52px 0 8px;gap:12px}
+      padding:40px 0 6px;gap:10px}
 .hero h1{font-size:30px;letter-spacing:-.03em;margin:0;line-height:1.25}
 .hero .tag{margin:0;font-size:15px;color:var(--muted);max-width:47ch;line-height:1.65}
 .hero .mark{display:flex;align-items:flex-end;gap:5px;height:52px}
@@ -430,15 +430,15 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
 /* 많이 찾는 제품 */
 .picks{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));
        gap:1px;background:var(--border);border:1px solid var(--border);margin:0 0 10px}
-.pick{display:grid;grid-template-columns:auto 1fr;grid-template-areas:
-      "t name" "t ing" "t kcal";gap:2px 10px;align-items:center;
-      background:var(--surface);padding:14px 16px;text-decoration:none;color:var(--text)}
+.pick{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"t name" "t ing";
+      gap:2px 9px;align-items:center;background:var(--surface);padding:12px 15px;
+      text-decoration:none;color:var(--text)}
 .pick:hover{background:var(--row-hover)}
 .pick .tier-chip{grid-area:t}
-.pick-name{grid-area:name;font-weight:700;font-size:14.5px}
-.pick-ing{grid-area:ing;font-size:12.5px;color:var(--text-2);line-height:1.45}
-.pick-kcal{grid-area:kcal;font-size:11.5px;color:var(--muted);
-           font-variant-numeric:tabular-nums}
+.pick-name{grid-area:name;font-weight:700;font-size:14px}
+.pick-kcal{font-style:normal;font-weight:400;font-size:11.5px;color:var(--muted);
+           margin-left:7px;font-variant-numeric:tabular-nums}
+.pick-ing{grid-area:ing;font-size:12px;color:var(--text-2);line-height:1.4}
 .src{font-size:11.5px;color:var(--muted);margin:0 0 28px;line-height:1.6}
 
 /* 다음 행동 3개. 표를 메인에서 뺀 대신 어디로 가면 되는지 분명히 둔다 */
@@ -452,36 +452,33 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .lsec{margin:34px 0 12px;font-size:17px}
 .lsec-sub{font-size:12.5px;color:var(--muted);font-weight:400;margin-left:8px}
 
-/* 티어 기준표 */
-.legend{background:var(--surface);border:1px solid var(--border);padding:2px 16px 14px;
-        margin:0 0 30px}
-.tier-row{display:grid;grid-template-columns:30px 92px minmax(180px,1.1fr) minmax(230px,2fr);
-          gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--hair)}
-.tier-row:first-child{border-top:0}
+/* 감미료 등급 한눈에 — 7개를 한 줄로 훑는다. 근거 문장은 /report.html 로 보낸다 */
+.tstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);
+        border:1px solid var(--border);margin:0 0 30px}
+.tcell{display:flex;flex-direction:column;align-items:center;gap:4px;
+       background:var(--surface);padding:13px 8px;text-decoration:none;color:var(--text);
+       text-align:center}
+.tcell:hover{background:var(--row-hover)}
 .tier-chip{display:inline-flex;align-items:center;justify-content:center;min-width:24px;
-           height:20px;padding:0 6px;border-radius:var(--pill);font-size:11.5px;
+           height:21px;padding:0 7px;border-radius:var(--pill);font-size:12px;
            font-weight:700;background:var(--tc,var(--muted-2));color:var(--tf,#fff)}
-.tier-row b{font-size:13px}
-.tier-ing{font-size:12.5px;color:var(--text)}
-.tier-why{font-size:12.5px;color:var(--muted);line-height:1.55}
-.tier-note{font-size:11.5px;color:var(--muted);line-height:1.65;padding:11px 0 0;
-           border-top:1px solid var(--hair);margin-top:2px}
+.tcell-n{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.tcell-ing{font-size:11px;color:var(--text-2);line-height:1.35;word-break:keep-all}
+.tcell-gist{font-size:10.5px;color:var(--muted);line-height:1.35;word-break:keep-all}
 @media(max-width:760px){
-  .tier-row{grid-template-columns:30px 1fr;gap:3px 10px}
-  .tier-ing,.tier-why{grid-column:2}
+  .tstrip{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:430px){
+  .tstrip{grid-template-columns:repeat(3,1fr)}
+  .tcell{padding:11px 5px}
 }
 
-/* 질문별로 골라 보기 — 제목과 설명이 붙어 보이던 버그: 정적 CSS 에 .guides 규칙이
-   아예 없었다. 제목은 블록, 설명은 그 아래 muted 로 분리한다 */
-.guides{margin:0 0 30px}
-.guides ul{list-style:none;padding:0;margin:0;display:grid;gap:8px;
-           grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
-.guides a{display:block;background:var(--surface);border:1px solid var(--border);
-          padding:13px 15px;text-decoration:none;color:var(--text)}
-.guides a:hover{border-color:var(--accent)}
-.guides a b{display:block;font-size:14px;font-weight:700;margin-bottom:3px}
-.guides a span{display:block;color:var(--muted);font-size:12px;line-height:1.5;
-               font-weight:400}
+/* 찾는 조건 — 설명문 없이 알약만. 스캔 비용이 카드보다 훨씬 싸다 */
+.pills{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 30px}
+.pills a{display:inline-block;background:var(--surface);border:1px solid var(--border);
+         border-radius:var(--pill);padding:7px 14px;font-size:13px;
+         text-decoration:none;color:var(--text)}
+.pills a:hover{border-color:var(--accent);color:var(--accent)}
 
 /* FAQ 는 접어 둔다. 메인에서 5문항을 다 펼치면 스크롤이 다시 길어진다 */
 .faq{background:none;border:0;padding:0;margin:0 0 26px}
@@ -512,8 +509,7 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
     <span class="m-bar" style="height:44%" data-tier="B"></span>
   </div>
   <h1>제로 음료 감미료 조회</h1>
-  <p class="tag">찾는 음료에 어떤 대체당이 들어 있는지 <b>식약처 신고 원재료</b>로 확인하세요.
-     추정하지 않고, 확인할 수 없으면 확인할 수 없다고 적습니다.</p>
+  <p class="tag">찾는 음료의 대체당을 <b>식약처 신고 원재료</b>로 확인합니다. 추정하지 않습니다.</p>
 </div>
 
 <div class="sbox">
@@ -531,33 +527,22 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
   <p class="hint">626개 제품 · 티어 분포 무감미료 5개, S 3개, A 24개, B 322개, C 257개, F 15개</p>
 </div>
 
-<h2 class="lsec">많이 찾는 제품<span class="lsec-sub">클릭하면 감미료 전문을 봅니다</span></h2>
-<div class="picks"><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EC%BD%94%EC%B9%B4%EC%BD%9C%EB%9D%BC-%EC%A0%9C%EB%A1%9C.html"><span class="t" style="background:#ffc107">B</span><span class="pick-name">코카콜라 제로</span><span class="pick-ing">아세설팜, 아스파탐</span><span class="pick-kcal">0 kcal / 100ml</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%ED%8E%A9%EC%8B%9C%EC%A0%9C%EB%A1%9C%EC%8A%88%EA%B1%B0.html"><span class="t" style="background:#ffc107">B</span><span class="pick-name">펩시제로슈거</span><span class="pick-ing">아스파탐, 아세설팜, 수크랄로스</span><span class="pick-kcal">1 kcal / 100ml</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EC%B9%A0%EC%84%B1%EC%82%AC%EC%9D%B4%EB%8B%A4%EC%A0%9C%EB%A1%9C.html"><span class="t" style="background:#ff9800">C</span><span class="pick-name">칠성사이다제로</span><span class="pick-ing">알룰로오스, 스테비올배당체, 수크랄로스, 에리스리톨</span><span class="pick-kcal">0 kcal / 100ml</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EB%82%98%EB%9E%91%EB%93%9C%EC%82%AC%EC%9D%B4%EB%8B%A4-%EC%A0%9C%EB%A1%9C.html"><span class="t" style="background:#ffc107">B</span><span class="pick-name">나랑드사이다 제로</span><span class="pick-ing">아세설팜, 수크랄로스</span><span class="pick-kcal">0 kcal / 100ml</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EC%8A%A4%ED%94%84%EB%9D%BC%EC%9D%B4%ED%8A%B8-%EC%A0%9C%EB%A1%9C.html"><span class="t" style="background:#ff9800">C</span><span class="pick-name">스프라이트 제로</span><span class="pick-ing">스테비올배당체, 아세설팜, 수크랄로스, 에리스리톨</span><span class="pick-kcal">0 kcal / 100ml</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EB%B0%80%ED%82%A4%EC%8A%A4%EC%A0%9C%EB%A1%9C.html"><span class="t" style="background:#ffc107">B</span><span class="pick-name">밀키스제로</span><span class="pick-ing">알룰로오스, 수크랄로스, 아세설팜</span><span class="pick-kcal">3 kcal / 100ml</span></a></div>
+<h2 class="lsec">많이 찾는 제품</h2>
+<div class="picks"><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EC%BD%94%EC%B9%B4%EC%BD%9C%EB%9D%BC-%EC%A0%9C%EB%A1%9C.html"><span class="tier-chip" data-tier="B">B</span><span class="pick-name">코카콜라 제로<i class="pick-kcal">0 kcal / 100ml</i></span><span class="pick-ing">아세설팜, 아스파탐</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%ED%8E%A9%EC%8B%9C%EC%A0%9C%EB%A1%9C%EC%8A%88%EA%B1%B0.html"><span class="tier-chip" data-tier="B">B</span><span class="pick-name">펩시제로슈거<i class="pick-kcal">1 kcal / 100ml</i></span><span class="pick-ing">아스파탐, 아세설팜, 수크랄로스</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EC%B9%A0%EC%84%B1%EC%82%AC%EC%9D%B4%EB%8B%A4%EC%A0%9C%EB%A1%9C.html"><span class="tier-chip" data-tier="C">C</span><span class="pick-name">칠성사이다제로<i class="pick-kcal">0 kcal / 100ml</i></span><span class="pick-ing">알룰로오스, 스테비올배당체, 수크랄로스, 에리스리톨</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EB%82%98%EB%9E%91%EB%93%9C%EC%82%AC%EC%9D%B4%EB%8B%A4-%EC%A0%9C%EB%A1%9C.html"><span class="tier-chip" data-tier="B">B</span><span class="pick-name">나랑드사이다 제로<i class="pick-kcal">0 kcal / 100ml</i></span><span class="pick-ing">아세설팜, 수크랄로스</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EC%8A%A4%ED%94%84%EB%9D%BC%EC%9D%B4%ED%8A%B8-%EC%A0%9C%EB%A1%9C.html"><span class="tier-chip" data-tier="C">C</span><span class="pick-name">스프라이트 제로<i class="pick-kcal">0 kcal / 100ml</i></span><span class="pick-ing">스테비올배당체, 아세설팜, 수크랄로스, 에리스리톨</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EB%B0%80%ED%82%A4%EC%8A%A4%EC%A0%9C%EB%A1%9C.html"><span class="tier-chip" data-tier="B">B</span><span class="pick-name">밀키스제로<i class="pick-kcal">3 kcal / 100ml</i></span><span class="pick-ing">알룰로오스, 수크랄로스, 아세설팜</span></a></div>
 
-<h2 class="lsec">티어 기준<span class="lsec-sub">한 제품에 여러 감미료가 있으면 가장 나쁜 등급이 최종 등급입니다</span></h2>
-<div class="legend"><div class="tier-row"><span class="tier-chip" data-tier="무감미료">무</span><b>무감미료</b><span class="tier-ing">감미료 표기 없음</span><span class="tier-why">신고 원재료에 감미료가 없음. 코카콜라 제로처럼 <b>식품첨가물혼합제제</b>로 뭉뚱그려져 감미료를 확인할 수 없는 제품도 여기 들어가며, 이때는 <b>감미료 미표기</b> 표시가 붙습니다 (열량·당류 0 확인 기준)</span></div><div class="tier-row"><span class="tier-chip" data-tier="S">S</span><b>S</b><span class="tier-ing">알룰로스, 타가토스</span><span class="tier-why">0.2~0.4 kcal/g. 식후 혈당을 오히려 낮춤 (2026 AJCN 메타분석)</span></div><div class="tier-row"><span class="tier-chip" data-tier="A">A</span><b>A</b><span class="tier-ing">스테비올배당체, 나한과(모그로사이드)</span><span class="tier-why">0 kcal, 혈당 영향 없음, 장기 안전성 양호</span></div><div class="tier-row"><span class="tier-chip" data-tier="B">B</span><b>B</b><span class="tier-ing">수크랄로스, 아세설팜칼륨, 아스파탐, 사카린</span><span class="tier-why">0 kcal이나 공복 인슐린·HbA1c 상승 신호 (2026 Tufts 메타분석)</span></div><div class="tier-row"><span class="tier-chip" data-tier="C">C</span><b>C</b><span class="tier-ing">에리스리톨, 자일리톨</span><span class="tier-why">혈당은 무해하나 혈소판 반응성·심혈관 사건 신호 (Cleveland Clinic). 인과관계는 확정되지 않음</span></div><div class="tier-row"><span class="tier-chip" data-tier="D">D</span><b>D</b><span class="tier-ing">말티톨, 소르비톨, 락티톨 등 당알코올</span><span class="tier-why">실제 2~2.6 kcal/g, 말티톨은 GI 35~52로 혈당 상승</span></div><div class="tier-row"><span class="tier-chip" data-tier="F">F</span><b>F</b><span class="tier-ing">설탕, 액상과당, 농축과즙 등</span><span class="tier-why">제로를 표방하지만 신고 원재료에 당류가 있음</span></div><div class="tier-note">한 제품에 여러 감미료가 있으면 가장 나쁜 등급이 최종 티어가 됩니다. 전체 구성은 '조합' 열에서 볼 수 있습니다.<br>이 리포트는 <b>당류가 없는 음료</b>와 <b>제로를 표방한 제품</b>만 다룹니다. 제로 표기가 없는 일반 당류 음료는 수집 대상에서 제외됩니다.<br>원재료에 농축과즙·올리고당이 <b>착향 목적으로 미량</b> 들어간 경우, 실측 당류가 0g이면 F로 보지 않습니다. 반대로 감미료가 표기되지 않아도 당류가 검출되면 F입니다.</div></div>
+<h2 class="lsec">감미료 등급 한눈에<span class="lsec-sub">여러 감미료가 섞이면 가장 나쁜 등급이 최종 등급</span></h2>
+<div class="tstrip"><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="무감미료"><span class="tier-chip" data-tier="무감미료">무</span><span class="tcell-n">5개</span><span class="tcell-ing">감미료 표기 없음</span><span class="tcell-gist">없거나 확인 불가</span></a><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="S"><span class="tier-chip" data-tier="S">S</span><span class="tcell-n">3개</span><span class="tcell-ing">알룰로스·타가토스</span><span class="tcell-gist">혈당 영향 없음</span></a><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="A"><span class="tier-chip" data-tier="A">A</span><span class="tcell-n">24개</span><span class="tcell-ing">스테비아·나한과</span><span class="tcell-gist">0kcal, 혈당 무영향</span></a><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="B"><span class="tier-chip" data-tier="B">B</span><span class="tcell-n">322개</span><span class="tcell-ing">수크랄로스·아스파탐</span><span class="tcell-gist">인슐린 상승 신호</span></a><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="C"><span class="tier-chip" data-tier="C">C</span><span class="tcell-n">257개</span><span class="tcell-ing">에리스리톨·자일리톨</span><span class="tcell-gist">심혈관 신호(미확정)</span></a><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="D"><span class="tier-chip" data-tier="D">D</span><span class="tcell-n">0개</span><span class="tcell-ing">말티톨 등 당알코올</span><span class="tcell-gist">실제 열량 있음</span></a><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="F"><span class="tier-chip" data-tier="F">F</span><span class="tcell-n">15개</span><span class="tcell-ing">설탕·액상과당</span><span class="tcell-gist">제로가 아님</span></a></div>
+
+<h2 class="lsec">찾는 조건으로 보기</h2>
+<nav class="pills" aria-label="조건별 목록"><a href="https://zero-drinks-tier.vercel.app/allulose.html">알룰로스 사용</a><a href="https://zero-drinks-tier.vercel.app/no-aspartame.html">아스파탐 없음</a><a href="https://zero-drinks-tier.vercel.app/no-erythritol.html">에리스리톨 없음</a><a href="https://zero-drinks-tier.vercel.app/no-caffeine.html">카페인 없음</a><a href="https://zero-drinks-tier.vercel.app/fake-zero.html">제로인데 당류 있음</a><a href="https://zero-drinks-tier.vercel.app/hidden-zero.html">이름에 제로 없는 0kcal</a><a href="https://zero-drinks-tier.vercel.app/products.html">전체 626개</a></nav>
 
 <div class="paths">
-  <a href="https://zero-drinks-tier.vercel.app/report.html"><b>전체 리포트 &rarr;</b><span>티어 배지·필터·정렬로 626개를 직접 골라 봅니다</span></a>
-  <a href="https://zero-drinks-tier.vercel.app/products.html"><b>626개 전체 목록 &rarr;</b><span>한 페이지에 전부 나열한 표입니다</span></a>
-  <a href="https://zero-drinks-tier.vercel.app/llms-full.txt"><b>데이터 전문 &rarr;</b><span>원재료·티어 전체를 텍스트로 내려받습니다</span></a>
+  <a href="https://zero-drinks-tier.vercel.app/report.html"><b>전체 리포트</b><span>필터·정렬로 626개 직접 고르기</span></a>
+  <a href="https://zero-drinks-tier.vercel.app/llms-full.txt"><b>데이터 전문</b><span>원재료·등급 전체 텍스트</span></a>
 </div>
 
-<section class="guides">
-<h2>질문별로 골라 보기</h2>
-<ul>
-<li><a href="https://zero-drinks-tier.vercel.app/products.html"><b>626개 전체 목록</b><span>티어·감미료·열량을 한눈에 볼 수 있습니다</span></a></li>
-<li><a href="https://zero-drinks-tier.vercel.app/allulose.html"><b>알룰로스를 쓰는 제로 음료</b><span>가장 높은 S 등급 감미료를 쓴 제품입니다</span></a></li>
-<li><a href="https://zero-drinks-tier.vercel.app/no-aspartame.html"><b>아스파탐이 없는 제로 음료</b><span>신고 원재료에서 아스파탐이 확인되지 않은 제품입니다</span></a></li>
-<li><a href="https://zero-drinks-tier.vercel.app/no-erythritol.html"><b>에리스리톨이 없는 제로 음료</b><span>심혈관 신호 연구가 신경 쓰일 때 봅니다</span></a></li>
-<li><a href="https://zero-drinks-tier.vercel.app/no-caffeine.html"><b>카페인이 없는 제로 음료</b><span>콜라·에너지드링크 계열을 제외했습니다</span></a></li>
-<li><a href="https://zero-drinks-tier.vercel.app/fake-zero.html"><b>제로라면서 당류가 들어간 음료</b><span>표기와 신고 원재료가 다른 제품입니다</span></a></li>
-<li><a href="https://zero-drinks-tier.vercel.app/hidden-zero.html"><b>이름에 제로가 없는데 0kcal인 음료</b><span>이름만 보면 놓치는 제품입니다</span></a></li>
-</ul>
-</section>
-
 <section class="faq">
-<h2>자주 묻는 질문</h2>
+<h2 class="lsec">자주 묻는 질문</h2>
 <details><summary>제로 음료 중 가장 나은 감미료는 무엇인가요?</summary><p>알룰로스와 타가토스입니다. 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 메타분석 결과가 있어 이 리포트에서 S 등급입니다. 다만 국내 탄산음료에서 알룰로스만 쓰는 제품은 드물고 대개 다른 감미료와 섞여 최종 등급이 내려갑니다.</p></details><details><summary>코카콜라 제로에는 어떤 감미료가 들어가나요?</summary><p>아스파탐과 아세설팜칼륨입니다. 식약처 신고 원재료에는 '식품첨가물혼합제제'로만 적혀 있어 감미료가 보이지 않아, 판매처의 상품정보제공 고시 표시사항으로 확인해 출처와 함께 표시했습니다.</p></details><details><summary>제로라고 적혀 있으면 칼로리가 정말 0인가요?</summary><p>아닙니다. 제로칼로리 표기 기준은 100mL당 4kcal 미만이라 소량의 열량과 당류가 있어도 적법하게 '제로'를 붙일 수 있습니다. 이 리포트는 제로를 표방하면서 신고 원재료에 당류가 있는 제품을 F 등급으로 따로 표시합니다.</p></details><details><summary>에리스리톨은 피해야 하나요?</summary><p>혈당에는 무해하지만 혈소판 반응성·심혈관 사건과 연관된 관찰연구 신호가 있어 이 리포트에서 C 등급입니다. 인과관계는 확정되지 않았습니다. 스테비아 제품은 대부분 에리스리톨과 혼합되므로 원재료를 직접 확인해야 합니다.</p></details><details><summary>이 데이터는 어디서 온 것인가요?</summary><p>식품의약품안전처 식품(첨가물)품목제조보고 원재료(C002)에서 제품명·업소명·원재료 전문을 수집하고, 품목제조보고번호로 공공데이터포털 전국통합식품영양성분정보(15100066)의 열량·당류를 조인했습니다. 추정으로 채우지 않으며 매월 갱신합니다.</p></details>
 </section>
 

@@ -3384,6 +3384,49 @@ _TIER_ROWS = [
 _TIER_NOTE = ("한 제품에 여러 감미료가 있으면 가장 나쁜 등급이 최종 티어가 됩니다. 전체 구성은 '조합' 열에서 볼 수 있습니다.<br>이 리포트는 <b>당류가 없는 음료</b>와 <b>제로를 표방한 제품</b>만 다룹니다. 제로 표기가 없는 일반 당류 음료는 수집 대상에서 제외됩니다.<br>원재료에 농축과즙·올리고당이 <b>착향 목적으로 미량</b> 들어간 경우, 실측 당류가 0g이면 F로 보지 않습니다. 반대로 감미료가 표기되지 않아도 당류가 검출되면 F입니다.")
 
 
+# 메인용 한 줄 판정. 리포트의 근거 문장(2~3줄)을 그대로 옮기면 스캔이 안 된다.
+# 여기서는 "무엇이 들었고 왜 그 등급인가"만 남기고, 근거·한계는 /report.html 로 보낸다.
+_TIER_GIST = {
+    "무감미료": ("감미료 표기 없음", "없거나 확인 불가"),
+    "S": ("알룰로스·타가토스", "혈당 영향 없음"),
+    "A": ("스테비아·나한과", "0kcal, 혈당 무영향"),
+    "B": ("수크랄로스·아스파탐", "인슐린 상승 신호"),
+    "C": ("에리스리톨·자일리톨", "심혈관 신호(미확정)"),
+    "D": ("말티톨 등 당알코올", "실제 열량 있음"),
+    "F": ("설탕·액상과당", "제로가 아님"),
+}
+
+
+def tier_strip_html(records):
+    """티어를 한 줄로 훑게 만든다. 제품 수를 같이 보여줘 분포가 바로 읽히게 한다."""
+    cells = []
+    for tier, _, _ in _TIER_ROWS:
+        ing, gist = _TIER_GIST[tier]
+        n = sum(1 for r in records if r["티어"] == tier)
+        cells.append(
+            f'<a class="tcell" href="{PAGE_URL}report.html" data-tier="{tier}">'
+            f'<span class="tier-chip" data-tier="{tier}">'
+            f'{"무" if tier == "무감미료" else tier}</span>'
+            f'<span class="tcell-n">{n}개</span>'
+            f'<span class="tcell-ing">{ing}</span>'
+            f'<span class="tcell-gist">{gist}</span></a>')
+    return "".join(cells)
+
+
+def guide_pills_html(total):
+    """찾는 조건을 알약 링크로. 설명문을 빼고 제목만 남긴다."""
+    pills = [
+        ("allulose.html", "알룰로스 사용"),
+        ("no-aspartame.html", "아스파탐 없음"),
+        ("no-erythritol.html", "에리스리톨 없음"),
+        ("no-caffeine.html", "카페인 없음"),
+        ("fake-zero.html", "제로인데 당류 있음"),
+        ("hidden-zero.html", "이름에 제로 없는 0kcal"),
+        ("products.html", f"전체 {total}개"),
+    ]
+    return "".join(f'<a href="{PAGE_URL}{slug}">{label}</a>' for slug, label in pills)
+
+
 def tier_legend_html():
     """티어 기준 행 + 주의문. 칩 라벨만 '무'로 축약한다 (폭 통일 목적)."""
     rows = "".join(
@@ -3440,10 +3483,11 @@ def _pick_cards(records):
                 if r.get("열량") not in ("", None) else "열량 미확인")
         out.append(
             f'<a class="pick" href="{PAGE_URL}{slug_url(r["슬러그"])}">'
-            f'{_tier_badge(r["티어"])}'
-            f'<span class="pick-name">{_esc(name)}</span>'
-            f'<span class="pick-ing">{_esc(ing)}</span>'
-            f'<span class="pick-kcal">{kcal}</span></a>')
+            f'<span class="tier-chip" data-tier="{r["티어"]}">'
+            f'{"무" if r["티어"] == "무감미료" else _esc(r["티어"])}</span>'
+            f'<span class="pick-name">{_esc(name)}'
+            f'<i class="pick-kcal">{kcal}</i></span>'
+            f'<span class="pick-ing">{_esc(ing)}</span></a>')
     return "".join(out)
 
 
@@ -3509,7 +3553,7 @@ _SUGGEST_JS = """<script>
 _LANDING_CSS = """
 /* 메인은 검색 하나가 주인공이다. 다른 요소가 검색창과 무게를 겨루지 않게 한다 */
 .hero{display:flex;flex-direction:column;align-items:center;text-align:center;
-      padding:52px 0 8px;gap:12px}
+      padding:40px 0 6px;gap:10px}
 .hero h1{font-size:30px;letter-spacing:-.03em;margin:0;line-height:1.25}
 .hero .tag{margin:0;font-size:15px;color:var(--muted);max-width:47ch;line-height:1.65}
 .hero .mark{display:flex;align-items:flex-end;gap:5px;height:52px}
@@ -3552,15 +3596,15 @@ _LANDING_CSS = """
 /* 많이 찾는 제품 */
 .picks{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));
        gap:1px;background:var(--border);border:1px solid var(--border);margin:0 0 10px}
-.pick{display:grid;grid-template-columns:auto 1fr;grid-template-areas:
-      "t name" "t ing" "t kcal";gap:2px 10px;align-items:center;
-      background:var(--surface);padding:14px 16px;text-decoration:none;color:var(--text)}
+.pick{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"t name" "t ing";
+      gap:2px 9px;align-items:center;background:var(--surface);padding:12px 15px;
+      text-decoration:none;color:var(--text)}
 .pick:hover{background:var(--row-hover)}
 .pick .tier-chip{grid-area:t}
-.pick-name{grid-area:name;font-weight:700;font-size:14.5px}
-.pick-ing{grid-area:ing;font-size:12.5px;color:var(--text-2);line-height:1.45}
-.pick-kcal{grid-area:kcal;font-size:11.5px;color:var(--muted);
-           font-variant-numeric:tabular-nums}
+.pick-name{grid-area:name;font-weight:700;font-size:14px}
+.pick-kcal{font-style:normal;font-weight:400;font-size:11.5px;color:var(--muted);
+           margin-left:7px;font-variant-numeric:tabular-nums}
+.pick-ing{grid-area:ing;font-size:12px;color:var(--text-2);line-height:1.4}
 .src{font-size:11.5px;color:var(--muted);margin:0 0 28px;line-height:1.6}
 
 /* 다음 행동 3개. 표를 메인에서 뺀 대신 어디로 가면 되는지 분명히 둔다 */
@@ -3574,36 +3618,33 @@ _LANDING_CSS = """
 .lsec{margin:34px 0 12px;font-size:17px}
 .lsec-sub{font-size:12.5px;color:var(--muted);font-weight:400;margin-left:8px}
 
-/* 티어 기준표 */
-.legend{background:var(--surface);border:1px solid var(--border);padding:2px 16px 14px;
-        margin:0 0 30px}
-.tier-row{display:grid;grid-template-columns:30px 92px minmax(180px,1.1fr) minmax(230px,2fr);
-          gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--hair)}
-.tier-row:first-child{border-top:0}
+/* 감미료 등급 한눈에 — 7개를 한 줄로 훑는다. 근거 문장은 /report.html 로 보낸다 */
+.tstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);
+        border:1px solid var(--border);margin:0 0 30px}
+.tcell{display:flex;flex-direction:column;align-items:center;gap:4px;
+       background:var(--surface);padding:13px 8px;text-decoration:none;color:var(--text);
+       text-align:center}
+.tcell:hover{background:var(--row-hover)}
 .tier-chip{display:inline-flex;align-items:center;justify-content:center;min-width:24px;
-           height:20px;padding:0 6px;border-radius:var(--pill);font-size:11.5px;
+           height:21px;padding:0 7px;border-radius:var(--pill);font-size:12px;
            font-weight:700;background:var(--tc,var(--muted-2));color:var(--tf,#fff)}
-.tier-row b{font-size:13px}
-.tier-ing{font-size:12.5px;color:var(--text)}
-.tier-why{font-size:12.5px;color:var(--muted);line-height:1.55}
-.tier-note{font-size:11.5px;color:var(--muted);line-height:1.65;padding:11px 0 0;
-           border-top:1px solid var(--hair);margin-top:2px}
+.tcell-n{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.tcell-ing{font-size:11px;color:var(--text-2);line-height:1.35;word-break:keep-all}
+.tcell-gist{font-size:10.5px;color:var(--muted);line-height:1.35;word-break:keep-all}
 @media(max-width:760px){
-  .tier-row{grid-template-columns:30px 1fr;gap:3px 10px}
-  .tier-ing,.tier-why{grid-column:2}
+  .tstrip{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:430px){
+  .tstrip{grid-template-columns:repeat(3,1fr)}
+  .tcell{padding:11px 5px}
 }
 
-/* 질문별로 골라 보기 — 제목과 설명이 붙어 보이던 버그: 정적 CSS 에 .guides 규칙이
-   아예 없었다. 제목은 블록, 설명은 그 아래 muted 로 분리한다 */
-.guides{margin:0 0 30px}
-.guides ul{list-style:none;padding:0;margin:0;display:grid;gap:8px;
-           grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
-.guides a{display:block;background:var(--surface);border:1px solid var(--border);
-          padding:13px 15px;text-decoration:none;color:var(--text)}
-.guides a:hover{border-color:var(--accent)}
-.guides a b{display:block;font-size:14px;font-weight:700;margin-bottom:3px}
-.guides a span{display:block;color:var(--muted);font-size:12px;line-height:1.5;
-               font-weight:400}
+/* 찾는 조건 — 설명문 없이 알약만. 스캔 비용이 카드보다 훨씬 싸다 */
+.pills{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 30px}
+.pills a{display:inline-block;background:var(--surface);border:1px solid var(--border);
+         border-radius:var(--pill);padding:7px 14px;font-size:13px;
+         text-decoration:none;color:var(--text)}
+.pills a:hover{border-color:var(--accent);color:var(--accent)}
 
 /* FAQ 는 접어 둔다. 메인에서 5문항을 다 펼치면 스크롤이 다시 길어진다 */
 .faq{background:none;border:0;padding:0;margin:0 0 26px}
@@ -3654,8 +3695,7 @@ _LANDING_TEMPLATE = """<!DOCTYPE html>
     <span class="m-bar" style="height:44%" data-tier="B"></span>
   </div>
   <h1>제로 음료 감미료 조회</h1>
-  <p class="tag">찾는 음료에 어떤 대체당이 들어 있는지 <b>식약처 신고 원재료</b>로 확인하세요.
-     추정하지 않고, 확인할 수 없으면 확인할 수 없다고 적습니다.</p>
+  <p class="tag">찾는 음료의 대체당을 <b>식약처 신고 원재료</b>로 확인합니다. 추정하지 않습니다.</p>
 </div>
 
 <div class="sbox">
@@ -3673,25 +3713,22 @@ _LANDING_TEMPLATE = """<!DOCTYPE html>
   <p class="hint">{total}개 제품 · 티어 분포 {dist}</p>
 </div>
 
-<h2 class="lsec">많이 찾는 제품<span class="lsec-sub">클릭하면 감미료 전문을 봅니다</span></h2>
+<h2 class="lsec">많이 찾는 제품</h2>
 <div class="picks">{picks}</div>
 
-<h2 class="lsec">티어 기준<span class="lsec-sub">한 제품에 여러 감미료가 있으면 가장 나쁜 등급이 최종 등급입니다</span></h2>
-<div class="legend">{tier_legend}</div>
+<h2 class="lsec">감미료 등급 한눈에<span class="lsec-sub">여러 감미료가 섞이면 가장 나쁜 등급이 최종 등급</span></h2>
+<div class="tstrip">{tier_strip}</div>
+
+<h2 class="lsec">찾는 조건으로 보기</h2>
+<nav class="pills" aria-label="조건별 목록">{pills}</nav>
 
 <div class="paths">
-  <a href="{page_url}report.html"><b>전체 리포트 &rarr;</b><span>티어 배지·필터·정렬로 {total}개를 직접 골라 봅니다</span></a>
-  <a href="{page_url}products.html"><b>{total}개 전체 목록 &rarr;</b><span>한 페이지에 전부 나열한 표입니다</span></a>
-  <a href="{page_url}llms-full.txt"><b>데이터 전문 &rarr;</b><span>원재료·티어 전체를 텍스트로 내려받습니다</span></a>
+  <a href="{page_url}report.html"><b>전체 리포트</b><span>필터·정렬로 {total}개 직접 고르기</span></a>
+  <a href="{page_url}llms-full.txt"><b>데이터 전문</b><span>원재료·등급 전체 텍스트</span></a>
 </div>
 
-<section class="guides">
-<h2>질문별로 골라 보기</h2>
-{guides}
-</section>
-
 <section class="faq">
-<h2>자주 묻는 질문</h2>
+<h2 class="lsec">자주 묻는 질문</h2>
 {faq}
 </section>
 
@@ -3734,9 +3771,10 @@ def landing_page(records, lastmod, stats):
         static_css=_STATIC_CSS,
         favicon=_FAVICON_B64, ga=_GA_SNIPPET.replace("__GA_ID__", GA_ID) if GA_ID else "",
         ld=json.dumps(ld, ensure_ascii=False, indent=1),
-        picks=_pick_cards(records), tier_legend=tier_legend_html(),
+        picks=_pick_cards(records), tier_strip=tier_strip_html(records),
+        pills=guide_pills_html(n),
         names_json=names, suggest_js=_SUGGEST_JS,
-        guides=_guides_links(n), faq=faq_html)
+        faq=faq_html)
 
 
 def publish_docs(docs_html, out_html, stats):

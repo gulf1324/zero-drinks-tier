@@ -969,3 +969,60 @@ class ThemeUiScopeTests(unittest.TestCase):
         self.assertIn("flex:none", z._THEME_CSS)
         self.assertIn(".theme-menu{position:absolute", z._THEME_CSS)
 
+class LandingBrevityTests(unittest.TestCase):
+    """메인은 인상 파악용이다. 자세히 볼 페이지가 따로 있는 내용을 그대로 옮기면 안 된다.
+
+    첫 방문자는 페이지 인상을 보고 원하는 것이 없으면 바로 떠난다. 그래서 메인의
+    각 섹션은 '한 줄 판정 + 숫자'로 끝내고, 근거·한계·설명문은 /report.html 과
+    의도 랜딩으로 보낸다.
+    """
+
+    def _recs(self):
+        out = [{"제품명": n, "티어": t, "조합": t, "감미료": "수크랄로스(B,1)",
+                "열량": "0", "당류": "0.00", "용량": "500ml", "기준량": "100ml",
+                "업소명": "공장", "식품유형": "탄산음료", "보고일자": "20260101",
+                "원재료전문": "정제수", "등록명": "", "이력": [], "감미료미표기": "",
+                "아스파탐": "", "카페인": ""}
+               for n, t in zip(z.POPULAR_PICKS, ["B"] * len(z.POPULAR_PICKS))]
+        z.assign_slugs(out)
+        return out
+
+    def test_tier_section_is_a_strip_not_the_full_legend(self):
+        recs = self._recs()
+        page = z.landing_page(recs, "2026-01-01", {"records": recs})
+        self.assertEqual(page.count('class="tcell"'), len(z._TIER_ROWS))
+        # 리포트의 근거 문장을 메인에 옮기지 않는다
+        self.assertNotIn("tier-why", page)
+        self.assertNotIn("tier-note", page)
+        for evidence in ("AJCN", "Tufts", "Cleveland Clinic", "GI 35~52"):
+            self.assertNotIn(evidence, page, f"근거 문장이 메인에 들어왔다: {evidence}")
+
+    def test_every_tier_has_a_one_line_gist(self):
+        for tier, _, _ in z._TIER_ROWS:
+            self.assertIn(tier, z._TIER_GIST, f"{tier} 의 한 줄 판정이 없다")
+            ing, gist = z._TIER_GIST[tier]
+            self.assertLessEqual(len(ing), 16, f"{tier} 성분 요약이 길다: {ing}")
+            self.assertLessEqual(len(gist), 16, f"{tier} 판정이 길다: {gist}")
+
+    def test_tier_strip_shows_counts_from_the_data(self):
+        recs = self._recs()
+        strip = z.tier_strip_html(recs)
+        self.assertIn(f">{len(recs)}개<", strip, "B 등급 제품 수가 데이터와 다르다")
+        self.assertIn(">0개<", strip, "0건인 등급도 숨기지 않고 보여준다")
+
+    def test_condition_links_are_pills_without_descriptions(self):
+        recs = self._recs()
+        page = z.landing_page(recs, "2026-01-01", {"records": recs})
+        self.assertIn('class="pills"', page)
+        # 카드형 설명문(.guides span)은 메인에서 쓰지 않는다
+        self.assertNotIn('class="guides"', page)
+        for note in ("한눈에 볼 수 있습니다", "신경 쓰일 때 봅니다", "계열을 제외했습니다"):
+            self.assertNotIn(note, page, f"설명문이 메인에 남았다: {note}")
+
+    def test_pills_cover_every_intent_landing(self):
+        html_out = z.guide_pills_html(626)
+        for slug in ("allulose.html", "no-aspartame.html", "no-erythritol.html",
+                     "no-caffeine.html", "fake-zero.html", "hidden-zero.html",
+                     "products.html"):
+            self.assertIn(z.PAGE_URL + slug, html_out, f"{slug} 알약이 없다")
+
