@@ -1184,6 +1184,13 @@ __THEME_CSS__
   .m-bar[data-tier]{background:var(--tc)}
   .m-drop{position:absolute;right:-9px;bottom:2px;width:11px;height:11px;
           border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--text)}
+  /* 로고·제목은 홈으로 가는 링크다. 밑줄 없이 두고 hover 에만 반응시킨다 */
+  .brandlink{display:flex;flex-direction:column;align-items:center;gap:10px;
+             text-decoration:none;color:inherit;border-radius:var(--ctl);
+             padding:2px 10px}
+  .brandlink:hover h1{color:var(--accent)}
+  .brandlink:hover .m-bar:not([data-tier]){opacity:1}
+  .brandlink:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
   .brandbar h1{font-size:27px;letter-spacing:-.03em;margin:0}
   .tagline{margin:0;max-width:52ch;font-size:14.5px;color:var(--muted);line-height:1.65}
   .tagline b{color:var(--text);font-weight:650}
@@ -1425,11 +1432,13 @@ __THEME_CSS__
 <div class="topbar">__THEME_UI__</div>
 <header>
   <div class="brandbar">
-    <div class="mark" aria-hidden="true">
-      <span class="m-bar" style="--h:60%"></span><span class="m-bar" style="--h:82%" data-tier="무감미료"></span>
-      <span class="m-bar" style="--h:44%" data-tier="B"></span><span class="m-drop"></span>
-    </div>
-    <h1>제로 음료 감미료 조회</h1>
+    <a class="brandlink" href="__PAGE_URL__" aria-label="제로 음료 티어 첫 화면으로">
+      <div class="mark" aria-hidden="true">
+        <span class="m-bar" style="--h:60%"></span><span class="m-bar" style="--h:82%" data-tier="무감미료"></span>
+        <span class="m-bar" style="--h:44%" data-tier="B"></span><span class="m-drop"></span>
+      </div>
+      <h1>제로 음료 감미료 조회</h1>
+    </a>
     <p class="tagline">찾는 음료에 어떤 대체당이 들어 있는지 <b>식약처 신고 원재료</b>로 확인하세요.
       제품 <b>__TOTAL__개</b>를 감미료 기준 S~F 티어로 나눴습니다.</p>
   </div>

@@ -1058,6 +1058,31 @@ class ReportUiTests(unittest.TestCase):
         self.assertNotIn("placeholder", main)
         self.assertIn("aria-label", main)
 
+    def test_logo_returns_to_the_home_page(self):
+        """로고를 누르면 홈으로 간다 - 웹의 기본 규약이다.
+
+        /report.html 에는 nav 의 '← 메인' 이 없어서 로고가 유일한 탈출구다.
+        """
+        tpl, css = self._css()
+        m = re.search(r'<a class="brandlink" href="([^"]+)"', tpl)
+        self.assertIsNotNone(m, "로고가 홈으로 가는 링크가 아니다")
+        self.assertEqual(m.group(1), "__PAGE_URL__")
+        # 로고와 제목이 함께 링크 안에 들어가야 클릭 영역이 쓸 만하다
+        link = tpl[m.start():tpl.index("</a>", m.start())]
+        self.assertIn('class="mark"', link)
+        self.assertIn("<h1>", link)
+        # 링크처럼 보이지 않게 두되 키보드 포커스는 드러낸다
+        self.assertIn(".brandlink{", css)
+        self.assertIn("text-decoration:none", css)
+        self.assertIn(".brandlink:focus-visible{", css)
+
+    def test_every_generated_page_can_reach_the_home_page(self):
+        tpl, _ = self._css()
+        self.assertIn('href="__PAGE_URL__"', tpl, "리포트에 홈 경로가 없다")
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        self.assertIn('<nav><a href="{PAGE_URL}">&larr; 메인</a>', src,
+                      "정적 페이지 nav 에서 메인 링크가 사라졌다")
+
     def test_report_is_called_advanced_search_everywhere(self):
         src = open("zero_soda_scan.py", encoding="utf-8").read()
         # 사용자에게 보이는 문구는 '고급 검색' 하나로 통일한다
