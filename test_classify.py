@@ -1112,8 +1112,8 @@ class ProductPageOrderTests(unittest.TestCase):
     def test_sections_follow_the_users_question_order(self):
         page = self._page()
         order = [re.sub(r"<[^>]+>", "", h) for h in re.findall(r"<h2[^>]*>(.*?)</h2>", page, re.S)]
-        want = ["요약", "신고 원재료 전문", "B 등급인 이유", "읽는 법"]
-        self.assertEqual(order[:4], want, f"실제 순서: {order}")
+        want = ["요약", "신고 원재료 전문", "제품 정보", "B 등급인 이유", "읽는 법"]
+        self.assertEqual(order[:5], want, f"실제 순서: {order}")
 
     def test_howto_is_not_pushed_below_the_faq(self):
         page = self._page()
@@ -1134,6 +1134,33 @@ class ProductPageOrderTests(unittest.TestCase):
         # 모바일에서도 세로로 쌓지 않는다 (항목 안은 가로 유지)
         narrow = css.split("@media(max-width:400px)")[-1]
         self.assertIn("grid-template-columns:62px 1fr", narrow)
+
+    def test_product_info_says_nothing_twice(self):
+        """같은 값을 두 번 말하지 않는다.
+
+        '감미료 등급' 행은 직답 문단이 배지와 함께 이미 말하고, '용량' 은 열량
+        환산 주석("500ml 한 개 약 …")에 들어간다. 환산이 불가능할 때만 따로 낸다.
+        """
+        page = self._page()
+        kv = re.search(r'<dl class="kvs">(.*?)</dl>', page, re.S).group(1)
+        labels = re.findall(r"<dt>(.*?)</dt>", kv)
+        self.assertNotIn("감미료 등급", labels)
+        self.assertNotIn("용량", labels, "열량 환산 주석에 이미 용량이 있다")
+        self.assertIn("500ml 한 개 약 0 kcal", kv)
+
+    def test_volume_reappears_when_calories_cannot_be_converted(self):
+        rec = {"제품명": "테스트 제로", "티어": "B", "조합": "B",
+               "감미료": "수크랄로스(B,1)", "열량": "", "당류": "",
+               "용량": "500ml", "기준량": "100ml", "업소명": "공장",
+               "식품유형": "탄산음료", "보고일자": "20260101",
+               "원재료전문": "정제수", "등록명": "", "이력": [],
+               "감미료미표기": "", "아스파탐": "", "카페인": ""}
+        recs = [rec]
+        z.assign_slugs(recs)
+        kv = re.search(r'<dl class="kvs">(.*?)</dl>',
+                       z.product_page(rec, recs, "2026-01-01"), re.S).group(1)
+        self.assertIn("용량", re.findall(r"<dt>(.*?)</dt>", kv),
+                      "환산이 안 되면 용량을 어디서도 볼 수 없게 된다")
 
     def test_summary_card_goes_horizontal_on_narrow_screens(self):
         """요약 8항목이 라벨을 값 위에 쌓으면 모바일에서 600px 넘게 먹는다.

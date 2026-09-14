@@ -2937,23 +2937,27 @@ def product_page(rec, records, lastmod):
     sugar_html = "".join(f'<li><span>{_esc(w)}</span></li>' for w, _ in sugar)
     base = rec.get("기준량") or "100ml"
 
+    # 같은 값을 두 번 말하지 않는다:
+    #  - '감미료 등급' 행은 직답 문단이 배지와 함께 이미 말한다
+    #  - '용량' 은 열량 환산 주석("500ml 한 개 약 …")에 들어가므로, 환산이
+    #    불가능할 때만 따로 보여준다
     rows = [
-        _kv("감미료 등급", f'{_tier_badge(tier)} <span class="kv-tier">{_esc(tier)}</span>'),
         _kv("탐지된 감미료", f'<ul class="swl">{sw_html}</ul>' if sw else "없음"),
         _kv("원재료의 당류 표기", f'<ul class="swl">{sugar_html}</ul>',
             "실측 당류가 0g 이면 착향용 미량으로 보고 등급을 내리지 않습니다") if sugar else "",
         _kv("열량", f'{_esc(rec["열량"])} kcal / {_esc(base)}',
             f'{_esc(rec["용량"])} 한 개 약 {total} kcal (계산값)' if total is not None else ""),
         _kv("당류", f'{_esc(rec["당류"])} g / {_esc(base)}'),
-        _kv("용량", _esc(rec["용량"])),
+        _kv("용량", _esc(rec["용량"])) if total is None else "",
         _kv("제조사", _esc(maker)),
         _kv("식품유형", _esc(rec["식품유형"])),
         _kv("보고일자", _esc(rec["보고일자"])),
         _kv("품목제조보고 등록명", _esc(rec["등록명"])) if rec.get("등록명") else "",
     ]
-    body = ['<dl class="kvs">' + "".join(r for r in rows if r) + "</dl>"]
 
-    body.append(f'<h2>신고 원재료 전문</h2><p class="raw">{_esc(rec["원재료전문"])}</p>')
+    # 원재료 전문이 요약 바로 아래다. 사용자가 가장 먼저 확인하려는 것은
+    # '무엇이 들었나' 이고, 수치 요약은 그 다음이다.
+    body = [f'<h2>신고 원재료 전문</h2><p class="raw">{_esc(rec["원재료전문"])}</p>']
     if rec.get("표시원재료"):
         src = rec.get("유통명출처")
         link = (f' (<a href="{_esc(src)}" target="_blank" rel="noopener nofollow">판매처 표시사항</a>)'
@@ -2961,6 +2965,8 @@ def product_page(rec, records, lastmod):
         body.append(f'<h2>판매처 표시 원재료{link}</h2><p class="raw">{_esc(rec["표시원재료"])}</p>'
                     '<p class="cav">위 신고 원재료가 뭉뚱그려져 감미료가 보이지 않아, 판매처 '
                     '표시사항으로 판정했습니다.</p>')
+    body.append('<h2>제품 정보</h2><dl class="kvs">'
+                + "".join(r for r in rows if r) + "</dl>")
     body.append(f'<h2>{_esc(tier)} 등급인 이유</h2><p>{_TIER_WHY.get(tier, "")}</p>'
                 '<p class="cav">한 제품에 여러 감미료가 있으면 <b>가장 나쁜 등급</b>이 최종 등급입니다.</p>')
     body.append("__HOWTO__")
