@@ -688,29 +688,22 @@ class SiteIdentityTests(unittest.TestCase):
     """사이트 이름은 통일하고 엔티티 이름은 구분한다.
 
     'SEO 에 좋으니 전부 통일하자' 는 반쯤만 맞다. 검색엔진이 교차 검증하는 것은
-    사이트 이름(og:site_name / WebSite.name / title 접미)뿐이다. Organization·
-    Person·Dataset 은 서로 다른 엔티티이고, 같은 문자열로 두면 Knowledge Graph
-    에서 뭉개진다.
+    사이트 이름(og:site_name / WebSite.name / title)뿐이다. Person·Dataset 은
+    서로 다른 엔티티이고, 같은 문자열로 두면 Knowledge Graph 에서 뭉개진다.
     """
 
     def setUp(self):
-        self.tpl = re.search(r'_HTML_TEMPLATE = r"""(.*?)\n"""',
-                             open('zero_soda_scan.py', encoding='utf-8').read(), re.S).group(1)
-        head = self.tpl.split("</head>")[0]
-        self.ld = json.loads(
-            re.search(r'<script type="application/ld\+json">(.*?)</script>', head, re.S)
-            .group(1).replace("__TOTAL__", "616").replace("__PAGE_URL__", z.PAGE_URL)
-            .replace("__GENERATED_DATE__", "2026-01-01"))
+        self.ld = z.site_ld(616, "2026-01-01")
         self.nodes = {n["@type"]: n for n in self.ld["@graph"]}
 
     def test_site_name_matches_across_every_slot(self):
         name = self.nodes["WebSite"]["name"]
-        self.assertEqual(re.search(r'og:site_name" content="(.*?)"', self.tpl).group(1), name)
-        title = re.search(r"<title>(.*?)</title>", self.tpl).group(1)
-        self.assertTrue(title.startswith(name) or title.endswith(name),
-                        f"title 이 사이트명을 담지 않는다: {title}")
-        # 정적 페이지도 같은 사이트다
-        self.assertEqual(z._STATIC_PAGE_SITE_NAME, name)
+        self.assertEqual(name, z.SITE_NAME)
+        # 메인 랜딩과 정적 페이지 셸이 같은 상수를 쓴다
+        self.assertIn('content="{site_name}"', z._LANDING_TEMPLATE)
+        self.assertIn("{site_name}", z._LANDING_TEMPLATE.split("</title>")[0])
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        self.assertIn('og:site_name" content="{_STATIC_PAGE_SITE_NAME}"', src)
 
     def test_entity_names_stay_distinct(self):
         site = self.nodes["WebSite"]["name"]
@@ -721,20 +714,27 @@ class SiteIdentityTests(unittest.TestCase):
         self.assertEqual(self.nodes["Dataset"]["alternateName"], site)
 
     def test_publisher_is_a_real_referenced_entity(self):
-        # 실체 없는 Organization 을 발행 주체로 세워 두면 안 된다
         for node in ("WebSite", "Dataset"):
-            ref = self.nodes[node]["publisher"]["@id"]
-            self.assertEqual(ref, self.nodes["Person"]["@id"],
+            self.assertEqual(self.nodes[node]["publisher"]["@id"],
+                             self.nodes["Person"]["@id"],
                              f"{node}.publisher 가 정의된 엔티티를 가리키지 않는다")
         self.assertIn("github.com/gulf1324", self.nodes["Person"]["sameAs"][0])
 
     def test_search_action_points_at_a_working_query_url(self):
         tpl = self.nodes["WebSite"]["potentialAction"]["target"]["urlTemplate"]
-        self.assertIn("{search_term_string}", tpl)
-        # 선언한 파라미터 이름이 실제 프리필 코드와 같아야 한다. 다르면 Google 이
-        # 검색창을 붙여도 결과가 걸러지지 않는다.
         self.assertIn("?q={search_term_string}", tpl)
+        # 선언한 파라미터 이름이 실제 프리필 코드와 같아야 한다
         self.assertIn("get('q')", z._FINDER_JS)
+        # 메인 검색 폼도 같은 이름·같은 목적지를 쓴다 (JS 없이도 동작해야 한다)
+        self.assertIn('action="{page_url}products.html" method="get"', z._LANDING_TEMPLATE)
+        self.assertIn('name="q"', z._LANDING_TEMPLATE)
+
+    def test_only_the_home_page_declares_the_website_node(self):
+        # WebPage 노드는 하위 페이지에만 붙는다
+        self.assertNotIn("WebPage", self.nodes)
+        sub = {n["@type"] for n in z.site_ld(616, "2026-01-01", "report.html")["@graph"]}
+        self.assertIn("WebPage", sub)
+
 
 class FaqTests(unittest.TestCase):
     """FAQ 는 가시 텍스트와 LD 가 글자까지 같아야 한다.
@@ -867,4 +867,62 @@ class ManualLabelTests(unittest.TestCase):
         # 손으로 검증해 넣는 파일이라 자동 커밋 대상에 넣지 않는다.
         # 반쯤 입력한 상태가 '데이터 동기화' 커밋에 섞이면 되돌리기 어렵다.
         self.assertNotIn(z.DEFAULT_LABEL_FILE, z.PUSH_PATHS)
+
+class LandingTests(unittest.TestCase):
+    """메인은 검색 하나로 끝내는 짧은 페이지다.
+
+    626행 표를 메인에 두면 스크롤이 13.7화면(12,633px)이 되고 그 아래 섹션은
+    아무도 보지 못한다. 실측으로 확인하고 표를 /report.html 로 옮겼다.
+    """
+
+    def _recs(self, names):
+        out = []
+        for i, n in enumerate(names):
+            out.append({"제품명": n, "티어": "B", "조합": "B",
+                        "감미료": "수크랄로스(B,1)", "열량": "0", "당류": "0.00",
+                        "용량": "500ml", "기준량": "100ml", "업소명": "공장",
+                        "식품유형": "탄산음료", "보고일자": "20260101",
+                        "원재료전문": "정제수", "등록명": "", "이력": [],
+                        "감미료미표기": "", "아스파탐": "", "카페인": ""})
+        z.assign_slugs(out)
+        return out
+
+    def test_landing_has_no_product_table(self):
+        recs = self._recs(z.POPULAR_PICKS)
+        page = z.landing_page(recs, "2026-01-01", {"records": recs})
+        self.assertNotIn("<tr", page, "메인에 표가 들어갔다 - 스크롤이 길어진다")
+
+    def test_landing_links_to_the_full_report_and_list(self):
+        recs = self._recs(z.POPULAR_PICKS)
+        page = z.landing_page(recs, "2026-01-01", {"records": recs})
+        for target in ("report.html", "products.html", "llms-full.txt"):
+            self.assertIn(z.PAGE_URL + target, page, f"{target} 링크가 없다")
+
+    def test_popular_picks_all_resolve_to_real_products(self):
+        # 인기 제품 목록에 데이터에 없는 이름을 적으면 카드가 조용히 사라진다
+        recs = self._recs(z.POPULAR_PICKS)
+        cards = z._pick_cards(recs)
+        self.assertEqual(cards.count('class="pick"'), len(z.POPULAR_PICKS))
+
+    def test_popular_source_is_attributed_and_not_claimed_as_ours(self):
+        # 판매량은 우리가 측정한 값이 아니다. 출처 없이 순위를 주장하면 안 된다.
+        self.assertIn("측정한 값이 아닙니다", z.POPULAR_SOURCE)
+        self.assertIn("http", z.POPULAR_SOURCE)
+
+    def test_report_is_published_at_its_own_url(self):
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        self.assertIn('"report.html"', src)
+        self.assertIn(os.path.join("docs", "report.html"), z.PUSH_PATHS,
+                      "리포트가 푸시 대상에서 빠졌다")
+        self.assertIn('canonical" href="__PAGE_URL__report.html"', src,
+                      "리포트 canonical 이 메인을 가리키면 중복 판정된다")
+
+    def test_suggest_payload_stays_small(self):
+        # 절대 URL 을 626개 실으면 45KB 가 더 붙는다. 슬러그만 싣고 JS 가 만든다.
+        self.assertIn("encodeURIComponent(r.g)", z._SUGGEST_JS)
+        self.assertNotIn("r.u", z._SUGGEST_JS)
+
+    def test_suggest_prefers_the_shortest_name_on_a_tie(self):
+        # '코카' 로 치면 '코카콜라 제로'가 '코카-콜라 제로 레몬'보다 먼저 와야 한다
+        self.assertIn("a.n.length - b.n.length", z._SUGGEST_JS)
 

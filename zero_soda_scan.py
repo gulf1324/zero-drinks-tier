@@ -978,7 +978,8 @@ _GA_SNIPPET = """<script>
 
 # 사이트 이름. og:site_name / WebSite.name / <title> 세 곳이 같아야
 # 검색엔진이 사이트명을 채택한다. 엔티티(Person·Dataset) 이름은 여기서 갈린다.
-_STATIC_PAGE_SITE_NAME = "제로 음료 티어"
+SITE_NAME = "제로 음료 티어"
+_STATIC_PAGE_SITE_NAME = SITE_NAME  # 회귀 테스트 호환
 
 # ── 색 팔레트: 단일 진원지 ───────────────────────────────────
 # 리포트(_HTML_TEMPLATE)와 정적 페이지(_STATIC_CSS)가 이 문자열 하나를 공유한다.
@@ -1141,12 +1142,12 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <meta name="robots" content="index, follow">
 <meta name="naver-site-verification" content="a3a82e491e9f40e89ab9e12d3306aab7">
 __FAVICON__
-<link rel="canonical" href="__PAGE_URL__">
+<link rel="canonical" href="__PAGE_URL__report.html">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:title" content="제로 음료 티어">
 <meta property="og:description" content="식약처 원재료 데이터로 분류한 국내 제로·무당류 탄산음료 __TOTAL__개의 감미료 티어(S~F). 알룰로스부터 아스파탐까지 성분별 근거를 확인하세요.">
-<meta property="og:url" content="__PAGE_URL__">
+<meta property="og:url" content="__PAGE_URL__report.html">
 <meta property="og:site_name" content="제로 음료 티어">
 <meta property="og:image" content="__PAGE_URL__og-card.png">
 <meta property="og:image:width" content="1200">
@@ -1156,69 +1157,7 @@ __FAVICON__
 <meta name="twitter:description" content="식약처 원재료 데이터로 분류한 국내 제로·무당류 탄산음료 __TOTAL__개의 감미료 티어(S~F).">
 <meta name="twitter:image" content="__PAGE_URL__og-card.png">
 __GA__
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@graph": [
-  {
-    "@type": "Person",
-    "@id": "__PAGE_URL__#author",
-    "name": "gulf1324",
-    "url": "https://github.com/gulf1324",
-    "sameAs": ["https://github.com/gulf1324", "https://github.com/gulf1324/zero-drinks-tier"]
-  },
-  {
-    "@type": "WebSite",
-    "@id": "__PAGE_URL__#website",
-    "name": "제로 음료 티어",
-    "url": "__PAGE_URL__",
-    "inLanguage": "ko",
-    "description": "국내 유통 __TOTAL__개 제품의 감미료 구성을 식약처 신고 원재료로 확인하고 S~F 티어로 분류합니다.",
-    "publisher": {"@id": "__PAGE_URL__#author"},
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": {"@type": "EntryPoint", "urlTemplate": "__PAGE_URL__products.html?q={search_term_string}"},
-      "query-input": "required name=search_term_string"
-    }
-  },
-  {
-  "@type": "Dataset",
-  "@id": "__PAGE_URL__#dataset",
-  "name": "대체당 제로 음료 티어",
-  "alternateName": "제로 음료 티어",
-  "description": "국내 유통 제로·무당류 탄산음료와 탄산수 __TOTAL__개 제품의 대체당(감미료) 구성을 식품의약품안전처 품목제조보고 원재료 전문으로 수집하고, 피어리뷰 메타분석 근거에 따라 S~F 티어로 분류한 데이터셋입니다. 알룰로스·스테비올배당체·수크랄로스·아스파탐·에리스리톨 등 감미료별 탐지 결과와 제로 표기 대비 실제 당류 포함 여부를 담고 있습니다.",
-  "url": "__PAGE_URL__",
-  "isPartOf": {"@id": "__PAGE_URL__#website"},
-  "inLanguage": "ko",
-  "dateModified": "__GENERATED_DATE__",
-  "datePublished": "2026-08-09",
-  "temporalCoverage": "2026-08-09/..",
-  "measurementTechnique": "식품의약품안전처 품목제조보고 원재료 전문에서 감미료 표기를 탐지하고, 품목제조보고번호로 공공데이터포털 영양성분 표준데이터를 조인",
-  "spatialCoverage": {"@type": "Place", "name": "대한민국"},
-
-  "isAccessibleForFree": true,
-  "keywords": ["제로음료", "대체당", "감미료", "알룰로스", "스테비아", "수크랄로스", "아스파탐", "에리스리톨", "탄산음료", "식품영양", "오픈데이터"],
-  "variableMeasured": ["티어", "감미료 조합", "원재료 전문", "열량", "당류", "카페인 함유", "아스파탐 함유", "제로 표기 여부"],
-  "creator": {"@id": "__PAGE_URL__#author"},
-  "publisher": {"@id": "__PAGE_URL__#author"},
-  "sourceOrganization": {"@type": "GovernmentOrganization", "name": "식품의약품안전처", "url": "https://www.mfds.go.kr/"},
-  "isBasedOn": [
-    "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002",
-    "https://www.data.go.kr/data/15100066/standard.do"
-  ],
-  "creditText": "식품의약품안전처 식품(첨가물)품목제조보고(원재료), 공공데이터포털 전국통합식품영양성분정보",
-  "sameAs": "https://github.com/gulf1324/zero-drinks-tier",
-  "license": "https://github.com/gulf1324/zero-drinks-tier/blob/main/NOTICE.md",
-  "distribution": [
-    {"@type": "DataDownload", "encodingFormat": "text/html", "contentUrl": "__PAGE_URL__"},
-    {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": "https://raw.githubusercontent.com/gulf1324/zero-drinks-tier/main/zero_soda_raw.json"},
-    {"@type": "DataDownload", "encodingFormat": "text/markdown", "contentUrl": "__PAGE_URL__llms-full.txt"}
-  ]
-  }
-  ]
-}
-</script>
-__FAQ_LD__
+__SITE_LD__
 __THEME_BOOT__
 <style>
 __PALETTE__
@@ -1943,22 +1882,9 @@ def write_html(records, meta, meta_info, path):
     html = html.replace("__PAGE_URL__", PAGE_URL)
     html = html.replace("__FAVICON__", _FAVICON_HTML)
 
-    # 질문별 정적 목록으로 가는 링크. 크롤러의 탐색 경로이자 사용자 진입점이다.
-    guides = [
-        ("products.html", f"{len(records)}개 전체 목록", "티어·감미료·열량을 한눈에 볼 수 있습니다"),
-        ("allulose.html", "알룰로스를 쓰는 제로 음료", "가장 높은 S 등급 감미료를 쓴 제품입니다"),
-        ("no-aspartame.html", "아스파탐이 없는 제로 음료", "신고 원재료에서 아스파탐이 확인되지 않은 제품입니다"),
-        ("no-erythritol.html", "에리스리톨이 없는 제로 음료", "심혈관 신호 연구가 신경 쓰일 때 봅니다"),
-        ("no-caffeine.html", "카페인이 없는 제로 음료", "콜라·에너지드링크 계열을 제외했습니다"),
-        ("fake-zero.html", "제로라면서 당류가 들어간 음료", "표기와 신고 원재료가 다른 제품입니다"),
-        ("hidden-zero.html", "이름에 제로가 없는데 0kcal인 음료", "이름만 보면 놓치는 제품입니다"),
-    ]
-    guides_html = (
-        '<section class="guides">\n<h2>질문별로 골라 보기</h2>\n<ul>\n'
-        + "".join(f'<li><a href="{PAGE_URL}{slug}"><b>{title}</b><span>{note}</span></a></li>\n'
-                  for slug, title, note in guides)
-        + "</ul>\n</section>")
-    html = html.replace("__GUIDES__", guides_html)
+    html = html.replace("__GUIDES__",
+                        '<section class="guides">\n<h2>질문별로 골라 보기</h2>\n'
+                        + _guides_links(len(records)) + "\n</section>")
 
     # 가시 FAQ 와 FAQPage LD 를 같은 _FAQ 에서 만든다 — 글자가 어긋나면 스팸 판정 위험.
     faq_html = ('<section class="faq">\n<h2>자주 묻는 질문</h2>\n'
@@ -1967,17 +1893,12 @@ def write_html(records, meta, meta_info, path):
                 + "</section>")
     html = html.replace("__FAQ_HTML__", faq_html)
 
-    faq_ld = {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": [
-            {"@type": "Question", "name": q,
-             "acceptedAnswer": {"@type": "Answer", "text": a}}
-            for q, a in _FAQ
-        ],
-    }
-    html = html.replace("__FAQ_LD__", '<script type="application/ld+json">'
-                        + json.dumps(faq_ld, ensure_ascii=False, indent=1) + "</script>")
+    # 리포트는 /report.html 로 서빙된다. 사이트 노드는 site_ld() 한 곳에서 나온다.
+    html = html.replace(
+        "__SITE_LD__",
+        '<script type="application/ld+json">'
+        + json.dumps(site_ld(len(records), meta_info["generated_at"][:10], "report.html"),
+                     ensure_ascii=False, indent=1) + "</script>")
     html = html.replace("__GA__", _GA_SNIPPET.replace("__GA_ID__", GA_ID) if GA_ID else "")
     html = html.replace("__GENERATED_DATE__", meta_info["generated_at"][:10])
     html = html.replace("__BADGES__", badges_html)
@@ -2337,6 +2258,7 @@ PUSH_PATHS = [
     os.path.join(DEFAULT_DOCS_DIR, "robots.txt"),
     os.path.join(DEFAULT_DOCS_DIR, "llms.txt"),
     os.path.join(DEFAULT_DOCS_DIR, "llms-full.txt"),
+    os.path.join(DEFAULT_DOCS_DIR, "report.html"),
     os.path.join(DEFAULT_DOCS_DIR, "products.html"),
     os.path.join(DEFAULT_DOCS_DIR, "allulose.html"),
     os.path.join(DEFAULT_DOCS_DIR, "no-aspartame.html"),
@@ -2664,7 +2586,7 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
 </head>
 <body>
 <main>
-<nav><a href="{PAGE_URL}">&larr; 전체 리포트(검색·필터)</a><a href="{PAGE_URL}products.html">616개 전체 목록</a>{_THEME_UI}</nav>
+<nav><a href="{PAGE_URL}">&larr; 메인</a><a href="{PAGE_URL}report.html">전체 리포트(필터·정렬)</a><a href="{PAGE_URL}products.html">전체 목록</a>{_THEME_UI}</nav>
 <h1>{h1}</h1>
 {finder_html}
 <h2 class="first">요약</h2>
@@ -3210,7 +3132,7 @@ def write_seo_pages(docs_dir, records, lastmod):
              f"달라 보일 수 있습니다. 감미료 칸이 비어 있으면 신고 원재료에서 감미료를 찾지 "
              f"못한 것이고, 원재료가 '식품첨가물혼합제제'로 가려져 확인할 수 없는 제품도 "
              f"여기 포함됩니다. 검색·필터·정렬이 필요하면 "
-             f"<a href=\"{PAGE_URL}\">전체 리포트</a>를 쓰세요.")
+             f"<a href=\"{PAGE_URL}report.html\">전체 리포트</a>를 쓰세요.")
     body = _rows_table(ordered)
     page = _static_page(
         "products.html",
@@ -3360,6 +3282,396 @@ def write_llms_files(docs_dir, records, lastmod):
     print(f"[seo] llms.txt / llms-full.txt 생성 ({len(records)}개 제품)")
 
 
+# ── 사이트 구조화 데이터: 단일 진원지 ─────────────────────────
+# 메인 랜딩과 리포트가 같은 노드를 쓴다. 두 곳에 JSON 을 복사해 두면 한쪽만
+# 고쳐서 사이트명·발행주체가 갈라진다 (이름 통일 때 실제로 겪었다).
+
+def _person_ld():
+    return {"@type": "Person", "@id": f"{PAGE_URL}#author", "name": "gulf1324",
+            "url": "https://github.com/gulf1324",
+            "sameAs": ["https://github.com/gulf1324",
+                       "https://github.com/gulf1324/zero-drinks-tier"]}
+
+
+def _website_ld(total):
+    return {"@type": "WebSite", "@id": f"{PAGE_URL}#website",
+            "name": SITE_NAME, "url": PAGE_URL, "inLanguage": "ko",
+            "description": f"국내 유통 {total}개 제품의 감미료 구성을 식약처 신고 원재료로 "
+                           f"확인하고 S~F 티어로 분류합니다.",
+            "publisher": {"@id": f"{PAGE_URL}#author"},
+            "potentialAction": {
+                "@type": "SearchAction",
+                "target": {"@type": "EntryPoint",
+                           "urlTemplate": f"{PAGE_URL}products.html?q={{search_term_string}}"},
+                "query-input": "required name=search_term_string"}}
+
+
+def _dataset_ld(total, lastmod):
+    return {
+        "@type": "Dataset", "@id": f"{PAGE_URL}#dataset",
+        "name": "대체당 제로 음료 티어", "alternateName": SITE_NAME,
+        "description": (f"국내 유통 제로·무당류 탄산음료와 탄산수 {total}개 제품의 대체당(감미료) "
+                        f"구성을 식품의약품안전처 품목제조보고 원재료 전문으로 수집하고, "
+                        f"피어리뷰 메타분석 근거에 따라 S~F 티어로 분류한 데이터셋입니다. "
+                        f"알룰로스·스테비올배당체·수크랄로스·아스파탐·에리스리톨 등 감미료별 "
+                        f"탐지 결과와 제로 표기 대비 실제 당류 포함 여부를 담고 있습니다."),
+        "url": PAGE_URL, "isPartOf": {"@id": f"{PAGE_URL}#website"},
+        "inLanguage": "ko", "dateModified": lastmod, "datePublished": "2026-08-09",
+        "temporalCoverage": "2026-08-09/..",
+        "measurementTechnique": ("식품의약품안전처 품목제조보고 원재료 전문에서 감미료 표기를 "
+                                 "탐지하고, 품목제조보고번호로 공공데이터포털 영양성분 "
+                                 "표준데이터를 조인"),
+        "spatialCoverage": {"@type": "Place", "name": "대한민국"},
+        "isAccessibleForFree": True,
+        "keywords": ["제로음료", "대체당", "감미료", "알룰로스", "스테비아", "수크랄로스",
+                     "아스파탐", "에리스리톨", "탄산음료", "식품영양", "오픈데이터"],
+        "variableMeasured": ["티어", "감미료 조합", "원재료 전문", "열량", "당류",
+                             "카페인 함유", "아스파탐 함유", "제로 표기 여부"],
+        "creator": {"@id": f"{PAGE_URL}#author"},
+        "publisher": {"@id": f"{PAGE_URL}#author"},
+        "sourceOrganization": {"@type": "GovernmentOrganization", "name": "식품의약품안전처",
+                               "url": "https://www.mfds.go.kr/"},
+        "isBasedOn": [
+            "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?menu_grp=MENU_GRP31&menu_no=661&svc_no=C002",
+            "https://www.data.go.kr/data/15100066/standard.do"],
+        "creditText": ("식품의약품안전처 식품(첨가물)품목제조보고(원재료), "
+                       "공공데이터포털 전국통합식품영양성분정보"),
+        "sameAs": "https://github.com/gulf1324/zero-drinks-tier",
+        "license": "https://github.com/gulf1324/zero-drinks-tier/blob/main/NOTICE.md",
+        "distribution": [
+            {"@type": "DataDownload", "encodingFormat": "text/html", "contentUrl": PAGE_URL},
+            {"@type": "DataDownload", "encodingFormat": "application/json",
+             "contentUrl": "https://raw.githubusercontent.com/gulf1324/zero-drinks-tier/main/zero_soda_raw.json"},
+            {"@type": "DataDownload", "encodingFormat": "text/markdown",
+             "contentUrl": f"{PAGE_URL}llms-full.txt"}],
+    }
+
+
+def site_ld(total, lastmod, page=""):
+    """page 가 빈 문자열이면 메인, 그 외에는 해당 페이지의 WebPage 노드를 더한다."""
+    graph = [_person_ld(), _website_ld(total), _dataset_ld(total, lastmod),
+             _faq_ld(_FAQ)]
+    if page:
+        graph.append({"@type": "WebPage", "@id": f"{PAGE_URL}{page}#webpage",
+                      "url": f"{PAGE_URL}{page}", "inLanguage": "ko",
+                      "isPartOf": {"@id": f"{PAGE_URL}#website"},
+                      "isBasedOn": f"{PAGE_URL}#dataset"})
+    return {"@context": "https://schema.org", "@graph": graph}
+
+
+# 질문별 정적 목록으로 가는 링크. 크롤러의 탐색 경로이자 사용자 진입점이다.
+# 리포트와 메인 랜딩이 같은 목록을 쓴다 (한쪽만 늘어나면 탐색 경로가 갈린다).
+def _guides_links(total):
+    guides = [
+        ("products.html", f"{total}개 전체 목록", "티어·감미료·열량을 한눈에 볼 수 있습니다"),
+        ("allulose.html", "알룰로스를 쓰는 제로 음료", "가장 높은 S 등급 감미료를 쓴 제품입니다"),
+        ("no-aspartame.html", "아스파탐이 없는 제로 음료", "신고 원재료에서 아스파탐이 확인되지 않은 제품입니다"),
+        ("no-erythritol.html", "에리스리톨이 없는 제로 음료", "심혈관 신호 연구가 신경 쓰일 때 봅니다"),
+        ("no-caffeine.html", "카페인이 없는 제로 음료", "콜라·에너지드링크 계열을 제외했습니다"),
+        ("fake-zero.html", "제로라면서 당류가 들어간 음료", "표기와 신고 원재료가 다른 제품입니다"),
+        ("hidden-zero.html", "이름에 제로가 없는데 0kcal인 음료", "이름만 보면 놓치는 제품입니다"),
+    ]
+    return ("<ul>\n" + "".join(
+        f'<li><a href="{PAGE_URL}{slug}"><b>{title}</b><span>{note}</span></a></li>\n'
+        for slug, title, note in guides) + "</ul>")
+
+
+# ── 메인 랜딩 ─────────────────────────────────────────────────
+# 메인은 "검색한 음료의 감미료를 즉시 확인" 하나만 한다. 626행 표를 메인에 두면
+# 스크롤이 13화면이 되고 아래 섹션은 아무도 보지 못한다 (실측 12,633px).
+# 전체 표·필터는 /report.html, 무JS 전체 목록은 /products.html 이 담당한다.
+
+# 국내 판매 상위 제품. 검색어를 모르는 방문자에게 첫 클릭을 준다.
+# 근거: 2026년 1분기 오프라인 구매침투율(코카콜라 제로 10.8%, 칠성사이다 제로 7.9%,
+# 펩시 제로 4.7%)과 온라인 판매순위(코카콜라 제로 > 펩시콜라 제로 > 나랑드사이다).
+# 순위를 숫자로 단정하지 않는다 - 우리가 측정한 값이 아니다.
+POPULAR_PICKS = [
+    "코카콜라 제로", "펩시제로슈거", "칠성사이다제로",
+    "나랑드사이다 제로", "스프라이트 제로", "밀키스제로",
+]
+POPULAR_SOURCE = (
+    '<a href="https://blog.remited.ai/marketinginsight04" target="_blank" '
+    'rel="noopener nofollow">2026년 1분기 오프라인 구매침투율</a>과 '
+    '<a href="https://www.wiseapp.co.kr/insight/detail/217" target="_blank" '
+    'rel="noopener nofollow">온라인 판매순위</a>에서 상위로 집계된 제품입니다. '
+    '판매량은 이 사이트가 측정한 값이 아닙니다.'
+)
+
+
+def _pick_cards(records):
+    by_name = {r["제품명"]: r for r in records}
+    out = []
+    for name in POPULAR_PICKS:
+        r = by_name.get(name)
+        if not r:
+            continue
+        sweet, _ = _sweetener_rows(r)
+        ing = ", ".join(w for w, _ in sweet) or (
+            "감미료 미표기" if r.get("감미료미표기") == "Y" else "감미료 없음")
+        kcal = (f'{_esc(r["열량"])} kcal / {_esc(r.get("기준량") or "100ml")}'
+                if r.get("열량") not in ("", None) else "열량 미확인")
+        out.append(
+            f'<a class="pick" href="{PAGE_URL}{slug_url(r["슬러그"])}">'
+            f'{_tier_badge(r["티어"])}'
+            f'<span class="pick-name">{_esc(name)}</span>'
+            f'<span class="pick-ing">{_esc(ing)}</span>'
+            f'<span class="pick-kcal">{kcal}</span></a>')
+    return "".join(out)
+
+
+_SUGGEST_JS = """<script>
+(function () {
+  var q = document.getElementById('q'), box = document.getElementById('sg'),
+      form = document.getElementById('sform');
+  if (!q || !box) return;
+  var ALL = JSON.parse(document.getElementById('names').textContent);
+  var BASE = form.getAttribute('data-pbase');
+  var cur = -1, items = [];
+  // 표기 흔들림 흡수: 공백·하이픈·가운뎃점류를 지우고 비교한다 (norm_name 과 같은 취지)
+  function norm(s) { return s.replace(/[\s\u002d\u00b7\u2022\u25cf]+/g, '').toLowerCase(); }
+  function hide() { box.hidden = true; cur = -1; items = []; q.setAttribute('aria-expanded', 'false'); }
+  function run() {
+    var s = norm(q.value);
+    if (s.length < 1) return hide();
+    // 제품명이 유통명과 다를 수 있으니 부분 일치로 찾고, 앞에서 일치하는 것을 위로 올린다.
+    var hit = ALL.filter(function (r) { return norm(r.n).indexOf(s) >= 0; });
+    // 위치가 같으면 짧은 이름이 대표다. '코카' 로 치면 '코카콜라 제로'가
+    // '코카-콜라 제로 레몬'보다 먼저 와야 한다.
+    hit.sort(function (a, b) {
+      return (norm(a.n).indexOf(s) - norm(b.n).indexOf(s)) || (a.n.length - b.n.length);
+    });
+    items = hit.slice(0, 8);
+    if (!items.length) {
+      box.innerHTML = '<div class="sg-none">일치하는 제품이 없습니다. 엔터를 누르면 전체 목록에서 찾습니다.</div>';
+      box.hidden = false; return;
+    }
+    box.innerHTML = items.map(function (r, i) {
+      return '<a role="option" id="sg' + i + '" href="' + BASE + encodeURIComponent(r.g) + '.html">' +
+             '<span class="tier-chip" data-tier="' + r.t + '">' +
+             (r.t === '\ubb34\uac10\ubbf8\ub8cc' ? '\ubb34' : r.t) + '</span>' +
+             '<b>' + r.n + '</b><span>' + (r.s || '') + '</span></a>';
+    }).join('');
+    box.hidden = false; q.setAttribute('aria-expanded', 'true');
+  }
+  function move(d) {
+    if (box.hidden || !items.length) return;
+    cur = (cur + d + items.length) % items.length;
+    var as = box.querySelectorAll('a');
+    for (var i = 0; i < as.length; i++) as[i].classList.toggle('on', i === cur);
+    q.setAttribute('aria-activedescendant', 'sg' + cur);
+  }
+  q.addEventListener('input', run);
+  q.addEventListener('focus', run);
+  q.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
+    else if (e.key === 'Escape') hide();
+    else if (e.key === 'Enter' && cur >= 0) {
+      e.preventDefault(); location.href = items[cur].u;
+    }
+    // cur < 0 이면 폼이 그대로 제출돼 products.html?q= 로 넘어간다 (JS 없어도 같다)
+  });
+  document.addEventListener('click', function (e) {
+    if (!form.contains(e.target)) hide();
+  });
+})();
+</script>"""
+
+
+_LANDING_CSS = """
+/* 메인은 검색 하나가 주인공이다. 다른 요소가 검색창과 무게를 겨루지 않게 한다 */
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;
+      padding:52px 0 8px;gap:12px}
+.hero h1{font-size:30px;letter-spacing:-.03em;margin:0;line-height:1.25}
+.hero .tag{margin:0;font-size:15px;color:var(--muted);max-width:47ch;line-height:1.65}
+.hero .mark{display:flex;align-items:flex-end;gap:5px;height:52px}
+.hero .m-bar{width:13px;border-radius:3px 3px 0 0;background:var(--accent);opacity:.9}
+.hero .m-bar[data-tier]{background:var(--tc)}
+@media(max-width:640px){.hero{padding:30px 0 6px}.hero h1{font-size:24px}}
+
+/* 검색창: 화면에서 가장 큰 폼 컨트롤. 아래 섹션과 여백으로 확실히 끊는다 */
+.sbox{position:relative;width:100%;max-width:620px;margin:14px auto 0}
+.sbox form{position:relative;display:flex;align-items:center}
+.sbox .s-ico{position:absolute;left:18px;width:21px;height:21px;fill:none;
+             stroke:var(--muted);stroke-width:2.2;stroke-linecap:round;pointer-events:none}
+.sbox input{width:100%;padding:18px 58px 18px 50px;font-size:17px;font-family:inherit;
+            border:2px solid var(--border-strong);border-radius:var(--pill);
+            background:var(--surface);color:var(--text);outline:none;
+            box-shadow:var(--shadow);-webkit-appearance:none;appearance:none}
+.sbox input::placeholder{color:var(--muted-2)}
+.sbox input:focus{border-color:var(--accent);background:var(--surface);
+                  box-shadow:0 0 0 4px var(--accent-soft),var(--shadow)}
+.sbox form:focus-within .s-ico{stroke:var(--accent)}
+.sbox button{position:absolute;right:8px;width:38px;height:38px;border:0;
+             border-radius:50%;background:var(--accent);color:var(--on-accent);
+             font-size:17px;font-weight:700;cursor:pointer;display:flex;
+             align-items:center;justify-content:center}
+.sbox .hint{margin:9px 2px 0;font-size:12.5px;color:var(--muted);text-align:center}
+
+/* 자동완성: 입력 바로 아래에 떠서 첫 클릭까지의 거리를 없앤다 */
+.sg{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;
+    background:var(--surface);border:1px solid var(--border-strong);
+    box-shadow:var(--shadow);max-height:352px;overflow-y:auto}
+.sg a{display:flex;align-items:center;gap:10px;padding:11px 14px;
+      text-decoration:none;color:var(--text);font-size:14px}
+.sg a+a{border-top:1px solid var(--hair)}
+.sg a b{font-weight:600}
+.sg a span:last-child{margin-left:auto;color:var(--muted);font-size:12px;
+                      text-align:right;max-width:46%}
+.sg a:hover,.sg a.on{background:var(--accent-soft)}
+.sg-none{padding:13px 14px;font-size:13px;color:var(--muted)}
+
+/* 많이 찾는 제품 */
+.picks{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));
+       gap:1px;background:var(--border);border:1px solid var(--border);margin:0 0 10px}
+.pick{display:grid;grid-template-columns:auto 1fr;grid-template-areas:
+      "t name" "t ing" "t kcal";gap:2px 10px;align-items:center;
+      background:var(--surface);padding:14px 16px;text-decoration:none;color:var(--text)}
+.pick:hover{background:var(--row-hover)}
+.pick .tier-chip{grid-area:t}
+.pick-name{grid-area:name;font-weight:700;font-size:14.5px}
+.pick-ing{grid-area:ing;font-size:12.5px;color:var(--text-2);line-height:1.45}
+.pick-kcal{grid-area:kcal;font-size:11.5px;color:var(--muted);
+           font-variant-numeric:tabular-nums}
+.src{font-size:11.5px;color:var(--muted);margin:0 0 28px;line-height:1.6}
+
+/* 다음 행동 3개. 표를 메인에서 뺀 대신 어디로 가면 되는지 분명히 둔다 */
+.paths{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;
+       margin:0 0 30px}
+.paths a{display:block;background:var(--surface);border:1px solid var(--border);
+         padding:15px 17px;text-decoration:none;color:var(--text)}
+.paths a:hover{border-color:var(--accent)}
+.paths b{display:block;font-size:14.5px;margin-bottom:4px}
+.paths span{font-size:12.5px;color:var(--muted);line-height:1.5}
+.lsec{margin:34px 0 12px;font-size:17px}
+.lsec-sub{font-size:12.5px;color:var(--muted);font-weight:400;margin-left:8px}
+"""
+
+
+_LANDING_TEMPLATE = """<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>제로 음료 감미료 조회 — 식약처 원재료로 확인합니다 | {site_name}</title>
+<meta name="description" content="찾는 제로 음료에 어떤 감미료가 들어 있는지 검색 한 번으로 확인합니다. 국내 유통 {total}개 제품을 식약처 품목제조보고 원재료 전문으로 분류했습니다.">
+<meta name="robots" content="index, follow">
+<meta name="naver-site-verification" content="a3a82e491e9f40e89ab9e12d3306aab7">
+<link rel="canonical" href="{page_url}">
+<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,{favicon}">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:site_name" content="{site_name}">
+<meta property="og:title" content="{site_name}">
+<meta property="og:description" content="찾는 제로 음료의 감미료를 검색 한 번으로 확인합니다. {total}개 제품, 식약처 원재료 기준.">
+<meta property="og:url" content="{page_url}">
+<meta property="og:image" content="{page_url}og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{site_name}">
+<meta name="twitter:description" content="찾는 제로 음료의 감미료를 검색 한 번으로 확인합니다. {total}개 제품, 식약처 원재료 기준.">
+<meta name="twitter:image" content="{page_url}og-card.png">
+<script type="application/ld+json">
+{ld}
+</script>
+{ga}{theme_boot}
+<style>{static_css}
+{theme_css}
+{landing_css}</style>
+</head>
+<body>
+<main>
+<div class="topbar">{theme_ui}</div>
+
+<div class="hero">
+  <div class="mark" aria-hidden="true">
+    <span class="m-bar" style="height:60%"></span>
+    <span class="m-bar" style="height:82%" data-tier="무감미료"></span>
+    <span class="m-bar" style="height:44%" data-tier="B"></span>
+  </div>
+  <h1>제로 음료 감미료 조회</h1>
+  <p class="tag">찾는 음료에 어떤 대체당이 들어 있는지 <b>식약처 신고 원재료</b>로 확인하세요.
+     추정하지 않고, 확인할 수 없으면 확인할 수 없다고 적습니다.</p>
+</div>
+
+<div class="sbox">
+  <form id="sform" action="{page_url}products.html" method="get" role="search"
+        data-pbase="{page_url}p/"
+        autocomplete="off">
+    <svg class="s-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input type="search" id="q" name="q" spellcheck="false"
+           placeholder="제품명을 입력하세요 (예: 코카콜라 제로, 밀키스)"
+           aria-label="제로 음료 제품명 검색" role="combobox"
+           aria-controls="sg" aria-expanded="false" aria-autocomplete="list">
+    <button type="submit" aria-label="검색">&rarr;</button>
+    <div class="sg" id="sg" role="listbox" aria-label="검색 제안" hidden></div>
+  </form>
+  <p class="hint">{total}개 제품 · 티어 분포 {dist}</p>
+</div>
+
+<h2 class="lsec">많이 찾는 제품<span class="lsec-sub">클릭하면 감미료 전문을 봅니다</span></h2>
+<div class="picks">{picks}</div>
+<p class="src">{pick_src}</p>
+
+<div class="paths">
+  <a href="{page_url}report.html"><b>전체 리포트 &rarr;</b><span>티어 배지·필터·정렬로 {total}개를 직접 골라 봅니다</span></a>
+  <a href="{page_url}products.html"><b>{total}개 전체 목록 &rarr;</b><span>한 페이지에 전부 나열한 표입니다</span></a>
+  <a href="{page_url}llms-full.txt"><b>데이터 전문 &rarr;</b><span>원재료·티어 전체를 텍스트로 내려받습니다</span></a>
+</div>
+
+<section class="guides">
+<h2>질문별로 골라 보기</h2>
+{guides}
+</section>
+
+<section class="faq">
+<h2>자주 묻는 질문</h2>
+{faq}
+</section>
+
+<footer>
+<div>출처: 식품의약품안전처 식품(첨가물)품목제조보고(원재료) · 공공데이터포털 전국통합식품영양성분정보. 기준일 {lastmod}.</div>
+<div>열량·당류는 <b>100mL(또는 100g)당</b> 값입니다. 제품 라벨은 한 병 전체 기준이라 숫자가 달라 보일 수 있습니다.</div>
+<div>티어는 인용된 연구를 근거로 한 이 프로젝트의 해석이며 정부 기관의 공식 평가가 아닙니다. 의학적 조언이 아닙니다.</div>
+<div>데이터 &copy; 식품의약품안전처 &middot; 공공데이터포털 &middot; <a href="https://github.com/gulf1324/zero-drinks-tier">소스·산출 방법</a></div>
+</footer>
+</main>
+<script id="names" type="application/json">{names_json}</script>
+{suggest_js}
+{theme_js}
+</body>
+</html>
+"""
+
+
+def landing_page(records, lastmod, stats):
+    """메인 랜딩. 표를 싣지 않는다 - 검색 하나로 끝내는 페이지다."""
+    n = len(records)
+    # 퍼센트 인코딩된 절대 URL 을 626개 실으면 45KB 가 더 붙는다. 원본 슬러그만
+    # 싣고 URL 은 JS 가 만든다 (한글 슬러그는 인코딩하면 3배로 늘어난다).
+    names = json.dumps(
+        [{"n": r["제품명"], "t": r["티어"], "g": r["슬러그"],
+          "s": ", ".join(w for w, _ in _sweetener_rows(r)[0])}
+         for r in sorted(records, key=lambda r: r["제품명"])],
+        ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    dist = ", ".join(f"{k} {v}개" for k, v in
+                     ((t, sum(1 for r in records if r["티어"] == t))
+                      for t in ("무감미료", "S", "A", "B", "C", "D", "F")) if v)
+    faq_pairs = list(_FAQ)
+    ld = site_ld(n, lastmod)
+    faq_html = ("".join(f"<details><summary>{q}</summary><p>{a}</p></details>"
+                        for q, a in faq_pairs))
+    return _LANDING_TEMPLATE.format(
+        page_url=PAGE_URL, site_name=SITE_NAME, total=n, dist=dist, lastmod=lastmod,
+        theme_css=_THEME_CSS, landing_css=_LANDING_CSS,
+        theme_boot=_THEME_BOOT_JS, theme_ui=_THEME_UI, theme_js=_THEME_JS,
+        static_css=_STATIC_CSS,
+        favicon=_FAVICON_B64, ga=_GA_SNIPPET.replace("__GA_ID__", GA_ID) if GA_ID else "",
+        ld=json.dumps(ld, ensure_ascii=False, indent=1),
+        picks=_pick_cards(records), pick_src=POPULAR_SOURCE,
+        names_json=names, suggest_js=_SUGGEST_JS,
+        guides=_guides_links(n), faq=faq_html)
+
+
 def publish_docs(docs_html, out_html, stats):
     """배포 디렉터리에 리포트를 복사하고 SEO 산출물을 전부 다시 만든다.
 
@@ -3368,9 +3680,20 @@ def publish_docs(docs_html, out_html, stats):
     """
     docs_dir = os.path.dirname(docs_html) or "."
     os.makedirs(docs_dir, exist_ok=True)
-    shutil.copyfile(out_html, docs_html)
-    print(f"[docs] {out_html} -> {docs_html}")
-    slugs = write_seo_files(docs_dir, stats["generated_at"][:10], stats["records"])
+    lastmod = stats["generated_at"][:10]
+
+    # 표·필터가 있는 전체 리포트는 /report.html 이다. 메인에 626행 표를 두면
+    # 스크롤이 13화면이 되고 그 아래 섹션은 아무도 보지 못한다 (실측 12,633px).
+    report_path = os.path.join(docs_dir, "report.html")
+    shutil.copyfile(out_html, report_path)
+    print(f"[docs] {out_html} -> {report_path}")
+
+    # 메인은 검색 하나로 끝내는 짧은 랜딩이다.
+    with open(docs_html, "w", encoding="utf-8", newline="\n") as f:
+        f.write(landing_page(stats["records"], lastmod, stats))
+    print(f"[docs] 메인 랜딩 -> {docs_html}")
+
+    slugs = write_seo_files(docs_dir, lastmod, stats["records"])
     return docs_dir, slugs
 
 
@@ -3397,7 +3720,8 @@ def write_seo_files(docs_dir, lastmod, records):
     prod = write_product_pages(docs_dir, records, lastmod)
     write_llms_files(docs_dir, records, lastmod)
 
-    urls = [(PAGE_URL, "1.0", "monthly")]
+    urls = [(PAGE_URL, "1.0", "monthly"),
+            (f"{PAGE_URL}report.html", "0.9", "monthly")]
     urls += [(f"{PAGE_URL}{s}", "0.8", "monthly") for s in slugs]
     # 제품별 페이지가 이 사이트의 롱테일이다. 사이트맵에 전부 넣는다.
     urls += [(f"{PAGE_URL}{s}", "0.6", "monthly") for s in prod]
