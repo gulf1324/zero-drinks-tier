@@ -950,7 +950,10 @@ class ThemeUiScopeTests(unittest.TestCase):
 
     def test_every_theme_consumer_gets_css_ui_and_js(self):
         # 랜딩: 세 조각이 다 들어간다
-        self.assertIn("{theme_css}", z._LANDING_TEMPLATE)
+        # 랜딩은 _STATIC_CSS 를 싣고, 그 안에 _THEME_CSS 가 이미 들어 있다.
+        # {theme_css} 를 따로 넣으면 같은 규칙이 두 번 나간다.
+        self.assertIn("{static_css}", z._LANDING_TEMPLATE)
+        self.assertNotIn("{theme_css}", z._LANDING_TEMPLATE)
         self.assertIn("{theme_ui}", z._LANDING_TEMPLATE)
         self.assertIn("{theme_js}", z._LANDING_TEMPLATE)
         self.assertIn("{theme_boot}", z._LANDING_TEMPLATE)

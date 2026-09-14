@@ -3641,7 +3641,6 @@ _LANDING_TEMPLATE = """<!DOCTYPE html>
 </script>
 {ga}{theme_boot}
 <style>{static_css}
-{theme_css}
 {landing_css}</style>
 </head>
 <body>
@@ -3730,7 +3729,7 @@ def landing_page(records, lastmod, stats):
                         for q, a in faq_pairs))
     return _LANDING_TEMPLATE.format(
         page_url=PAGE_URL, site_name=SITE_NAME, total=n, dist=dist, lastmod=lastmod,
-        theme_css=_THEME_CSS, landing_css=_LANDING_CSS,
+        landing_css=_LANDING_CSS,
         theme_boot=_THEME_BOOT_JS, theme_ui=_THEME_UI, theme_js=_THEME_JS,
         static_css=_STATIC_CSS,
         favicon=_FAVICON_B64, ga=_GA_SNIPPET.replace("__GA_ID__", GA_ID) if GA_ID else "",

@@ -385,28 +385,6 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
         margin:0 0 12px;font-size:13px;}
 @media(max-width:720px){table{font-size:12px}th,td{padding:6px 7px}h1{font-size:20px}}
 
-/* 설정은 내용 위에 얹지 않는다. 헤로보다 위, 오른쪽 끝.
-   이 규칙이 없으면 .themer 의 margin-left:auto 가 먹지 않아 톱니는 왼쪽에,
-   메뉴만 right:0 기준으로 오른쪽에 떠서 둘이 갈라진다 (실제 버그였다). */
-.topbar{display:flex;justify-content:flex-end;height:30px}
-/* 톱니바퀴는 내용이 아니라 설정이다. 시선을 끌지 않게 muted 로 두고 hover 에만 살린다 */
-.themer{position:relative;margin-left:auto;flex:none}
-.theme-btn{display:flex;align-items:center;justify-content:center;width:30px;height:30px;
-  border:1px solid var(--border);background:var(--surface);color:var(--muted);
-  border-radius:var(--ctl);cursor:pointer;padding:0}
-.theme-btn svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
-.theme-btn:hover{color:var(--text);border-color:var(--border-hover)}
-.theme-btn[aria-expanded="true"]{color:var(--accent);border-color:var(--accent)}
-.theme-menu{position:absolute;top:34px;right:0;z-index:20;min-width:148px;padding:4px;
-  background:var(--surface);border:1px solid var(--border-strong);box-shadow:var(--shadow)}
-.theme-menu button{display:flex;align-items:baseline;gap:7px;width:100%;padding:7px 9px;
-  border:0;background:none;color:var(--text);font:inherit;font-size:12.5px;text-align:left;cursor:pointer}
-.theme-menu button span{color:var(--muted);font-size:11px}
-.theme-menu button:hover{background:var(--row-hover)}
-.theme-menu button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink);font-weight:700}
-.theme-menu button[aria-pressed="true"]::after{content:"\2713";margin-left:auto;font-weight:700}
-
-
 /* 메인은 검색 하나가 주인공이다. 다른 요소가 검색창과 무게를 겨루지 않게 한다 */
 .hero{display:flex;flex-direction:column;align-items:center;text-align:center;
       padding:52px 0 8px;gap:12px}
