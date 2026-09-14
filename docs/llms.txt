@@ -7,7 +7,7 @@
 
 ## 핵심 페이지
 
-- [전체 리포트](https://zero-drinks-tier.vercel.app/): 검색·필터·정렬 가능한 626개 전량 (JS 필요)
+- [고급 검색](https://zero-drinks-tier.vercel.app/report.html): 검색·필터·정렬 가능한 626개 전량 (JS 필요)
 - [전체 목록](https://zero-drinks-tier.vercel.app/products.html): 같은 데이터의 무JS 정적 표
 - [알룰로스 쓰는 제로 음료](https://zero-drinks-tier.vercel.app/allulose.html)
 - [아스파탐 없는 제로 음료](https://zero-drinks-tier.vercel.app/no-aspartame.html)

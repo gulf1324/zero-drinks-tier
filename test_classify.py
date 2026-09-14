@@ -1026,3 +1026,42 @@ class LandingBrevityTests(unittest.TestCase):
                      "products.html"):
             self.assertIn(z.PAGE_URL + slug, html_out, f"{slug} 알약이 없다")
 
+class ReportUiTests(unittest.TestCase):
+    """고급 검색(/report.html) 화면 규약."""
+
+    def _css(self):
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        tpl = re.search(r'_HTML_TEMPLATE = r"""(.*?)\n"""', src, re.S).group(1)
+        return tpl, re.search(r"<style>(.*?)</style>", tpl, re.S).group(1)
+
+    def test_tier_legend_starts_collapsed(self):
+        tpl, _ = self._css()
+        self.assertIn('<details class="panel tierlegend">', tpl)
+        self.assertNotIn('class="panel tierlegend" open', tpl,
+                         "787px 짜리 기준표를 처음부터 펼쳐 두면 표가 밀려난다")
+
+    def test_sort_select_never_matches_the_search_width(self):
+        # 셀렉트가 가로로 늘어나면 검색 입력과 구분이 안 된다 (실제 혼동 신고)
+        _, css = self._css()
+        mobile = css.split("@media (max-width:820px)")[-1]
+        self.assertNotIn(".sortsel select{flex:1", mobile)
+        self.assertIn("max-width:148px", mobile)
+        self.assertIn(".sortsel{display:flex;margin-left:0;width:auto}", mobile)
+
+    def test_search_inputs_have_no_placeholder_but_keep_a_label(self):
+        tpl, _ = self._css()
+        inp = re.search(r'<input type="search" id="q".*?>', tpl, re.S).group(0)
+        self.assertNotIn("placeholder", inp)
+        self.assertIn("aria-label", inp)
+        # 메인도 같은 규칙
+        main = re.search(r'<input type="search" id="q".*?>', z._LANDING_TEMPLATE, re.S).group(0)
+        self.assertNotIn("placeholder", main)
+        self.assertIn("aria-label", main)
+
+    def test_report_is_called_advanced_search_everywhere(self):
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        # 사용자에게 보이는 문구는 '고급 검색' 하나로 통일한다
+        visible = re.findall(r'>전체 리포트[^<]*<', src)
+        self.assertEqual(visible, [], f"'전체 리포트' 표기가 남았다: {visible}")
+        self.assertIn("고급 검색", z._LANDING_TEMPLATE)
+

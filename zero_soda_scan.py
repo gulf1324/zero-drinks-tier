@@ -1379,8 +1379,9 @@ __THEME_CSS__
     .searchbar{padding:11px 11px 9px}
     .badges{gap:6px}
     .badge{padding:5px 10px 5px 9px;font-size:12px}
-    .sortsel{display:flex;margin-left:0;width:100%}
-    .sortsel select{flex:1;min-width:0}
+    /* 셀렉트를 가로로 늘리면 검색 입력과 구분이 안 된다. 내용 폭만 쓴다 */
+    .sortsel{display:flex;margin-left:0;width:auto}
+    .sortsel select{flex:0 1 auto;min-width:0;max-width:148px}
     .maker-name{width:106px;font-size:12px}
     .panel-body{padding:2px 11px 11px}
 
@@ -1436,7 +1437,7 @@ __THEME_CSS__
     <div class="searchfield">
       <svg class="s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
       <input type="search" id="q" autocomplete="off" spellcheck="false"
-             placeholder="제품명·제조사 검색   예: 밀키스 제로">
+             aria-label="제품명·제조사 검색">
       <button type="button" class="s-clear" id="qClear" aria-label="검색어 지우기" hidden>&times;</button>
     </div>
     <div class="searchmeta">
@@ -1448,7 +1449,7 @@ __THEME_CSS__
   </section>
   <div class="badges" id="badges">__BADGES__<button class="clear-tiers" id="clearTiers" disabled>전체 해제</button></div>
   <div class="warn" id="fakeZeroBanner">제로 표기 제품 __ZERO_TOTAL__개 중 __FAKE_ZERO__개는 신고 원재료에 당류가 있습니다</div>
-  <details class="panel tierlegend" open>
+  <details class="panel tierlegend">
     <summary>티어 기준</summary>
     <div class="panel-body">
 __TIER_LEGEND__
@@ -2582,7 +2583,7 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
 </head>
 <body>
 <main>
-<nav><a href="{PAGE_URL}">&larr; 메인</a><a href="{PAGE_URL}report.html">전체 리포트(필터·정렬)</a><a href="{PAGE_URL}products.html">전체 목록</a>{_THEME_UI}</nav>
+<nav><a href="{PAGE_URL}">&larr; 메인</a><a href="{PAGE_URL}report.html">고급 검색</a><a href="{PAGE_URL}products.html">전체 목록</a>{_THEME_UI}</nav>
 <h1>{h1}</h1>
 {finder_html}
 <h2 class="first">요약</h2>
@@ -3128,7 +3129,7 @@ def write_seo_pages(docs_dir, records, lastmod):
              f"달라 보일 수 있습니다. 감미료 칸이 비어 있으면 신고 원재료에서 감미료를 찾지 "
              f"못한 것이고, 원재료가 '식품첨가물혼합제제'로 가려져 확인할 수 없는 제품도 "
              f"여기 포함됩니다. 검색·필터·정렬이 필요하면 "
-             f"<a href=\"{PAGE_URL}report.html\">전체 리포트</a>를 쓰세요.")
+             f"<a href=\"{PAGE_URL}report.html\">고급 검색</a>을 쓰세요.")
     body = _rows_table(ordered)
     page = _static_page(
         "products.html",
@@ -3214,7 +3215,7 @@ def write_llms_files(docs_dir, records, lastmod):
 
 ## 핵심 페이지
 
-- [전체 리포트]({PAGE_URL}): 검색·필터·정렬 가능한 {len(records)}개 전량 (JS 필요)
+- [고급 검색]({PAGE_URL}report.html): 검색·필터·정렬 가능한 {len(records)}개 전량 (JS 필요)
 - [전체 목록]({PAGE_URL}products.html): 같은 데이터의 무JS 정적 표
 - [알룰로스 쓰는 제로 음료]({PAGE_URL}allulose.html)
 - [아스파탐 없는 제로 음료]({PAGE_URL}no-aspartame.html)
@@ -3720,7 +3721,7 @@ _LANDING_TEMPLATE = """<!DOCTYPE html>
 <nav class="pills" aria-label="조건별 목록">{pills}</nav>
 
 <div class="paths">
-  <a href="{page_url}report.html"><b>전체 리포트</b><span>필터·정렬로 {total}개 직접 고르기</span></a>
+  <a href="{page_url}report.html"><b>고급 검색</b><span>필터·정렬로 {total}개 직접 고르기</span></a>
   <a href="{page_url}llms-full.txt"><b>데이터 전문</b><span>원재료·등급 전체 텍스트</span></a>
 </div>
 
