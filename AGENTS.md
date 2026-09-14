@@ -181,7 +181,8 @@ I2570 의 제품명 예시 - 지금 등록명보다 오히려 나쁘다:
 | `zero_soda_nutrition.json` | 영양 조인 캐시. **git 추적 대상**. `rows`(매칭분)와 `checked`(조회 시도한 보고번호 전체)를 함께 보관 |
 | `zero_soda_label.json` | 유통명·표시원재료. **손으로 검증해 넣는다.** 품목보고번호로 C002 에 조인. 자동 생성 금지 |
 | `docs/LABELS.md` | 위 파일을 채우는 절차와 소스별 실증 결과, 남은 작업 목록 |
-| `docs/index.html` | Vercel 이 서빙하는 배포본. `zero_soda_report.html` 의 복사본이다 |
+| `docs/index.html` | **메인 랜딩**. `landing_page()` 가 생성한다. 표를 싣지 않는다 — 626행을 메인에 두면 스크롤이 13.7화면이 되고 아래 섹션이 죽는다 |
+| `docs/report.html` | 표·필터·정렬이 있는 전체 리포트. `zero_soda_report.html` 의 복사본이다 |
 | `docs/p/*.html` | 제품별 상세 페이지. `write_product_pages()` 가 생성하고 **현재 슬러그에 없는 파일은 삭제한다** (제품명이 바뀌면 고아 페이지가 쌓인다). **`.gitignore` 예외**(`!docs/p/*.html`)와 **`PUSH_PATHS` 등록**이 둘 다 필요하다 |
 
 ## SEO 산출물 — 배포는 한 경로로만
