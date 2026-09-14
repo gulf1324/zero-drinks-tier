@@ -3578,7 +3578,6 @@ _LANDING_CSS = """
              border-radius:50%;background:var(--accent);color:var(--on-accent);
              font-size:17px;font-weight:700;cursor:pointer;display:flex;
              align-items:center;justify-content:center}
-.sbox .hint{margin:9px 2px 0;font-size:12.5px;color:var(--muted);text-align:center}
 
 /* 자동완성: 입력 바로 아래에 떠서 첫 클릭까지의 거리를 없앤다 */
 .sg{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;
@@ -3695,7 +3694,7 @@ _LANDING_TEMPLATE = """<!DOCTYPE html>
     <span class="m-bar" style="height:44%" data-tier="B"></span>
   </div>
   <h1>제로 음료 감미료 조회</h1>
-  <p class="tag">찾는 음료의 대체당을 <b>식약처 신고 원재료</b>로 확인합니다. 추정하지 않습니다.</p>
+  <p class="tag">제품의 성분을 <b>식약처 신고 원재료</b>로 확인합니다.</p>
 </div>
 
 <div class="sbox">
@@ -3704,13 +3703,11 @@ _LANDING_TEMPLATE = """<!DOCTYPE html>
         autocomplete="off">
     <svg class="s-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
     <input type="search" id="q" name="q" spellcheck="false"
-           placeholder="제품명을 입력하세요 (예: 코카콜라 제로, 밀키스)"
            aria-label="제로 음료 제품명 검색" role="combobox"
            aria-controls="sg" aria-expanded="false" aria-autocomplete="list">
     <button type="submit" aria-label="검색">&rarr;</button>
     <div class="sg" id="sg" role="listbox" aria-label="검색 제안" hidden></div>
   </form>
-  <p class="hint">{total}개 제품 · 티어 분포 {dist}</p>
 </div>
 
 <h2 class="lsec">많이 찾는 제품</h2>
@@ -3757,15 +3754,12 @@ def landing_page(records, lastmod, stats):
           "s": ", ".join(w for w, _ in _sweetener_rows(r)[0])}
          for r in sorted(records, key=lambda r: r["제품명"])],
         ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-    dist = ", ".join(f"{k} {v}개" for k, v in
-                     ((t, sum(1 for r in records if r["티어"] == t))
-                      for t in ("무감미료", "S", "A", "B", "C", "D", "F")) if v)
     faq_pairs = list(_FAQ)
     ld = site_ld(n, lastmod)
     faq_html = ("".join(f"<details><summary>{q}</summary><p>{a}</p></details>"
                         for q, a in faq_pairs))
     return _LANDING_TEMPLATE.format(
-        page_url=PAGE_URL, site_name=SITE_NAME, total=n, dist=dist, lastmod=lastmod,
+        page_url=PAGE_URL, site_name=SITE_NAME, total=n, lastmod=lastmod,
         landing_css=_LANDING_CSS,
         theme_boot=_THEME_BOOT_JS, theme_ui=_THEME_UI, theme_js=_THEME_JS,
         static_css=_STATIC_CSS,
