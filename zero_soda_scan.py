@@ -2380,7 +2380,15 @@ footer div{margin-bottom:5px}
 a.pl{color:var(--text);text-decoration:none;border-bottom:1px solid var(--border-strong)}
 a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
 @media(max-width:640px){
+  /* 좁은 화면에서 라벨을 값 위에 쌓으면 8항목이 600px 넘게 먹는다.
+     읽는 법(.hrow)과 같은 규율로 라벨을 왼쪽에 가로로 붙인다. */
   .kvs{grid-template-columns:1fr}
+  .kv{display:grid;grid-template-columns:76px 1fr;gap:10px;align-items:baseline;
+      padding:10px 13px}
+  .kv dt{margin-bottom:0}
+  .kv dd{font-size:13.5px}
+  .kv-note{margin-top:3px}
+  .swl{gap:6px 9px}
   .hr{grid-template-columns:1fr;gap:4px}
 }\n.caveat{background:var(--danger-soft);border-left:4px solid var(--danger);padding:10px 12px;\n        margin:0 0 12px;font-size:13px;}
 @media(max-width:720px){table{font-size:12px}th,td{padding:6px 7px}h1{font-size:20px}}"""

@@ -1135,6 +1135,21 @@ class ProductPageOrderTests(unittest.TestCase):
         narrow = css.split("@media(max-width:400px)")[-1]
         self.assertIn("grid-template-columns:62px 1fr", narrow)
 
+    def test_summary_card_goes_horizontal_on_narrow_screens(self):
+        """요약 8항목이 라벨을 값 위에 쌓으면 모바일에서 600px 넘게 먹는다.
+
+        읽는 법(.hrow)과 같은 규율로 라벨을 왼쪽에 붙인다. 390px 실측
+        620px -> 403px. 데스크톱은 4열이라 세로 쌓기를 유지한다.
+        """
+        css = z._STATIC_CSS
+        narrow = css.split("@media(max-width:640px)")[-1]
+        self.assertIn(".kv{display:grid;grid-template-columns:76px 1fr", narrow)
+        self.assertIn(".kv dt{margin-bottom:0}", narrow)
+        # 데스크톱 기본 규칙은 건드리지 않는다
+        base = css.split("@media(max-width:640px)")[0]
+        self.assertIn(".kv{background:var(--surface);padding:13px 15px}", base)
+        self.assertNotIn("grid-template-columns:76px", base)
+
     def test_list_pages_still_show_the_method_up_front(self):
         # 제품 상세만 예외다. 목록·랜딩은 읽는 법이 표보다 위에 있어야 한다
         page = z._static_page("x.html", "t", "d", "h1", "요약문", "방법론",
