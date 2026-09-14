@@ -1082,6 +1082,10 @@ _THEME_UI = """<div class="themer">
 </div>"""
 
 _THEME_CSS = """
+/* 설정은 내용 위에 얹지 않는다. 헤로보다 위, 오른쪽 끝.
+   이 규칙이 없으면 .themer 의 margin-left:auto 가 먹지 않아 톱니는 왼쪽에,
+   메뉴만 right:0 기준으로 오른쪽에 떠서 둘이 갈라진다 (실제 버그였다). */
+.topbar{display:flex;justify-content:flex-end;height:30px}
 /* 톱니바퀴는 내용이 아니라 설정이다. 시선을 끌지 않게 muted 로 두고 hover 에만 살린다 */
 .themer{position:relative;margin-left:auto;flex:none}
 .theme-btn{display:flex;align-items:center;justify-content:center;width:30px;height:30px;
@@ -1170,8 +1174,6 @@ __PALETTE__
 
   header{margin-bottom:14px}
   /* 구글식 진입: 로고 -> 한 줄 설명 -> 검색창. 들어온 사람이 바로 검색한다. */
-  /* 설정은 내용 위에 얹지 않는다. 헤로보다 위, 오른쪽 끝 */
-  .topbar{display:flex;justify-content:flex-end;height:30px}
 __THEME_CSS__
   .brandbar{display:flex;flex-direction:column;align-items:center;text-align:center;
             padding:34px 0 20px;gap:10px}

@@ -933,3 +933,36 @@ class LandingTests(unittest.TestCase):
         # '코카' 로 치면 '코카콜라 제로'가 '코카-콜라 제로 레몬'보다 먼저 와야 한다
         self.assertIn("a.n.length - b.n.length", z._SUGGEST_JS)
 
+class ThemeUiScopeTests(unittest.TestCase):
+    """테마 토글의 CSS·마크업·스크립트는 한 묶음으로 움직여야 한다.
+
+    .topbar 규칙이 리포트 템플릿에만 있어서, 메인 랜딩에서는 톱니가 좌측 상단에
+    가고 메뉴만 right:0 기준으로 우측에 떠 둘이 갈라졌다 (2026-09-14 버그).
+    """
+
+    def test_topbar_rule_lives_in_shared_theme_css(self):
+        self.assertIn(".topbar{", z._THEME_CSS,
+                      ".topbar 가 공유 CSS 밖에 있으면 페이지마다 정렬이 갈린다")
+        self.assertIn("justify-content:flex-end", z._THEME_CSS)
+        # 템플릿 쪽에 중복 정의가 남아 있으면 또 갈라진다
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        self.assertEqual(src.count(".topbar{"), 1)
+
+    def test_every_theme_consumer_gets_css_ui_and_js(self):
+        # 랜딩: 세 조각이 다 들어간다
+        self.assertIn("{theme_css}", z._LANDING_TEMPLATE)
+        self.assertIn("{theme_ui}", z._LANDING_TEMPLATE)
+        self.assertIn("{theme_js}", z._LANDING_TEMPLATE)
+        self.assertIn("{theme_boot}", z._LANDING_TEMPLATE)
+        # 정적 페이지: _STATIC_CSS 가 _THEME_CSS 를 품고, 셸이 UI·JS 를 싣는다
+        self.assertIn(z._THEME_CSS, z._STATIC_CSS)
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        self.assertIn("{_THEME_UI}", src)
+        self.assertIn("{_THEME_JS}", src)
+
+    def test_menu_anchors_to_the_button_not_the_page(self):
+        # 메뉴는 .themer 기준으로 뜬다. .themer 가 늘어나면 버튼과 갈라진다.
+        self.assertIn(".themer{position:relative", z._THEME_CSS)
+        self.assertIn("flex:none", z._THEME_CSS)
+        self.assertIn(".theme-menu{position:absolute", z._THEME_CSS)
+

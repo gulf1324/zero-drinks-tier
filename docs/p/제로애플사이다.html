@@ -230,6 +230,10 @@ color-scheme: light dark;
 [data-tier="D"]{--tc:#f4511e;--tf:#0d0f11}
 [data-tier="F"]{--tc:#cc0000;--tf:#ffffff}
 [data-tier="?"]{--tc:#9aa1ab;--tf:#0d0f11}
+/* 설정은 내용 위에 얹지 않는다. 헤로보다 위, 오른쪽 끝.
+   이 규칙이 없으면 .themer 의 margin-left:auto 가 먹지 않아 톱니는 왼쪽에,
+   메뉴만 right:0 기준으로 오른쪽에 떠서 둘이 갈라진다 (실제 버그였다). */
+.topbar{display:flex;justify-content:flex-end;height:30px}
 /* 톱니바퀴는 내용이 아니라 설정이다. 시선을 끌지 않게 muted 로 두고 hover 에만 살린다 */
 .themer{position:relative;margin-left:auto;flex:none}
 .theme-btn{display:flex;align-items:center;justify-content:center;width:30px;height:30px;
