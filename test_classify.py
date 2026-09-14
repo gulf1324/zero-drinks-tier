@@ -1090,3 +1090,54 @@ class ReportUiTests(unittest.TestCase):
         self.assertEqual(visible, [], f"'전체 리포트' 표기가 남았다: {visible}")
         self.assertIn("고급 검색", z._LANDING_TEMPLATE)
 
+class ProductPageOrderTests(unittest.TestCase):
+    """제품 상세는 사용자가 원하는 순서로 답한다.
+
+    요약 -> 신고 원재료 전문 -> 등급인 이유 -> 읽는 법. 방법론(읽는 법)을 맨 위에
+    두면 '무엇이 들었나'에 닿기까지 한 화면을 소비한다. 목록·랜딩은 반대로
+    위에 둔다 (수백 행을 지나야 한계가 보이면 안 되기 때문).
+    """
+
+    def _page(self):
+        rec = {"제품명": "테스트 제로", "티어": "B", "조합": "B",
+               "감미료": "수크랄로스(B,1)", "열량": "0", "당류": "0.00",
+               "용량": "500ml", "기준량": "100ml", "업소명": "공장",
+               "식품유형": "탄산음료", "보고일자": "20260101",
+               "원재료전문": "정제수, 수크랄로스", "등록명": "", "이력": [],
+               "감미료미표기": "", "아스파탐": "", "카페인": ""}
+        recs = [rec]
+        z.assign_slugs(recs)
+        return z.product_page(rec, recs, "2026-01-01")
+
+    def test_sections_follow_the_users_question_order(self):
+        page = self._page()
+        order = [re.sub(r"<[^>]+>", "", h) for h in re.findall(r"<h2[^>]*>(.*?)</h2>", page, re.S)]
+        want = ["요약", "신고 원재료 전문", "B 등급인 이유", "읽는 법"]
+        self.assertEqual(order[:4], want, f"실제 순서: {order}")
+
+    def test_howto_is_not_pushed_below_the_faq(self):
+        page = self._page()
+        self.assertLess(page.index("읽는 법"), page.index("자주 묻는 질문"),
+                        "읽는 법이 FAQ 뒤로 밀리면 아무도 보지 않는다")
+        self.assertNotIn("__HOWTO__", page, "자리표시자가 치환되지 않았다")
+
+    def test_howto_is_split_into_labelled_rows(self):
+        page = self._page()
+        rows = re.findall(r'<div class="hrow"><dt>(.*?)</dt>', page)
+        self.assertEqual(rows, ["판정 방법", "등급 기준", "기준량", "확인 불가", "기준일"])
+        # 한 덩어리 문단으로 되돌아가면 모바일에서 세로로만 흐른다
+        self.assertNotIn("이 페이지의 값은 제조사가", page)
+
+    def test_howto_rows_keep_label_and_text_side_by_side(self):
+        css = z._STATIC_CSS
+        self.assertIn(".hrow{display:grid;grid-template-columns:74px 1fr", css)
+        # 모바일에서도 세로로 쌓지 않는다 (항목 안은 가로 유지)
+        narrow = css.split("@media(max-width:400px)")[-1]
+        self.assertIn("grid-template-columns:62px 1fr", narrow)
+
+    def test_list_pages_still_show_the_method_up_front(self):
+        # 제품 상세만 예외다. 목록·랜딩은 읽는 법이 표보다 위에 있어야 한다
+        page = z._static_page("x.html", "t", "d", "h1", "요약문", "방법론",
+                              "<h2>표</h2>", "2026-01-01")
+        self.assertLess(page.index("방법론"), page.index("<h2>표</h2>"))
+

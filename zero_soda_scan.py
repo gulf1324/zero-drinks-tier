@@ -2344,6 +2344,22 @@ footer div{margin-bottom:5px}
      line-height:1.75;margin:0 0 8px;word-break:keep-all;overflow-wrap:anywhere}
 .cav{font-size:12.5px;color:var(--muted);margin:0 0 22px;line-height:1.6}
 .ansub{display:block;margin-top:7px;font-size:13.5px;font-weight:400;color:var(--text-2)}
+
+/* 읽는 법: 항목은 세로로 나누고, 항목 안에서는 라벨을 왼쪽에 가로로 붙인다.
+   한 덩어리 문단은 모바일에서 세로로만 흘러 어디까지가 한 얘기인지 안 보인다.
+   라벨 폭을 고정해 시선이 한 줄로 내려오게 한다 (모바일에서도 유지). */
+.howto{padding:0 !important;background:none !important;border:0 !important}
+.hrow{display:grid;grid-template-columns:74px 1fr;gap:10px;align-items:baseline;
+      background:var(--surface);border:1px solid var(--border);border-bottom:0;
+      padding:11px 14px}
+.hrow:last-child{border-bottom:1px solid var(--border)}
+.hrow dt{font-size:12px;font-weight:700;color:var(--text);word-break:keep-all}
+.hrow dd{margin:0;font-size:12.5px;color:var(--text-2);line-height:1.6}
+@media(max-width:400px){
+  .hrow{grid-template-columns:62px 1fr;gap:8px;padding:10px 12px}
+  .hrow dt{font-size:11.5px}
+  .hrow dd{font-size:12px}
+}
 /* FAQ: 질문은 굵게, 답은 바로 아래. 아코디언으로 접지 않는다 - 접힌 답은
    크롤러가 보긴 해도 사용자가 못 보고, AI 인용에도 불리하다 */
 .faq{border:1px solid var(--border);background:var(--surface);padding:4px 15px 14px;margin:0 0 22px}
@@ -2548,7 +2564,7 @@ def _rows_table(records, cols=("티어", "제품명", "업소명", "감미료", 
 
 
 def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
-                 depth=0, has_table=True, faqs=None):
+                 depth=0, has_table=True, faqs=None, howto_last=False):
     """무JS 정적 페이지 한 장. 가시 텍스트와 JSON-LD 를 어긋나게 만들지 않는다.
 
     순서를 h1 -> 요약 -> 읽는 법 -> 기준일 -> 표 로 고정한다. 읽는 법을 표 아래에
@@ -2559,7 +2575,14 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
     # 질의를 넘기는 GET 폼을 쓴다.
     finder_html = _FINDER_FILTER if has_table else _FINDER_JUMP.replace("{PAGE_URL}", PAGE_URL)
     # FAQ 는 가시 마크업과 LD 를 같은 쌍에서 만든다 (어긋나면 인용 신뢰가 깎인다).
+    howto_html = f'<h2>읽는 법</h2>\n<div class="howto">{howto}</div>\n'
     body = body + _faq_block(faqs or [])
+    # 본문에 __HOWTO__ 자리가 있으면 거기에 넣는다. 제품 상세는 '등급인 이유' 바로
+    # 뒤가 자리다 - 끝에 붙이면 FAQ 뒤로 밀려 아무도 안 본다.
+    if "__HOWTO__" in body:
+        body, howto_top, howto_end = body.replace("__HOWTO__", howto_html, 1), "", ""
+    else:
+        howto_top, howto_end = ("", howto_html) if howto_last else (howto_html, "")
     ld = _merge_ld(ld, faqs or [])
     ld_html = ""
     if ld:
@@ -2597,10 +2620,8 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
 {finder_html}
 <h2 class="first">요약</h2>
 <p class="lead">{summary}</p>
-<h2>읽는 법</h2>
-<div class="howto">{howto}</div>
-<div class="meta">기준일 {lastmod} &middot; 출처 식품의약품안전처 품목제조보고(C002) &middot; 열량·당류는 공공데이터포털 전국통합식품영양성분정보(15100066)</div>
-{body}
+{howto_top}<div class="meta">기준일 {lastmod} &middot; 출처 식품의약품안전처 품목제조보고(C002) &middot; 열량·당류는 공공데이터포털 전국통합식품영양성분정보(15100066)</div>
+{body}{howto_end}
 <footer>
 <div>이 표의 감미료는 제조사가 식약처에 신고한 <b>품목제조보고 원재료 전문</b>에서 탐지한 것입니다. 추정으로 채우지 않으며 데이터에 없으면 표시하지 않습니다.</div>
 <div>열량·당류는 <b>100mL(또는 100g)당</b> 값입니다. 제품 라벨은 한 병 전체 기준이라 숫자가 달라 보일 수 있습니다.</div>
@@ -2932,6 +2953,9 @@ def product_page(rec, records, lastmod):
         body.append(f'<h2>판매처 표시 원재료{link}</h2><p class="raw">{_esc(rec["표시원재료"])}</p>'
                     '<p class="cav">위 신고 원재료가 뭉뚱그려져 감미료가 보이지 않아, 판매처 '
                     '표시사항으로 판정했습니다.</p>')
+    body.append(f'<h2>{_esc(tier)} 등급인 이유</h2><p>{_TIER_WHY.get(tier, "")}</p>'
+                '<p class="cav">한 제품에 여러 감미료가 있으면 <b>가장 나쁜 등급</b>이 최종 등급입니다.</p>')
+    body.append("__HOWTO__")
     if rec.get("일반판"):
         reg = rec["일반판"]
         body.append(f'<h2>일반판과 비교</h2><p>같은 제품군의 일반판 <b>{_esc(reg)}</b>'
@@ -2943,8 +2967,6 @@ def product_page(rec, records, lastmod):
                      f'<span class="hraw">{_esc(h["원재료전문"])}</span></div>' for h in hist)
         body.append(f'<h2>배합 신고 이력 {len(hist)}건</h2><div class="hist">{hl}</div>'
                     '<p class="cav">위 표의 값은 가장 최근 보고 기준입니다. 배합은 자주 바뀝니다.</p>')
-    body.append(f'<h2>{_esc(tier)} 등급인 이유</h2><p>{_TIER_WHY.get(tier, "")}</p>'
-                '<p class="cav">한 제품에 여러 감미료가 있으면 <b>가장 나쁜 등급</b>이 최종 등급입니다.</p>')
 
     # 내부 링크: 같은 제조사, 같은 등급. 크롤러의 탐색 경로이자 사용자의 다음 행동이다.
     same_maker = [r for r in records
@@ -3005,11 +3027,18 @@ def product_page(rec, records, lastmod):
         desc[:150],
         _esc(name),
         answer,
-        f"이 페이지의 값은 제조사가 식약처에 신고한 <b>품목제조보고 원재료 전문</b>에서 "
-        f"감미료를 탐지한 결과입니다. 추정으로 채우지 않으며, 열량·당류는 <b>{_esc(base)}당</b> "
-        f"값이라 제품 라벨(한 병 전체 기준)과 달라 보일 수 있습니다.",
+        _howto_rows([
+            ("판정 방법", "제조사가 식약처에 신고한 <b>품목제조보고 원재료 전문</b>에서 "
+                       "감미료 표기를 탐지합니다. 추정으로 채우지 않습니다."),
+            ("등급 기준", "여러 감미료가 섞이면 <b>가장 나쁜 등급</b>이 최종 등급입니다."),
+            ("기준량", f"열량·당류는 <b>{_esc(base)}당</b> 값입니다. 제품 라벨은 한 병 전체 "
+                     f"기준이라 숫자가 달라 보입니다."),
+            ("확인 불가", "원재료가 '식품첨가물혼합제제'로 뭉뚱그려지면 감미료를 판정할 수 "
+                       "없습니다. 들어 있지 않다는 뜻이 아닙니다."),
+            ("기준일", "표의 값은 가장 최근 보고일자 기준입니다. 배합은 자주 바뀝니다."),
+        ]),
         "".join(body), lastmod, ld, depth=1, has_table=False,
-        faqs=product_faqs(rec, sw, sugar, total))
+        faqs=product_faqs(rec, sw, sugar, total), howto_last=True)
 
 
 def write_product_pages(docs_dir, records, lastmod):
@@ -3067,6 +3096,15 @@ def _merge_ld(ld, faqs):
         return {**ld, "@graph": list(ld["@graph"]) + [node]}
     rest = {k: v for k, v in ld.items() if k != "@context"}
     return {"@context": ld.get("@context", "https://schema.org"), "@graph": [rest, node]}
+
+
+def _howto_rows(pairs):
+    """읽는 법을 '항목 | 설명' 행으로 쪼갠다.
+
+    한 덩어리 문단은 모바일에서 세로로만 흘러 어디까지가 한 얘기인지 안 보인다.
+    항목은 세로로 나누고 항목 안에서는 가로로(라벨 왼쪽, 설명 오른쪽) 배치한다.
+    """
+    return "".join(f'<div class="hrow"><dt>{k}</dt><dd>{v}</dd></div>' for k, v in pairs)
 
 
 def product_faqs(rec, sweet, sugar, total_kcal):

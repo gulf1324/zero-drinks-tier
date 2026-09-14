@@ -1433,6 +1433,22 @@ footer div{margin-bottom:5px}
      line-height:1.75;margin:0 0 8px;word-break:keep-all;overflow-wrap:anywhere}
 .cav{font-size:12.5px;color:var(--muted);margin:0 0 22px;line-height:1.6}
 .ansub{display:block;margin-top:7px;font-size:13.5px;font-weight:400;color:var(--text-2)}
+
+/* 읽는 법: 항목은 세로로 나누고, 항목 안에서는 라벨을 왼쪽에 가로로 붙인다.
+   한 덩어리 문단은 모바일에서 세로로만 흘러 어디까지가 한 얘기인지 안 보인다.
+   라벨 폭을 고정해 시선이 한 줄로 내려오게 한다 (모바일에서도 유지). */
+.howto{padding:0 !important;background:none !important;border:0 !important}
+.hrow{display:grid;grid-template-columns:74px 1fr;gap:10px;align-items:baseline;
+      background:var(--surface);border:1px solid var(--border);border-bottom:0;
+      padding:11px 14px}
+.hrow:last-child{border-bottom:1px solid var(--border)}
+.hrow dt{font-size:12px;font-weight:700;color:var(--text);word-break:keep-all}
+.hrow dd{margin:0;font-size:12.5px;color:var(--text-2);line-height:1.6}
+@media(max-width:400px){
+  .hrow{grid-template-columns:62px 1fr;gap:8px;padding:10px 12px}
+  .hrow dt{font-size:11.5px}
+  .hrow dd{font-size:12px}
+}
 /* FAQ: 질문은 굵게, 답은 바로 아래. 아코디언으로 접지 않는다 - 접힌 답은
    크롤러가 보긴 해도 사용자가 못 보고, AI 인용에도 불리하다 */
 .faq{border:1px solid var(--border);background:var(--surface);padding:4px 15px 14px;margin:0 0 22px}
