@@ -904,10 +904,17 @@ class LandingTests(unittest.TestCase):
         cards = z._pick_cards(recs)
         self.assertEqual(cards.count('class="pick"'), len(z.POPULAR_PICKS))
 
-    def test_popular_source_is_attributed_and_not_claimed_as_ours(self):
-        # 판매량은 우리가 측정한 값이 아니다. 출처 없이 순위를 주장하면 안 된다.
-        self.assertIn("측정한 값이 아닙니다", z.POPULAR_SOURCE)
-        self.assertIn("http", z.POPULAR_SOURCE)
+    def test_landing_makes_no_sales_or_ranking_claim(self):
+        """판매량·순위는 우리가 측정한 값이 아니다.
+
+        출처 표기를 지운 만큼 주장도 하지 않는다. '많이 찾는 제품'은 편집 선택이고
+        섹션 제목도 그 이상을 말하지 않는다.
+        """
+        recs = self._recs(z.POPULAR_PICKS)
+        page = z.landing_page(recs, "2026-01-01", {"records": recs})
+        for claim in ("판매량", "판매 1위", "베스트셀러", "가장 많이 팔린", "점유율"):
+            self.assertNotIn(claim, page, f"측정하지 않은 값을 주장한다: {claim}")
+        self.assertIn("많이 찾는 제품", page)
 
     def test_report_is_published_at_its_own_url(self):
         src = open("zero_soda_scan.py", encoding="utf-8").read()

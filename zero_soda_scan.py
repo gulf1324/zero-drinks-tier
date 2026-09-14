@@ -1449,14 +1449,7 @@ __THEME_CSS__
   <details class="panel tierlegend" open>
     <summary>티어 기준</summary>
     <div class="panel-body">
-      <div class="tier-row"><span class="tier-chip" data-tier="무감미료">무</span><b>무감미료</b><span class="tier-ing">감미료 표기 없음</span><span class="tier-why">신고 원재료에 감미료가 없음. 코카콜라 제로처럼 <b>식품첨가물혼합제제</b>로 뭉뚱그려져 감미료를 확인할 수 없는 제품도 여기 들어가며, 이때는 <b>감미료 미표기</b> 표시가 붙습니다 (열량·당류 0 확인 기준)</span></div>
-      <div class="tier-row"><span class="tier-chip" data-tier="S">S</span><b>S</b><span class="tier-ing">알룰로스, 타가토스</span><span class="tier-why">0.2~0.4 kcal/g. 식후 혈당을 오히려 낮춤 (2026 AJCN 메타분석)</span></div>
-      <div class="tier-row"><span class="tier-chip" data-tier="A">A</span><b>A</b><span class="tier-ing">스테비올배당체, 나한과(모그로사이드)</span><span class="tier-why">0 kcal, 혈당 영향 없음, 장기 안전성 양호</span></div>
-      <div class="tier-row"><span class="tier-chip" data-tier="B">B</span><b>B</b><span class="tier-ing">수크랄로스, 아세설팜칼륨, 아스파탐, 사카린</span><span class="tier-why">0 kcal이나 공복 인슐린·HbA1c 상승 신호 (2026 Tufts 메타분석)</span></div>
-      <div class="tier-row"><span class="tier-chip" data-tier="C">C</span><b>C</b><span class="tier-ing">에리스리톨, 자일리톨</span><span class="tier-why">혈당은 무해하나 혈소판 반응성·심혈관 사건 신호 (Cleveland Clinic). 인과관계는 확정되지 않음</span></div>
-      <div class="tier-row"><span class="tier-chip" data-tier="D">D</span><b>D</b><span class="tier-ing">말티톨, 소르비톨, 락티톨 등 당알코올</span><span class="tier-why">실제 2~2.6 kcal/g, 말티톨은 GI 35~52로 혈당 상승</span></div>
-      <div class="tier-row"><span class="tier-chip" data-tier="F">F</span><b>F</b><span class="tier-ing">설탕, 액상과당, 농축과즙 등</span><span class="tier-why">제로를 표방하지만 신고 원재료에 당류가 있음</span></div>
-      <div class="tier-note">한 제품에 여러 감미료가 있으면 가장 나쁜 등급이 최종 티어가 됩니다. 전체 구성은 '조합' 열에서 볼 수 있습니다.<br>이 리포트는 <b>당류가 없는 음료</b>와 <b>제로를 표방한 제품</b>만 다룹니다. 제로 표기가 없는 일반 당류 음료는 수집 대상에서 제외됩니다.<br>원재료에 농축과즙·올리고당이 <b>착향 목적으로 미량</b> 들어간 경우, 실측 당류가 0g이면 F로 보지 않습니다. 반대로 감미료가 표기되지 않아도 당류가 검출되면 F입니다.</div>
+__TIER_LEGEND__
     </div>
   </details>
   <details class="panel makers">
@@ -1882,6 +1875,7 @@ def write_html(records, meta, meta_info, path):
     html = html.replace("__PAGE_URL__", PAGE_URL)
     html = html.replace("__FAVICON__", _FAVICON_HTML)
 
+    html = html.replace("__TIER_LEGEND__", tier_legend_html())
     html = html.replace("__GUIDES__",
                         '<section class="guides">\n<h2>질문별로 골라 보기</h2>\n'
                         + _guides_links(len(records)) + "\n</section>")
@@ -3359,6 +3353,46 @@ def site_ld(total, lastmod, page=""):
     return {"@context": "https://schema.org", "@graph": graph}
 
 
+# 티어 기준표의 단일 진원지. 리포트와 메인 랜딩이 같은 행을 쓴다.
+# 성분·근거를 두 곳에 복사해 두면 한쪽만 고쳐서 판정 근거가 갈린다.
+_TIER_ROWS = [
+    ('무감미료',
+     '감미료 표기 없음',
+     '신고 원재료에 감미료가 없음. 코카콜라 제로처럼 <b>식품첨가물혼합제제</b>로 뭉뚱그려져 감미료를 확인할 수 없는 제품도 여기 들어가며, 이때는 <b>감미료 미표기</b> 표시가 붙습니다 (열량·당류 0 확인 기준)'),
+    ('S',
+     '알룰로스, 타가토스',
+     '0.2~0.4 kcal/g. 식후 혈당을 오히려 낮춤 (2026 AJCN 메타분석)'),
+    ('A',
+     '스테비올배당체, 나한과(모그로사이드)',
+     '0 kcal, 혈당 영향 없음, 장기 안전성 양호'),
+    ('B',
+     '수크랄로스, 아세설팜칼륨, 아스파탐, 사카린',
+     '0 kcal이나 공복 인슐린·HbA1c 상승 신호 (2026 Tufts 메타분석)'),
+    ('C',
+     '에리스리톨, 자일리톨',
+     '혈당은 무해하나 혈소판 반응성·심혈관 사건 신호 (Cleveland Clinic). 인과관계는 확정되지 않음'),
+    ('D',
+     '말티톨, 소르비톨, 락티톨 등 당알코올',
+     '실제 2~2.6 kcal/g, 말티톨은 GI 35~52로 혈당 상승'),
+    ('F',
+     '설탕, 액상과당, 농축과즙 등',
+     '제로를 표방하지만 신고 원재료에 당류가 있음'),
+]
+
+_TIER_NOTE = ("한 제품에 여러 감미료가 있으면 가장 나쁜 등급이 최종 티어가 됩니다. 전체 구성은 '조합' 열에서 볼 수 있습니다.<br>이 리포트는 <b>당류가 없는 음료</b>와 <b>제로를 표방한 제품</b>만 다룹니다. 제로 표기가 없는 일반 당류 음료는 수집 대상에서 제외됩니다.<br>원재료에 농축과즙·올리고당이 <b>착향 목적으로 미량</b> 들어간 경우, 실측 당류가 0g이면 F로 보지 않습니다. 반대로 감미료가 표기되지 않아도 당류가 검출되면 F입니다.")
+
+
+def tier_legend_html():
+    """티어 기준 행 + 주의문. 칩 라벨만 '무'로 축약한다 (폭 통일 목적)."""
+    rows = "".join(
+        f'<div class="tier-row">'
+        f'<span class="tier-chip" data-tier="{tier}">{"무" if tier == "무감미료" else tier}</span>'
+        f'<b>{tier}</b>'
+        f'<span class="tier-ing">{ing}</span>'
+        f'<span class="tier-why">{why}</span></div>'
+        for tier, ing, why in _TIER_ROWS)
+    return rows + f'<div class="tier-note">{_TIER_NOTE}</div>'
+
 # 질문별 정적 목록으로 가는 링크. 크롤러의 탐색 경로이자 사용자 진입점이다.
 # 리포트와 메인 랜딩이 같은 목록을 쓴다 (한쪽만 늘어나면 탐색 경로가 갈린다).
 def _guides_links(total):
@@ -3389,14 +3423,6 @@ POPULAR_PICKS = [
     "코카콜라 제로", "펩시제로슈거", "칠성사이다제로",
     "나랑드사이다 제로", "스프라이트 제로", "밀키스제로",
 ]
-POPULAR_SOURCE = (
-    '<a href="https://blog.remited.ai/marketinginsight04" target="_blank" '
-    'rel="noopener nofollow">2026년 1분기 오프라인 구매침투율</a>과 '
-    '<a href="https://www.wiseapp.co.kr/insight/detail/217" target="_blank" '
-    'rel="noopener nofollow">온라인 판매순위</a>에서 상위로 집계된 제품입니다. '
-    '판매량은 이 사이트가 측정한 값이 아닙니다.'
-)
-
 
 def _pick_cards(records):
     by_name = {r["제품명"]: r for r in records}
@@ -3545,6 +3571,44 @@ _LANDING_CSS = """
 .paths span{font-size:12.5px;color:var(--muted);line-height:1.5}
 .lsec{margin:34px 0 12px;font-size:17px}
 .lsec-sub{font-size:12.5px;color:var(--muted);font-weight:400;margin-left:8px}
+
+/* 티어 기준표 */
+.legend{background:var(--surface);border:1px solid var(--border);padding:2px 16px 14px;
+        margin:0 0 30px}
+.tier-row{display:grid;grid-template-columns:30px 92px minmax(180px,1.1fr) minmax(230px,2fr);
+          gap:10px;align-items:start;padding:10px 0;border-top:1px solid var(--hair)}
+.tier-row:first-child{border-top:0}
+.tier-chip{display:inline-flex;align-items:center;justify-content:center;min-width:24px;
+           height:20px;padding:0 6px;border-radius:var(--pill);font-size:11.5px;
+           font-weight:700;background:var(--tc,var(--muted-2));color:var(--tf,#fff)}
+.tier-row b{font-size:13px}
+.tier-ing{font-size:12.5px;color:var(--text)}
+.tier-why{font-size:12.5px;color:var(--muted);line-height:1.55}
+.tier-note{font-size:11.5px;color:var(--muted);line-height:1.65;padding:11px 0 0;
+           border-top:1px solid var(--hair);margin-top:2px}
+@media(max-width:760px){
+  .tier-row{grid-template-columns:30px 1fr;gap:3px 10px}
+  .tier-ing,.tier-why{grid-column:2}
+}
+
+/* 질문별로 골라 보기 — 제목과 설명이 붙어 보이던 버그: 정적 CSS 에 .guides 규칙이
+   아예 없었다. 제목은 블록, 설명은 그 아래 muted 로 분리한다 */
+.guides{margin:0 0 30px}
+.guides ul{list-style:none;padding:0;margin:0;display:grid;gap:8px;
+           grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
+.guides a{display:block;background:var(--surface);border:1px solid var(--border);
+          padding:13px 15px;text-decoration:none;color:var(--text)}
+.guides a:hover{border-color:var(--accent)}
+.guides a b{display:block;font-size:14px;font-weight:700;margin-bottom:3px}
+.guides a span{display:block;color:var(--muted);font-size:12px;line-height:1.5;
+               font-weight:400}
+
+/* FAQ 는 접어 둔다. 메인에서 5문항을 다 펼치면 스크롤이 다시 길어진다 */
+.faq{background:none;border:0;padding:0;margin:0 0 26px}
+.faq details{background:var(--surface);border:1px solid var(--border);
+             padding:11px 14px;margin:0 0 7px}
+.faq summary{cursor:pointer;font-weight:600;font-size:13.5px}
+.faq p{margin:9px 0 2px;color:var(--muted);font-size:13px;line-height:1.7}
 """
 
 
@@ -3610,7 +3674,9 @@ _LANDING_TEMPLATE = """<!DOCTYPE html>
 
 <h2 class="lsec">많이 찾는 제품<span class="lsec-sub">클릭하면 감미료 전문을 봅니다</span></h2>
 <div class="picks">{picks}</div>
-<p class="src">{pick_src}</p>
+
+<h2 class="lsec">티어 기준<span class="lsec-sub">한 제품에 여러 감미료가 있으면 가장 나쁜 등급이 최종 등급입니다</span></h2>
+<div class="legend">{tier_legend}</div>
 
 <div class="paths">
   <a href="{page_url}report.html"><b>전체 리포트 &rarr;</b><span>티어 배지·필터·정렬로 {total}개를 직접 골라 봅니다</span></a>
@@ -3667,7 +3733,7 @@ def landing_page(records, lastmod, stats):
         static_css=_STATIC_CSS,
         favicon=_FAVICON_B64, ga=_GA_SNIPPET.replace("__GA_ID__", GA_ID) if GA_ID else "",
         ld=json.dumps(ld, ensure_ascii=False, indent=1),
-        picks=_pick_cards(records), pick_src=POPULAR_SOURCE,
+        picks=_pick_cards(records), tier_legend=tier_legend_html(),
         names_json=names, suggest_js=_SUGGEST_JS,
         guides=_guides_links(n), faq=faq_html)
 
