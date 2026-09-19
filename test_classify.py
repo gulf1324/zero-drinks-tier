@@ -1183,3 +1183,57 @@ class ProductPageOrderTests(unittest.TestCase):
                               "<h2>표</h2>", "2026-01-01")
         self.assertLess(page.index("방법론"), page.index("<h2>표</h2>"))
 
+class TierBadgeContrastTests(unittest.TestCase):
+    """등급 배지 글자색은 테마가 아니라 배경색이 정한다.
+
+    _tier_badge 가 배경만 인라인으로 주고 글자는 var(--text) 를 쓰던 탓에,
+    다크에서 파스텔 배경 위에 거의 흰 글자가 얹혀 안 읽혔다 (2026-09-14 신고).
+    """
+
+    def _lum(self, hx):
+        hx = hx.lstrip("#")
+        if len(hx) == 3:
+            hx = "".join(c * 2 for c in hx)
+        v = [int(hx[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+        f = lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+        return 0.2126 * f(v[0]) + 0.7152 * f(v[1]) + 0.0722 * f(v[2])
+
+    def _ratio(self, a, b):
+        x, y = self._lum(a), self._lum(b)
+        return (max(x, y) + 0.05) / (min(x, y) + 0.05)
+
+    def _parse(self):
+        out = {}
+        for m in re.finditer(r'\[data-tier="([^"]+)"\]\{--tc:(#[0-9a-fA-F]+);--tf:(#[0-9a-fA-F]+)\}',
+                             z._TIER_CSS):
+            out[m.group(1)] = (m.group(2), m.group(3))
+        return out
+
+    def test_badge_inherits_tokens_instead_of_inline_background(self):
+        self.assertIn('data-tier=', z._tier_badge("A"))
+        self.assertNotIn("style=", z._tier_badge("A"),
+                         "배경을 인라인으로 주면 글자색이 테마를 따라가 버린다")
+        self.assertIn("background:var(--tc", z._STATIC_CSS)
+        self.assertIn("color:var(--tf", z._STATIC_CSS)
+        # 배경 사본을 따로 두면 또 갈라진다
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        self.assertNotIn("_TIER_BG", src)
+
+    def test_every_tier_badge_meets_wcag_aa(self):
+        pairs = self._parse()
+        self.assertEqual(len(pairs), 8, f"등급 토큰이 8개가 아니다: {list(pairs)}")
+        for tier, (bg, fg) in pairs.items():
+            r = self._ratio(bg, fg)
+            self.assertGreaterEqual(round(r, 2), 4.5, f"{tier} 배지 대비 {r:.2f}:1")
+
+    def test_pastel_tiers_use_dark_ink(self):
+        # 밝은 배경에는 검은 글자여야 한다. F(#cc0000)만 흰 글자가 대비가 높다.
+        pairs = self._parse()
+        for tier in ("무감미료", "S", "A", "B", "C", "D", "?"):
+            bg, fg = pairs[tier]
+            self.assertLess(self._lum(fg), 0.5, f"{tier} 배지가 밝은 글자를 쓴다")
+        bg, fg = pairs["F"]
+        self.assertGreater(self._lum(fg), 0.5)
+        self.assertGreater(self._ratio(bg, fg), self._ratio(bg, "#0d0f11"),
+                           "F 는 검은 글자보다 흰 글자가 대비가 높다")
+

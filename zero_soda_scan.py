@@ -2323,7 +2323,8 @@ th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);ver
 th{background:var(--th-bg);font-weight:700;font-size:12px;white-space:nowrap;\n   cursor:pointer;user-select:none;position:relative}\nth:hover{background:var(--hair);color:var(--accent)}\nth:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}\nth.sorted{color:var(--accent)}\nth.sorted::after{content:" " attr(data-dir);font-size:9px}
 td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .t{display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border-radius:var(--pill);
-   font-weight:700;font-size:11.5px;color:var(--text)}
+   font-weight:700;font-size:11.5px;
+   background:var(--tc,var(--muted-2));color:var(--tf,#fff)}
 /* 톱니바퀴가 오른쪽 끝에 붙으려면 nav 가 flex 여야 한다 (block 이면 아래로 밀린다) */
 nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;margin:0 0 16px}
 nav a{color:var(--accent)}
@@ -2393,8 +2394,6 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
 }\n.caveat{background:var(--danger-soft);border-left:4px solid var(--danger);padding:10px 12px;\n        margin:0 0 12px;font-size:13px;}
 @media(max-width:720px){table{font-size:12px}th,td{padding:6px 7px}h1{font-size:20px}}"""
 
-_TIER_BG = {"무감미료": "#4caf50", "S": "#8bc34a", "A": "#cddc39", "B": "#ffc107",
-            "C": "#ff9800", "D": "#f4511e", "F": "#c00", "?": "#999"}
 
 
 # 정적 페이지의 제품 검색. 표는 이미 HTML 에 전부 있고 이 스크립트는 행을 숨기기만
@@ -2538,7 +2537,7 @@ def _esc(s):
 
 def _tier_badge(tier):
     label = "무" if tier == "무감미료" else tier
-    return f'<span class="t" style="background:{_TIER_BG.get(tier, "#999")}">{_esc(label)}</span>'
+    return f'<span class="t" data-tier="{_esc(tier)}">{_esc(label)}</span>' 
 
 
 _SORT_TYPE = {"티어": "tier", "열량": "num", "당류": "num", "용량": "size"}
