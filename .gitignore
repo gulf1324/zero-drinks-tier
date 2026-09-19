@@ -6,6 +6,9 @@
 !zero_soda_raw.json
 !zero_soda_nutrition.json
 !zero_soda_label.json
+# 측정 기준선. 로컬에만 두면 이력이 날아가고, 그러면 '얼마나 좋아졌나'를
+# 영영 답할 수 없다 (8/30 기준선을 잃어 9/4 에 다시 잡은 적이 있다).
+!seo_baseline.json
 !docs/*.html
 # 제품별 상세 페이지. docs/*.html 글롭은 하위 디렉터리를 잡지 못한다 -
 # 이것 때문에 616장이 커밋되지 않고 404 가 났다.
