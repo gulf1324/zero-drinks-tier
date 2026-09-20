@@ -1414,3 +1414,59 @@ class LastmodTests(unittest.TestCase):
         self.assertEqual(len(store), sm.count("<loc>"),
                          "저장소와 사이트맵 URL 수가 다르다")
 
+class RobotsPolicyTests(unittest.TestCase):
+    """llms 계열은 Yeti 에게만 막는다. AI 크롤러는 반드시 열려 있어야 한다.
+
+    llms.txt 는 text/plain 이라 <title>·<meta description> 을 넣을 수 없는데,
+    네이버 진단기가 크롤한 URL 을 전부 HTML 로 가정해 '제목 없음'·'설명 누락'
+    으로 잡았다 (2026-09-20). 검색 색인 대상이 아닌 파일이라 Yeti 만 막는다.
+    """
+
+    def _robots(self):
+        d = tempfile.mkdtemp()
+        try:
+            recs = [{"제품명": "테스트 제로", "티어": "B", "조합": "B",
+                     "감미료": "수크랄로스(B,1)", "열량": "0", "당류": "0.00",
+                     "용량": "500ml", "기준량": "100ml", "업소명": "공장",
+                     "식품유형": "탄산음료", "보고일자": "20260101",
+                     "원재료전문": "정제수", "등록명": "", "이력": [],
+                     "감미료미표기": "", "아스파탐": "", "카페인": "",
+                     "제로표기": "Y", "실측제로": "Y", "제로사칭": "",
+                     "일반판": "", "일반판티어": "", "표시원재료": "",
+                     "유통명출처": "", "배합변경": "", "티어불일치": "",
+                     "이력행수": 1}]
+            store = z.DEFAULT_LASTMOD_STORE
+            z.DEFAULT_LASTMOD_STORE = os.path.join(d, "lm.json")
+            try:
+                z.write_seo_files(d, "2026-01-01", recs)
+            finally:
+                z.DEFAULT_LASTMOD_STORE = store
+            return open(os.path.join(d, "robots.txt"), encoding="utf-8").read()
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
+    def _block(self, robots, agent):
+        m = re.search(r"User-agent: " + re.escape(agent) + r"\n(.*?)(?:\n\n|\Z)",
+                      robots, re.S)
+        return m.group(1) if m else ""
+
+    def test_yeti_is_the_only_agent_blocked_from_llms(self):
+        robots = self._robots()
+        yeti = self._block(robots, "Yeti")
+        self.assertIn("Disallow: /llms.txt", yeti)
+        self.assertIn("Disallow: /llms-full.txt", yeti)
+        for agent in ("GPTBot", "ClaudeBot", "PerplexityBot", "OAI-SearchBot",
+                      "Claude-SearchBot", "ChatGPT-User", "*"):
+            block = self._block(robots, agent)
+            self.assertIn("Allow: /", block, f"{agent} 블록에 Allow 가 없다")
+            self.assertNotIn("Disallow", block,
+                             f"{agent} 까지 llms 를 막으면 GEO 를 잃는다")
+
+    def test_every_agent_block_has_an_explicit_allow(self):
+        # robots.txt 는 매칭되는 첫 블록만 적용된다. Allow 를 빼면 그 크롤러는
+        # 자기 블록만 보고 전부 차단된 것으로 해석한다.
+        robots = self._robots()
+        for m in re.finditer(r"User-agent: (\S+)\n((?:(?!User-agent).*\n)*)", robots):
+            self.assertIn("Allow: /", m.group(2), f"{m.group(1)} 블록")
+        self.assertIn("Sitemap: ", robots)
+

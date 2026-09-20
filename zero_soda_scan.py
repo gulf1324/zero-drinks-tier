@@ -4063,7 +4063,16 @@ def write_seo_files(docs_dir, lastmod, records):
         # 실시간 fetch (사용자 질문 시 페이지 열람)
         "ChatGPT-User", "Claude-User", "Perplexity-User",
     ]
-    robots = "".join(f"User-agent: {a}\nAllow: /\n\n" for a in ["Yeti"] + ai_agents)
+    # llms.txt 계열은 text/plain 이라 <title>·<meta description> 을 넣을 수 없다.
+    # 네이버 진단기는 크롤한 URL 을 전부 HTML 로 가정해서 '제목 없음'·'설명 누락'
+    # 으로 잡는다 (2026-09-20 실제로 올라옴). 검색 색인 대상이 아닌 파일이므로
+    # Yeti 에게만 크롤을 막아 진단을 깨끗하게 한다.
+    # robots.txt 는 매칭되는 첫 블록만 적용되므로 AI 크롤러 11종은 영향이 없다.
+    LLMS_FILES = ("/llms.txt", "/llms-full.txt")
+    yeti_block = ("User-agent: Yeti\nAllow: /\n"
+                  + "".join(f"Disallow: {f}\n" for f in LLMS_FILES) + "\n")
+    robots = yeti_block
+    robots += "".join(f"User-agent: {a}\nAllow: /\n\n" for a in ai_agents)
     robots += "User-agent: *\nAllow: /\n\n"
     robots += f"Sitemap: {PAGE_URL}sitemap.xml\n"
 
