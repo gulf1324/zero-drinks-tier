@@ -991,11 +991,17 @@ class LandingBrevityTests(unittest.TestCase):
         recs = self._recs()
         page = z.landing_page(recs, "2026-01-01", {"records": recs})
         self.assertEqual(page.count('class="tcell"'), len(z._TIER_ROWS))
-        # 리포트의 근거 문장을 메인에 옮기지 않는다
-        self.assertNotIn("tier-why", page)
-        self.assertNotIn("tier-note", page)
+        # 티어 섹션 자체에는 근거 문장이 없다 (스트립은 한 줄 판정만)
+        strip = re.search(r'<div class="tstrip">(.*?)</div>\s*\n', page, re.S).group(1)
+        self.assertNotIn("tier-why", strip)
         for evidence in ("AJCN", "Tufts", "Cleveland Clinic", "GI 35~52"):
-            self.assertNotIn(evidence, page, f"근거 문장이 메인에 들어왔다: {evidence}")
+            self.assertNotIn(evidence, strip, f"근거 문장이 스트립에 들어왔다: {evidence}")
+        # 상세 기준표는 FAQ 안에 '접힌 채로'만 존재한다 - 펼쳐 두면 스크롤이 길어진다
+        legend = re.search(r'<details class="faq-legend">(.*?)</details>', page, re.S)
+        self.assertIsNotNone(legend, "티어 기준표가 사라졌다")
+        self.assertNotIn("open", page[page.index('<details class="faq-legend"')
+                                       :page.index('<details class="faq-legend"') + 34])
+        self.assertIn("tier-why", legend.group(1))
 
     def test_every_tier_has_a_one_line_gist(self):
         for tier, _, _ in z._TIER_ROWS:
@@ -1272,19 +1278,20 @@ class FaqContentTests(unittest.TestCase):
     """FAQ 답변은 데이터로 확인되는 것만 말한다."""
 
     def _answers(self):
-        return {q: a for q, a in z._FAQ}
+        return dict(z.faq_pairs(z._FAQ))
 
     def test_tier_basis_question_comes_first(self):
         self.assertEqual(z._FAQ[0][0], "티어는 어떤 기준으로 나눈 건가요?")
-        a = z._FAQ[0][1]
-        self.assertIn("맛", a)
+        a = dict(z.faq_pairs(z._FAQ))[z._FAQ[0][0]]
+        self.assertIn("맛, 가격, 인기는 평가에 반영하지 않았습니다", a)
         # 정부 평가가 아니라는 단서를 빼면 안 된다
         self.assertIn("공식 평가가 아니", a)
-        self.assertIn("의학적 조언이 아닙니다", a)
+        self.assertIn("의학적 조언이나 진단을 위한 자료는 아닙니다", a)
 
     def test_bc_reassurance_answer_matches_the_data(self):
-        a = self._answers()["제가 마시는 음료가 대부분 B~C 등급인데 걱정해야 하나요?"]
-        for claim in ("제로 음료끼리 비교", "일반판은 대부분 F", "인과관계가 확정된 것이 아닙니다"):
+        a = self._answers()["제가 마시는 음료가 대부분 B~C 티어인데 걱정해야 하나요?"]
+        for claim in ("제로 음료끼리 비교", "일반판은 대부분 F 티어",
+                      "인과관계가 확정됐다는 연구결과는 아닙니다"):
             self.assertIn(claim, a, f"근거 문장이 빠졌다: {claim}")
         # '안전하다' 로 단정하지 않는다 - 우리가 말할 수 있는 범위가 아니다
         for overclaim in ("안전합니다", "걱정하지 않아도 됩니다", "문제없습니다"):
@@ -1298,7 +1305,9 @@ class FaqContentTests(unittest.TestCase):
                  "아스파탐": "", "카페인": ""} for n in z.POPULAR_PICKS]
         z.assign_slugs(recs)
         page = z.landing_page(recs, "2026-01-01", {"records": recs})
-        self.assertEqual(page.count("<summary>"), len(z._FAQ))
-        for q, _ in z._FAQ:
+        # 부가 블록(티어 기준표)의 summary 가 하나 더 붙는다
+        extras = sum(1 for e in z._FAQ if len(e) > 2)
+        self.assertEqual(page.count("<summary>"), len(z._FAQ) + extras)
+        for q, *_ in z._FAQ:
             self.assertIn(q, page)
 
