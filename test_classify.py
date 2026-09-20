@@ -1366,3 +1366,51 @@ class ProductMarkupTests(unittest.TestCase):
         src = open("zero_soda_scan.py", encoding="utf-8").read()
         self.assertNotIn('"@type": "Product"', src)
 
+class LastmodTests(unittest.TestCase):
+    """사이트맵 lastmod 는 URL 마다 실제 변경일이어야 한다.
+
+    예전에는 빌드할 때마다 635개 URL 전부에 오늘 날짜를 찍었다. 내용이 그대로인
+    페이지도 매번 '바뀌었다'고 말한 셈이라 Google 이 lastmod 를 통째로 무시하고,
+    626장이 '발견됨 - 현재 색인이 생성되지 않음'에 머물렀다 (2026-09-20 GSC).
+    """
+
+    def test_same_content_keeps_the_old_date(self):
+        store = {}
+        self.assertEqual(z.resolve_lastmod(store, "u", {"a": 1}, "2026-01-01"),
+                         "2026-01-01")
+        self.assertEqual(z.resolve_lastmod(store, "u", {"a": 1}, "2026-06-30"),
+                         "2026-01-01", "내용이 같은데 날짜가 올라갔다")
+
+    def test_changed_content_moves_the_date(self):
+        store = {}
+        z.resolve_lastmod(store, "u", {"a": 1}, "2026-01-01")
+        self.assertEqual(z.resolve_lastmod(store, "u", {"a": 2}, "2026-06-30"),
+                         "2026-06-30")
+
+    def test_fingerprint_ignores_key_order(self):
+        self.assertEqual(z._digest({"a": 1, "b": 2}), z._digest({"b": 2, "a": 1}))
+
+    def test_product_fingerprint_covers_what_the_page_shows(self):
+        fp = z._product_fingerprint({"제품명": "x", "티어": "B"})
+        for field in ("제품명", "티어", "감미료", "열량", "당류", "원재료전문",
+                      "표시원재료", "보고일자", "이력"):
+            self.assertIn(field, fp, f"{field} 가 바뀌어도 lastmod 가 안 올라간다")
+        # 렌더 시점에만 달라지는 값은 지문에 넣지 않는다
+        self.assertNotIn("슬러그", fp)
+
+    def test_store_is_tracked_and_pushed(self):
+        # 이 파일이 없으면 다음 빌드가 전부 '오늘 바뀜'으로 되돌린다
+        self.assertIn(z.DEFAULT_LASTMOD_STORE, z.PUSH_PATHS)
+        gi = open(".gitignore", encoding="utf-8").read()
+        self.assertIn("!" + z.DEFAULT_LASTMOD_STORE, gi)
+
+    def test_live_sitemap_does_not_stamp_everything_with_one_date(self):
+        # 산출물 기준: 전부 같은 날짜여도 '오늘'이 아니면 정상(첫 생성 직후 제외).
+        # 여기서는 저장소가 URL 수만큼 채워졌는지만 본다.
+        store = z.load_lastmod_store()
+        if not store:
+            self.skipTest("저장소 없음 - 빌드를 먼저 돌려야 한다")
+        sm = open(os.path.join("docs", "sitemap.xml"), encoding="utf-8").read()
+        self.assertEqual(len(store), sm.count("<loc>"),
+                         "저장소와 사이트맵 URL 수가 다르다")
+

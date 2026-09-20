@@ -42,6 +42,7 @@
 import argparse
 import csv
 import collections
+import hashlib
 import json
 import os
 import html
@@ -67,6 +68,8 @@ DEFAULT_RAW = "zero_soda_raw.json"
 DEFAULT_NUTRITION_CACHE = "zero_soda_nutrition.json"
 DEFAULT_OUT_CSV = "zero_soda_result.csv"
 DEFAULT_OUT_HTML = "zero_soda_report.html"
+# URL 별 실제 변경일 저장소. 사이트맵 lastmod 가 여기서 나온다.
+DEFAULT_LASTMOD_STORE = "seo_lastmod.json"
 DEFAULT_DOCS_HTML = os.path.join("docs", "index.html")
 PAGE_URL = "https://zero-drinks-tier.vercel.app/"   # Vercel 배포 주소 (canonical/OG용)
 GA_ID = "G-8QMBBJ4EXD"   # Google Analytics 4 측정 ID. 빈 문자열로 두면 태그를 넣지 않는다
@@ -2281,6 +2284,9 @@ def sync(key, types, raw_path, cache_path, out_csv, out_html, docs_html, force=F
 DEFAULT_DOCS_DIR = os.path.dirname(DEFAULT_DOCS_HTML) or "."
 PUSH_PATHS = [
     DEFAULT_RAW, DEFAULT_NUTRITION_CACHE, DEFAULT_DOCS_HTML, README_PATH,
+    # 이 파일이 푸시되지 않으면 CI·다른 기기의 빌드가 lastmod 를 전부
+    # 오늘로 되돌린다 (Google 이 lastmod 를 무시하던 원래 상태).
+    DEFAULT_LASTMOD_STORE,
     os.path.join(DEFAULT_DOCS_DIR, "sitemap.xml"),
     os.path.join(DEFAULT_DOCS_DIR, "robots.txt"),
     os.path.join(DEFAULT_DOCS_DIR, "llms.txt"),
@@ -3938,6 +3944,54 @@ def publish_docs(docs_html, out_html, stats):
     return docs_dir, slugs
 
 
+# ── URL 별 실제 변경일 ────────────────────────────────────────
+# GSC 가 제품 상세를 '발견됨 - 현재 색인이 생성되지 않음'으로 남겨 두는 동안,
+# 사이트맵은 635개 URL 전부에 매 빌드의 날짜를 찍고 있었다. 내용이 그대로인
+# 페이지도 매번 '바뀌었다'고 말한 셈이라, Google 은 부정확한 lastmod 를 무시하고
+# 크롤 스케줄 신호를 잃는다. 사실과도 다르다.
+#
+# 그래서 URL 마다 '무엇이 바뀌면 이 페이지가 바뀌는가'를 해시로 잡고, 해시가
+# 같으면 이전 날짜를 그대로 쓴다. 렌더된 HTML 이 아니라 데이터를 해시한다 -
+# HTML 에는 기준일 문구가 들어 있어 매번 달라지기 때문이다.
+
+
+def load_lastmod_store(path=DEFAULT_LASTMOD_STORE):
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+
+def save_lastmod_store(store, path=DEFAULT_LASTMOD_STORE):
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(store, f, ensure_ascii=False, indent=1, sort_keys=True)
+
+
+def _digest(payload):
+    return hashlib.sha1(
+        json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+
+
+def resolve_lastmod(store, url, payload, today):
+    """내용이 바뀌었을 때만 날짜를 올린다. 돌려주는 값이 사이트맵에 들어간다."""
+    h = _digest(payload)
+    prev = store.get(url)
+    if prev and prev.get("hash") == h:
+        return prev["lastmod"]
+    store[url] = {"hash": h, "lastmod": today}
+    return today
+
+
+def _product_fingerprint(rec):
+    """제품 페이지의 내용을 결정하는 필드만 모은다."""
+    return {k: rec.get(k) for k in
+            ("제품명", "티어", "조합", "감미료", "감미료미표기", "열량", "당류",
+             "기준량", "용량", "업소명", "식품유형", "보고일자", "원재료전문",
+             "표시원재료", "유통명출처", "등록명", "일반판", "일반판티어",
+             "카페인", "아스파탐", "이력")}
+
+
 def write_seo_files(docs_dir, lastmod, records):
     """sitemap.xml / robots.txt / 정적 페이지 / llms.txt 를 한 번에 생성한다.
 
@@ -3961,15 +4015,42 @@ def write_seo_files(docs_dir, lastmod, records):
     prod = write_product_pages(docs_dir, records, lastmod)
     write_llms_files(docs_dir, records, lastmod)
 
-    urls = [(PAGE_URL, "1.0", "monthly"),
-            (f"{PAGE_URL}report.html", "0.9", "monthly")]
-    urls += [(f"{PAGE_URL}{s}", "0.8", "monthly") for s in slugs]
+    # URL 마다 '무엇이 바뀌면 이 페이지가 바뀌는가'를 지문으로 잡는다.
+    # 전체 URL 에 빌드 날짜를 찍으면 Google 이 lastmod 를 통째로 무시한다.
+    store = load_lastmod_store()
+    dist = {t: sum(1 for r in records if r["티어"] == t) for t in TIER_RANK}
+    site_fp = {"총": len(records), "분포": dist, "인기": POPULAR_PICKS,
+               "faq": [q for q, *_ in _FAQ]}
+    by_slug = {slug_url(r["슬러그"]): r for r in records}
+
+    urls = [(PAGE_URL, "1.0", "monthly", site_fp),
+            (f"{PAGE_URL}report.html", "0.9", "monthly",
+             {"rows": [_product_fingerprint(r) for r in records]})]
+    for s in slugs:
+        # 목록·랜딩은 실려 있는 제품 집합이 바뀔 때만 바뀐다
+        urls.append((f"{PAGE_URL}{s}", "0.8", "monthly",
+                     {"page": s, "rows": [_product_fingerprint(r) for r in records]}))
     # 제품별 페이지가 이 사이트의 롱테일이다. 사이트맵에 전부 넣는다.
-    urls += [(f"{PAGE_URL}{s}", "0.6", "monthly") for s in prod]
-    body = "".join(
-        f"  <url>\n    <loc>{loc}</loc>\n    <lastmod>{lastmod}</lastmod>\n"
-        f"    <changefreq>{freq}</changefreq>\n    <priority>{pri}</priority>\n  </url>\n"
-        for loc, pri, freq in urls)
+    for s in prod:
+        urls.append((f"{PAGE_URL}{s}", "0.6", "monthly",
+                     _product_fingerprint(by_slug[s])))
+
+    before = {k: v.get("hash") for k, v in store.items()}
+    body = ""
+    fresh = 0
+    for loc, pri, freq, fp in urls:
+        lm = resolve_lastmod(store, loc, fp, lastmod)
+        if before.get(loc) != store[loc]["hash"]:
+            fresh += 1
+        body += (f"  <url>\n    <loc>{loc}</loc>\n    <lastmod>{lm}</lastmod>\n"
+                 f"    <changefreq>{freq}</changefreq>\n"
+                 f"    <priority>{pri}</priority>\n  </url>\n")
+    # 사라진 URL 은 저장소에서도 지운다 (제품명이 바뀌면 슬러그가 바뀐다)
+    live = {loc for loc, *_ in urls}
+    for gone in [k for k in store if k not in live]:
+        del store[gone]
+    save_lastmod_store(store)
+    print(f"[seo] lastmod 내용이 바뀐 {fresh}개만 갱신 / {len(urls) - fresh}개 유지")
     sitemap = ('<?xml version="1.0" encoding="UTF-8"?>\n'
                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
                + body + "</urlset>\n")
