@@ -2672,10 +2672,16 @@ def _item_list_ld(name, desc, slug, records, limit=100):
         "description": desc,
         "url": f"{PAGE_URL}{slug}",
         "numberOfItems": min(len(records), limit),
+        # Google 의 '요약 페이지' ItemList 규약: ListItem 에 url 과 name 만 둔다.
+        # 예전에는 item 으로 Product 를 100개씩 중첩했는데, offers/review/
+        # aggregateRating 이 없어 GSC 가 '잘못된 항목 100개'로 보고했다. 우리는
+        # 가격도 평점도 없으니 그 필드를 만들어 넣을 수 없다 - 제품 스니펫을
+        # 주장하지 않는 것이 맞다. url 을 넣으면서 상세 페이지로 가는 링크 신호도
+        # 같이 생긴다 (예전 Product 에는 url 조차 없었다).
         "itemListElement": [
             {"@type": "ListItem", "position": i + 1,
-             "item": {"@type": "Product", "name": r["제품명"],
-                      "brand": {"@type": "Organization", "name": r["업소명"]}}}
+             "name": r["제품명"],
+             "url": f"{PAGE_URL}{slug_url(r['슬러그'])}"}
             for i, r in enumerate(records[:limit])
         ],
     }
@@ -3016,34 +3022,25 @@ def product_page(rec, records, lastmod):
         body.append(f'<h2>{_esc(tier)} 등급의 다른 제품</h2><div class="rel">{links(same_tier)}</div>')
 
     page_url = f"{PAGE_URL}{slug_url(rec['슬러그'])}"
-    props = [{"@type": "PropertyValue", "name": "감미료 등급", "value": tier}]
-    if sw:
-        props.append({"@type": "PropertyValue", "name": "탐지된 감미료",
-                      "value": ", ".join(w for w, _ in sw)})
-    if sugar:
-        props.append({"@type": "PropertyValue", "name": "원재료의 당류 표기",
-                      "value": ", ".join(w for w, _ in sugar)})
-    for lab, key in (("열량", "열량"), ("당류", "당류")):
-        if rec.get(key) not in ("", None):
-            props.append({"@type": "PropertyValue", "name": f"{lab} ({base}당)",
-                          "value": str(rec[key])})
     ld = {
         "@context": "https://schema.org",
         "@graph": [
             # isBasedOn 은 CreativeWork 의 속성이라 Product 에 쓰면 경고가 난다.
             # 페이지를 WebPage 로 세우고 그쪽에서 사이트·데이터셋에 연결한다.
-            {"@type": "Product", "@id": f"{page_url}#product", "name": name,
-             "brand": {"@type": "Organization", "name": maker},
-             "category": rec["식품유형"],
-             "description": f"{name}의 감미료 구성과 등급. 식약처 품목제조보고 원재료 기준.",
-             "url": page_url,
-             "additionalProperty": props},
+            # Product 를 쓰지 않는다. Google 은 Product 에 offers/review/
+            # aggregateRating 중 하나를 요구하는데 우리는 가격도 평점도 없고,
+            # 없는 값을 만들어 넣을 수 없다. 애초에 이 페이지는 물건을 파는
+            # 곳이 아니라 신고 데이터를 보여주는 곳이라 Product 가 맞지 않는다
+            # (GSC '잘못된 항목' 626건의 원인이었다).
+            # 측정값은 WebPage 아래 PropertyValue 로 그대로 남긴다.
             {"@type": "WebPage", "@id": f"{page_url}#webpage",
-             "url": page_url, "name": f"{name} 감미료 · 등급 {tier}",
+             "url": page_url, "name": f"{name} 감미료 · 티어 {tier}",
              "inLanguage": "ko",
+             "description": f"{name}의 감미료 구성과 티어. 식약처 품목제조보고 원재료 기준.",
              "isPartOf": {"@id": f"{PAGE_URL}#website"},
-             "mainEntity": {"@id": f"{page_url}#product"},
-             "isBasedOn": f"{PAGE_URL}#dataset"},
+             "isBasedOn": f"{PAGE_URL}#dataset",
+             "about": {"@type": "Thing", "@id": f"{page_url}#item", "name": name},
+             "mentions": {"@type": "Organization", "name": maker}},
             {"@type": "BreadcrumbList", "itemListElement": [
                 {"@type": "ListItem", "position": 1, "name": "제로 음료 감미료 조회",
                  "item": PAGE_URL},

@@ -1311,3 +1311,58 @@ class FaqContentTests(unittest.TestCase):
         for q, *_ in z._FAQ:
             self.assertIn(q, page)
 
+class ProductMarkupTests(unittest.TestCase):
+    """Product 마크업을 쓰지 않는다.
+
+    Google 은 Product 에 offers/review/aggregateRating 중 하나를 요구한다.
+    이 사이트는 가격도 평점도 없고 없는 값을 만들어 넣을 수 없다. 애초에 물건을
+    파는 페이지가 아니라 신고 데이터를 보여주는 페이지라 Product 가 맞지 않는다.
+    GSC 가 목록 페이지에서 '잘못된 항목 100개'로 보고한 원인이었다 (2026-09-20).
+    """
+
+    def _rec(self, name="테스트 제로"):
+        r = {"제품명": name, "티어": "B", "조합": "B", "감미료": "수크랄로스(B,1)",
+             "열량": "0", "당류": "0.00", "용량": "500ml", "기준량": "100ml",
+             "업소명": "공장", "식품유형": "탄산음료", "보고일자": "20260101",
+             "원재료전문": "정제수", "등록명": "", "이력": [], "감미료미표기": "",
+             "아스파탐": "", "카페인": ""}
+        return r
+
+    def test_detail_page_declares_no_product(self):
+        recs = [self._rec()]
+        z.assign_slugs(recs)
+        page = z.product_page(recs[0], recs, "2026-01-01")
+        ld = json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>',
+                                  page, re.S).group(1))
+        types = [n["@type"] for n in ld["@graph"]]
+        self.assertNotIn("Product", types, "Product 는 offers 없이는 무효 항목이 된다")
+        self.assertEqual(types, ["WebPage", "BreadcrumbList", "FAQPage"])
+
+    def test_list_items_carry_url_not_nested_products(self):
+        recs = [self._rec(f"제품{i}") for i in range(3)]
+        z.assign_slugs(recs)
+        ld = z._item_list_ld("목록", "설명", "products.html", recs)
+        self.assertNotIn("Product", json.dumps(ld))
+        for el in ld["itemListElement"]:
+            self.assertIn("url", el, "url 이 없으면 링크 신호로도 쓸모가 없다")
+            self.assertIn("name", el)
+            self.assertNotIn("item", el)
+
+    def test_facts_survive_in_the_faq_graph(self):
+        # Product.additionalProperty 를 뺐으므로, 감미료·열량이 구조화 데이터에서
+        # 사라지지 않았는지 확인한다 (FAQPage 가 문답으로 담는다)
+        recs = [self._rec()]
+        z.assign_slugs(recs)
+        page = z.product_page(recs[0], recs, "2026-01-01")
+        ld = json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>',
+                                  page, re.S).group(1))
+        faq = [n for n in ld["@graph"] if n["@type"] == "FAQPage"][0]
+        blob = json.dumps(faq, ensure_ascii=False)
+        self.assertIn("수크랄로스", blob)
+        self.assertIn("kcal", blob)
+        self.assertIn("B", blob)
+
+    def test_no_generated_page_emits_product_markup(self):
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        self.assertNotIn('"@type": "Product"', src)
+
