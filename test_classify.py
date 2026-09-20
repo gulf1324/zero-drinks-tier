@@ -1237,3 +1237,68 @@ class TierBadgeContrastTests(unittest.TestCase):
         self.assertGreater(self._ratio(bg, fg), self._ratio(bg, "#0d0f11"),
                            "F 는 검은 글자보다 흰 글자가 대비가 높다")
 
+class SuggestOverlayTests(unittest.TestCase):
+    """자동완성은 '떠 있는 레이어'로 보여야 한다.
+
+    아래 '많이 찾는 제품' 카드와 생김새가 같아 어디까지가 검색 결과인지
+    구분이 안 된다는 신고를 받았다 (2026-09-19, 모바일).
+    """
+
+    def test_suggestion_box_outranks_the_cards_visually(self):
+        css = z._LANDING_CSS
+        self.assertIn("border:2px solid var(--accent)", css, "제안 박스 테두리가 카드와 같다")
+        self.assertIn(".sg-head{", css, "몇 건인지 알려주는 머리글이 없다")
+        # 카드는 테두리 없이 1px 구분선만 쓴다 - 둘이 같아지면 안 된다
+        self.assertNotIn(".pick{border:2px", css)
+
+    def test_scrim_dims_the_page_on_narrow_screens_only(self):
+        css = z._LANDING_CSS
+        self.assertIn("body.sg-open .scrim{opacity:1", css)
+        self.assertIn("@media(min-width:761px){body.sg-open .scrim{opacity:0", css,
+                      "데스크톱에서도 화면을 덮으면 과하다")
+        self.assertIn('<div class="scrim"', z._LANDING_TEMPLATE)
+
+    def test_scrim_state_is_cleared_on_every_exit(self):
+        js = z._SUGGEST_JS
+        self.assertIn("document.body.classList.remove('sg-open')", js)
+        self.assertIn("scrim.addEventListener('click', hide)", js,
+                      "덮개를 눌러도 안 닫히면 갇힌다")
+        # 여는 경로는 show() 하나로 모은다 (한 곳이라도 빠지면 스크림이 안 뜬다)
+        self.assertEqual(js.count("box.hidden = false"), 1)
+        self.assertIn("function show()", js)
+
+
+class FaqContentTests(unittest.TestCase):
+    """FAQ 답변은 데이터로 확인되는 것만 말한다."""
+
+    def _answers(self):
+        return {q: a for q, a in z._FAQ}
+
+    def test_tier_basis_question_comes_first(self):
+        self.assertEqual(z._FAQ[0][0], "티어는 어떤 기준으로 나눈 건가요?")
+        a = z._FAQ[0][1]
+        self.assertIn("맛", a)
+        # 정부 평가가 아니라는 단서를 빼면 안 된다
+        self.assertIn("공식 평가가 아니", a)
+        self.assertIn("의학적 조언이 아닙니다", a)
+
+    def test_bc_reassurance_answer_matches_the_data(self):
+        a = self._answers()["제가 마시는 음료가 대부분 B~C 등급인데 걱정해야 하나요?"]
+        for claim in ("제로 음료끼리 비교", "일반판은 대부분 F", "인과관계가 확정된 것이 아닙니다"):
+            self.assertIn(claim, a, f"근거 문장이 빠졌다: {claim}")
+        # '안전하다' 로 단정하지 않는다 - 우리가 말할 수 있는 범위가 아니다
+        for overclaim in ("안전합니다", "걱정하지 않아도 됩니다", "문제없습니다"):
+            self.assertNotIn(overclaim, a, f"단정 표현: {overclaim}")
+
+    def test_faq_is_rendered_on_the_landing(self):
+        recs = [{"제품명": n, "티어": "B", "조합": "B", "감미료": "수크랄로스(B,1)",
+                 "열량": "0", "당류": "0.00", "용량": "500ml", "기준량": "100ml",
+                 "업소명": "공장", "식품유형": "탄산음료", "보고일자": "20260101",
+                 "원재료전문": "정제수", "등록명": "", "이력": [], "감미료미표기": "",
+                 "아스파탐": "", "카페인": ""} for n in z.POPULAR_PICKS]
+        z.assign_slugs(recs)
+        page = z.landing_page(recs, "2026-01-01", {"records": recs})
+        self.assertEqual(page.count("<summary>"), len(z._FAQ))
+        for q, _ in z._FAQ:
+            self.assertIn(q, page)
+

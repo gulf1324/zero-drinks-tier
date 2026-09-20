@@ -935,6 +935,12 @@ def annotate(records):
 # 가시 FAQ 와 FAQPage LD 는 같은 원본에서 만든다. 글자가 어긋나면 스팸 판정 위험이
 # 있어서, 화면 문구와 구조화 데이터를 절대 따로 쓰지 않는다.
 _FAQ = [
+    ("티어는 어떤 기준으로 나눈 건가요?",
+     "맛·가격·인기는 보지 않습니다. <b>피어리뷰 연구에 보고된 대사 영향</b>만 놓고 "
+     "나눴습니다. 열량이 얼마나 되는지, 혈당·인슐린을 움직인다는 근거가 있는지, "
+     "그 근거가 얼마나 강한지 세 가지입니다. 그래서 맛있는 제품이 낮은 등급을 받고 "
+     "덜 팔리는 제품이 높은 등급을 받기도 합니다. 정부 기관의 공식 평가가 아니라 "
+     "인용된 연구를 근거로 한 이 프로젝트의 해석이며, 의학적 조언이 아닙니다."),
     ("제로 음료 중 가장 나은 감미료는 무엇인가요?",
      "알룰로스와 타가토스입니다. 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 "
      "메타분석 결과가 있어 이 리포트에서 S 등급입니다. 다만 국내 탄산음료에서 알룰로스만 "
@@ -947,6 +953,12 @@ _FAQ = [
      "아닙니다. 제로칼로리 표기 기준은 100mL당 4kcal 미만이라 소량의 열량과 당류가 "
      "있어도 적법하게 '제로'를 붙일 수 있습니다. 이 리포트는 제로를 표방하면서 신고 "
      "원재료에 당류가 있는 제품을 F 등급으로 따로 표시합니다."),
+    ("제가 마시는 음료가 대부분 B~C 등급인데 걱정해야 하나요?",
+     "B~C 가 국내 제로 음료의 대다수입니다. 이 등급은 <b>제로 음료끼리 비교한 결과</b>이지 "
+     "설탕 음료와 비교한 것이 아닙니다. 같은 제품의 일반판은 대부분 F 등급이므로, "
+     "B~C 를 마시는 것은 이미 당류를 크게 줄인 선택입니다. B·C 의 근거도 "
+     "'상승 신호가 관찰됐다' 수준이지 인과관계가 확정된 것이 아닙니다. 더 낮추고 "
+     "싶다면 S·A 등급 후보를 보면 되지만, 국내에 선택지가 많지는 않습니다."),
     ("에리스리톨은 피해야 하나요?",
      "혈당에는 무해하지만 혈소판 반응성·심혈관 사건과 연관된 관찰연구 신호가 있어 이 "
      "리포트에서 C 등급입니다. 인과관계는 확정되지 않았습니다. 스테비아 제품은 대부분 "
@@ -3562,7 +3574,12 @@ _SUGGEST_JS = """<script>
   var cur = -1, items = [];
   // 표기 흔들림 흡수: 공백·하이픈·가운뎃점류를 지우고 비교한다 (norm_name 과 같은 취지)
   function norm(s) { return s.replace(/[\s\u002d\u00b7\u2022\u25cf]+/g, '').toLowerCase(); }
-  function hide() { box.hidden = true; cur = -1; items = []; q.setAttribute('aria-expanded', 'false'); }
+  function hide() {
+    box.hidden = true; cur = -1; items = [];
+    q.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('sg-open');
+  }
+  function show() { box.hidden = false; document.body.classList.add('sg-open'); }
   function run() {
     var s = norm(q.value);
     if (s.length < 1) return hide();
@@ -3576,15 +3593,17 @@ _SUGGEST_JS = """<script>
     items = hit.slice(0, 8);
     if (!items.length) {
       box.innerHTML = '<div class="sg-none">일치하는 제품이 없습니다. 엔터를 누르면 전체 목록에서 찾습니다.</div>';
-      box.hidden = false; return;
+      show(); return;
     }
-    box.innerHTML = items.map(function (r, i) {
+    var head = '<div class="sg-head">검색 결과 ' + hit.length + '개' +
+               (hit.length > items.length ? ' 중 ' + items.length + '개 표시' : '') + '</div>';
+    box.innerHTML = head + items.map(function (r, i) {
       return '<a role="option" id="sg' + i + '" href="' + BASE + encodeURIComponent(r.g) + '.html">' +
              '<span class="tier-chip" data-tier="' + r.t + '">' +
              (r.t === '\ubb34\uac10\ubbf8\ub8cc' ? '\ubb34' : r.t) + '</span>' +
              '<b>' + r.n + '</b><span>' + (r.s || '') + '</span></a>';
     }).join('');
-    box.hidden = false; q.setAttribute('aria-expanded', 'true');
+    show(); q.setAttribute('aria-expanded', 'true');
   }
   function move(d) {
     if (box.hidden || !items.length) return;
@@ -3607,6 +3626,8 @@ _SUGGEST_JS = """<script>
   document.addEventListener('click', function (e) {
     if (!form.contains(e.target)) hide();
   });
+  var scrim = document.querySelector('.scrim');
+  if (scrim) scrim.addEventListener('click', hide);
 })();
 </script>"""
 
@@ -3623,7 +3644,13 @@ _LANDING_CSS = """
 @media(max-width:640px){.hero{padding:30px 0 6px}.hero h1{font-size:24px}}
 
 /* 검색창: 화면에서 가장 큰 폼 컨트롤. 아래 섹션과 여백으로 확실히 끊는다 */
-.sbox{position:relative;width:100%;max-width:620px;margin:14px auto 0}
+.sbox{position:relative;width:100%;max-width:620px;margin:14px auto 0;z-index:40}
+/* 제안이 열리면 뒤를 덮는다. 좁은 화면에서 목록과 아래 카드가 같은 무게로
+   보여 어디까지가 검색 결과인지 구분이 안 됐다. */
+.scrim{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.42);
+       opacity:0;pointer-events:none;transition:opacity .12s}
+body.sg-open .scrim{opacity:1;pointer-events:auto}
+@media(min-width:761px){body.sg-open .scrim{opacity:0;pointer-events:none}}
 .sbox form{position:relative;display:flex;align-items:center}
 .sbox .s-ico{position:absolute;left:18px;width:21px;height:21px;fill:none;
              stroke:var(--muted);stroke-width:2.2;stroke-linecap:round;pointer-events:none}
@@ -3641,9 +3668,12 @@ _LANDING_CSS = """
              align-items:center;justify-content:center}
 
 /* 자동완성: 입력 바로 아래에 떠서 첫 클릭까지의 거리를 없앤다 */
-.sg{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;
-    background:var(--surface);border:1px solid var(--border-strong);
-    box-shadow:var(--shadow);max-height:352px;overflow-y:auto}
+.sg{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:40;
+    background:var(--surface);border:2px solid var(--accent);
+    box-shadow:0 12px 32px rgba(0,0,0,.28);max-height:60vh;overflow-y:auto}
+.sg-head{position:sticky;top:0;background:var(--accent-soft);color:var(--accent-ink);
+         font-size:11.5px;font-weight:700;padding:7px 14px;
+         border-bottom:1px solid var(--accent-border)}
 .sg a{display:flex;align-items:center;gap:10px;padding:11px 14px;
       text-decoration:none;color:var(--text);font-size:14px}
 .sg a+a{border-top:1px solid var(--hair)}
@@ -3678,7 +3708,7 @@ _LANDING_CSS = """
 .lsec{margin:34px 0 12px;font-size:17px}
 .lsec-sub{font-size:12.5px;color:var(--muted);font-weight:400;margin-left:8px}
 
-/* 감미료 등급 한눈에 — 7개를 한 줄로 훑는다. 근거 문장은 /report.html 로 보낸다 */
+/* 한눈에 보는 감미료 티어 — 7개를 한 줄로 훑는다. 근거 문장은 /report.html 로 보낸다 */
 .tstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);
         border:1px solid var(--border);margin:0 0 30px}
 .tcell{display:flex;flex-direction:column;align-items:center;gap:4px;
@@ -3770,11 +3800,12 @@ _LANDING_TEMPLATE = """<!DOCTYPE html>
     <div class="sg" id="sg" role="listbox" aria-label="검색 제안" hidden></div>
   </form>
 </div>
+<div class="scrim" aria-hidden="true"></div>
 
 <h2 class="lsec">많이 찾는 제품</h2>
 <div class="picks">{picks}</div>
 
-<h2 class="lsec">감미료 등급 한눈에<span class="lsec-sub">여러 감미료가 섞이면 가장 나쁜 등급이 최종 등급</span></h2>
+<h2 class="lsec">한눈에 보는 감미료 티어<span class="lsec-sub">여러 감미료가 섞이면 가장 나쁜 등급이 최종 등급입니다</span></h2>
 <div class="tstrip">{tier_strip}</div>
 
 <h2 class="lsec">찾는 조건으로 보기</h2>

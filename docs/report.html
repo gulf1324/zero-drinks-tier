@@ -82,7 +82,7 @@
     "@id": "https://zero-drinks-tier.vercel.app/#website"
    },
    "inLanguage": "ko",
-   "dateModified": "2026-09-19",
+   "dateModified": "2026-09-20",
    "datePublished": "2026-08-09",
    "temporalCoverage": "2026-08-09/..",
    "measurementTechnique": "식품의약품안전처 품목제조보고 원재료 전문에서 감미료 표기를 탐지하고, 품목제조보고번호로 공공데이터포털 영양성분 표준데이터를 조인",
@@ -155,6 +155,14 @@
    "mainEntity": [
     {
      "@type": "Question",
+     "name": "티어는 어떤 기준으로 나눈 건가요?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "맛·가격·인기는 보지 않습니다. 피어리뷰 연구에 보고된 대사 영향만 놓고 나눴습니다. 열량이 얼마나 되는지, 혈당·인슐린을 움직인다는 근거가 있는지, 그 근거가 얼마나 강한지 세 가지입니다. 그래서 맛있는 제품이 낮은 등급을 받고 덜 팔리는 제품이 높은 등급을 받기도 합니다. 정부 기관의 공식 평가가 아니라 인용된 연구를 근거로 한 이 프로젝트의 해석이며, 의학적 조언이 아닙니다."
+     }
+    },
+    {
+     "@type": "Question",
      "name": "제로 음료 중 가장 나은 감미료는 무엇인가요?",
      "acceptedAnswer": {
       "@type": "Answer",
@@ -175,6 +183,14 @@
      "acceptedAnswer": {
       "@type": "Answer",
       "text": "아닙니다. 제로칼로리 표기 기준은 100mL당 4kcal 미만이라 소량의 열량과 당류가 있어도 적법하게 '제로'를 붙일 수 있습니다. 이 리포트는 제로를 표방하면서 신고 원재료에 당류가 있는 제품을 F 등급으로 따로 표시합니다."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "제가 마시는 음료가 대부분 B~C 등급인데 걱정해야 하나요?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "B~C 가 국내 제로 음료의 대다수입니다. 이 등급은 제로 음료끼리 비교한 결과이지 설탕 음료와 비교한 것이 아닙니다. 같은 제품의 일반판은 대부분 F 등급이므로, B~C 를 마시는 것은 이미 당류를 크게 줄인 선택입니다. B·C 의 근거도 '상승 신호가 관찰됐다' 수준이지 인과관계가 확정된 것이 아닙니다. 더 낮추고 싶다면 S·A 등급 후보를 보면 되지만, 국내에 선택지가 많지는 않습니다."
      }
     },
     {
@@ -603,7 +619,7 @@ color-scheme: light dark;
       <span class="hint">행을 누르면 원재료 전문이 열립니다</span>
       <a class="alllink" href="https://zero-drinks-tier.vercel.app/products.html">전체 목록 한 페이지로 보기</a>
     </div>
-    <div class="genmeta">생성 2026-09-19 22:20:27 · 대상 탄산음료, 탄산수 · 설탕이 든 일반 음료는 제외했으나, 제로를 표방하면서 당류가 있는 제품은 F 티어로 남겼습니다.</div>
+    <div class="genmeta">생성 2026-09-20 11:04:42 · 대상 탄산음료, 탄산수 · 설탕이 든 일반 음료는 제외했으나, 제로를 표방하면서 당류가 있는 제품은 F 티어로 남겼습니다.</div>
   </section>
   <div class="badges" id="badges"><button class="badge" data-tier="무감미료"><span class="dot"></span>무감미료<span class="cnt">5</span></button><button class="badge" data-tier="S"><span class="dot"></span>S<span class="cnt">3</span></button><button class="badge" data-tier="A"><span class="dot"></span>A<span class="cnt">24</span></button><button class="badge" data-tier="B"><span class="dot"></span>B<span class="cnt">322</span></button><button class="badge" data-tier="C"><span class="dot"></span>C<span class="cnt">257</span></button><button class="badge" data-tier="F"><span class="dot"></span>F<span class="cnt">15</span></button><button class="clear-tiers" id="clearTiers" disabled>전체 해제</button></div>
   <div class="warn" id="fakeZeroBanner">제로 표기 제품 321개 중 15개는 신고 원재료에 당류가 있습니다</div>
@@ -665,9 +681,11 @@ color-scheme: light dark;
 </section>
 <section class="faq">
 <h2>자주 묻는 질문</h2>
+<details><summary>티어는 어떤 기준으로 나눈 건가요?</summary><p>맛·가격·인기는 보지 않습니다. <b>피어리뷰 연구에 보고된 대사 영향</b>만 놓고 나눴습니다. 열량이 얼마나 되는지, 혈당·인슐린을 움직인다는 근거가 있는지, 그 근거가 얼마나 강한지 세 가지입니다. 그래서 맛있는 제품이 낮은 등급을 받고 덜 팔리는 제품이 높은 등급을 받기도 합니다. 정부 기관의 공식 평가가 아니라 인용된 연구를 근거로 한 이 프로젝트의 해석이며, 의학적 조언이 아닙니다.</p></details>
 <details><summary>제로 음료 중 가장 나은 감미료는 무엇인가요?</summary><p>알룰로스와 타가토스입니다. 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 메타분석 결과가 있어 이 리포트에서 S 등급입니다. 다만 국내 탄산음료에서 알룰로스만 쓰는 제품은 드물고 대개 다른 감미료와 섞여 최종 등급이 내려갑니다.</p></details>
 <details><summary>코카콜라 제로에는 어떤 감미료가 들어가나요?</summary><p>아스파탐과 아세설팜칼륨입니다. 식약처 신고 원재료에는 '식품첨가물혼합제제'로만 적혀 있어 감미료가 보이지 않아, 판매처의 상품정보제공 고시 표시사항으로 확인해 출처와 함께 표시했습니다.</p></details>
 <details><summary>제로라고 적혀 있으면 칼로리가 정말 0인가요?</summary><p>아닙니다. 제로칼로리 표기 기준은 100mL당 4kcal 미만이라 소량의 열량과 당류가 있어도 적법하게 '제로'를 붙일 수 있습니다. 이 리포트는 제로를 표방하면서 신고 원재료에 당류가 있는 제품을 F 등급으로 따로 표시합니다.</p></details>
+<details><summary>제가 마시는 음료가 대부분 B~C 등급인데 걱정해야 하나요?</summary><p>B~C 가 국내 제로 음료의 대다수입니다. 이 등급은 <b>제로 음료끼리 비교한 결과</b>이지 설탕 음료와 비교한 것이 아닙니다. 같은 제품의 일반판은 대부분 F 등급이므로, B~C 를 마시는 것은 이미 당류를 크게 줄인 선택입니다. B·C 의 근거도 '상승 신호가 관찰됐다' 수준이지 인과관계가 확정된 것이 아닙니다. 더 낮추고 싶다면 S·A 등급 후보를 보면 되지만, 국내에 선택지가 많지는 않습니다.</p></details>
 <details><summary>에리스리톨은 피해야 하나요?</summary><p>혈당에는 무해하지만 혈소판 반응성·심혈관 사건과 연관된 관찰연구 신호가 있어 이 리포트에서 C 등급입니다. 인과관계는 확정되지 않았습니다. 스테비아 제품은 대부분 에리스리톨과 혼합되므로 원재료를 직접 확인해야 합니다.</p></details>
 <details><summary>이 데이터는 어디서 온 것인가요?</summary><p>식품의약품안전처 식품(첨가물)품목제조보고 원재료(C002)에서 제품명·업소명·원재료 전문을 수집하고, 품목제조보고번호로 공공데이터포털 전국통합식품영양성분정보(15100066)의 열량·당류를 조인했습니다. 추정으로 채우지 않으며 매월 갱신합니다.</p></details>
 </section>

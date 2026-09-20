@@ -64,7 +64,7 @@
     "@id": "https://zero-drinks-tier.vercel.app/#website"
    },
    "inLanguage": "ko",
-   "dateModified": "2026-09-19",
+   "dateModified": "2026-09-20",
    "datePublished": "2026-08-09",
    "temporalCoverage": "2026-08-09/..",
    "measurementTechnique": "식품의약품안전처 품목제조보고 원재료 전문에서 감미료 표기를 탐지하고, 품목제조보고번호로 공공데이터포털 영양성분 표준데이터를 조인",
@@ -137,6 +137,14 @@
    "mainEntity": [
     {
      "@type": "Question",
+     "name": "티어는 어떤 기준으로 나눈 건가요?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "맛·가격·인기는 보지 않습니다. 피어리뷰 연구에 보고된 대사 영향만 놓고 나눴습니다. 열량이 얼마나 되는지, 혈당·인슐린을 움직인다는 근거가 있는지, 그 근거가 얼마나 강한지 세 가지입니다. 그래서 맛있는 제품이 낮은 등급을 받고 덜 팔리는 제품이 높은 등급을 받기도 합니다. 정부 기관의 공식 평가가 아니라 인용된 연구를 근거로 한 이 프로젝트의 해석이며, 의학적 조언이 아닙니다."
+     }
+    },
+    {
+     "@type": "Question",
      "name": "제로 음료 중 가장 나은 감미료는 무엇인가요?",
      "acceptedAnswer": {
       "@type": "Answer",
@@ -157,6 +165,14 @@
      "acceptedAnswer": {
       "@type": "Answer",
       "text": "아닙니다. 제로칼로리 표기 기준은 100mL당 4kcal 미만이라 소량의 열량과 당류가 있어도 적법하게 '제로'를 붙일 수 있습니다. 이 리포트는 제로를 표방하면서 신고 원재료에 당류가 있는 제품을 F 등급으로 따로 표시합니다."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "제가 마시는 음료가 대부분 B~C 등급인데 걱정해야 하나요?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "B~C 가 국내 제로 음료의 대다수입니다. 이 등급은 제로 음료끼리 비교한 결과이지 설탕 음료와 비교한 것이 아닙니다. 같은 제품의 일반판은 대부분 F 등급이므로, B~C 를 마시는 것은 이미 당류를 크게 줄인 선택입니다. B·C 의 근거도 '상승 신호가 관찰됐다' 수준이지 인과관계가 확정된 것이 아닙니다. 더 낮추고 싶다면 S·A 등급 후보를 보면 되지만, 국내에 선택지가 많지는 않습니다."
      }
     },
     {
@@ -421,7 +437,13 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
 @media(max-width:640px){.hero{padding:30px 0 6px}.hero h1{font-size:24px}}
 
 /* 검색창: 화면에서 가장 큰 폼 컨트롤. 아래 섹션과 여백으로 확실히 끊는다 */
-.sbox{position:relative;width:100%;max-width:620px;margin:14px auto 0}
+.sbox{position:relative;width:100%;max-width:620px;margin:14px auto 0;z-index:40}
+/* 제안이 열리면 뒤를 덮는다. 좁은 화면에서 목록과 아래 카드가 같은 무게로
+   보여 어디까지가 검색 결과인지 구분이 안 됐다. */
+.scrim{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.42);
+       opacity:0;pointer-events:none;transition:opacity .12s}
+body.sg-open .scrim{opacity:1;pointer-events:auto}
+@media(min-width:761px){body.sg-open .scrim{opacity:0;pointer-events:none}}
 .sbox form{position:relative;display:flex;align-items:center}
 .sbox .s-ico{position:absolute;left:18px;width:21px;height:21px;fill:none;
              stroke:var(--muted);stroke-width:2.2;stroke-linecap:round;pointer-events:none}
@@ -439,9 +461,12 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
              align-items:center;justify-content:center}
 
 /* 자동완성: 입력 바로 아래에 떠서 첫 클릭까지의 거리를 없앤다 */
-.sg{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;
-    background:var(--surface);border:1px solid var(--border-strong);
-    box-shadow:var(--shadow);max-height:352px;overflow-y:auto}
+.sg{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:40;
+    background:var(--surface);border:2px solid var(--accent);
+    box-shadow:0 12px 32px rgba(0,0,0,.28);max-height:60vh;overflow-y:auto}
+.sg-head{position:sticky;top:0;background:var(--accent-soft);color:var(--accent-ink);
+         font-size:11.5px;font-weight:700;padding:7px 14px;
+         border-bottom:1px solid var(--accent-border)}
 .sg a{display:flex;align-items:center;gap:10px;padding:11px 14px;
       text-decoration:none;color:var(--text);font-size:14px}
 .sg a+a{border-top:1px solid var(--hair)}
@@ -476,7 +501,7 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .lsec{margin:34px 0 12px;font-size:17px}
 .lsec-sub{font-size:12.5px;color:var(--muted);font-weight:400;margin-left:8px}
 
-/* 감미료 등급 한눈에 — 7개를 한 줄로 훑는다. 근거 문장은 /report.html 로 보낸다 */
+/* 한눈에 보는 감미료 티어 — 7개를 한 줄로 훑는다. 근거 문장은 /report.html 로 보낸다 */
 .tstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);
         border:1px solid var(--border);margin:0 0 30px}
 .tcell{display:flex;flex-direction:column;align-items:center;gap:4px;
@@ -548,11 +573,12 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
     <div class="sg" id="sg" role="listbox" aria-label="검색 제안" hidden></div>
   </form>
 </div>
+<div class="scrim" aria-hidden="true"></div>
 
 <h2 class="lsec">많이 찾는 제품</h2>
 <div class="picks"><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EC%BD%94%EC%B9%B4%EC%BD%9C%EB%9D%BC-%EC%A0%9C%EB%A1%9C.html"><span class="tier-chip" data-tier="B">B</span><span class="pick-name">코카콜라 제로<i class="pick-kcal">0 kcal / 100ml</i></span><span class="pick-ing">아세설팜, 아스파탐</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%ED%8E%A9%EC%8B%9C%EC%A0%9C%EB%A1%9C%EC%8A%88%EA%B1%B0.html"><span class="tier-chip" data-tier="B">B</span><span class="pick-name">펩시제로슈거<i class="pick-kcal">1 kcal / 100ml</i></span><span class="pick-ing">아스파탐, 아세설팜, 수크랄로스</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EC%B9%A0%EC%84%B1%EC%82%AC%EC%9D%B4%EB%8B%A4%EC%A0%9C%EB%A1%9C.html"><span class="tier-chip" data-tier="C">C</span><span class="pick-name">칠성사이다제로<i class="pick-kcal">0 kcal / 100ml</i></span><span class="pick-ing">알룰로오스, 스테비올배당체, 수크랄로스, 에리스리톨</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EB%82%98%EB%9E%91%EB%93%9C%EC%82%AC%EC%9D%B4%EB%8B%A4-%EC%A0%9C%EB%A1%9C.html"><span class="tier-chip" data-tier="B">B</span><span class="pick-name">나랑드사이다 제로<i class="pick-kcal">0 kcal / 100ml</i></span><span class="pick-ing">아세설팜, 수크랄로스</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EC%8A%A4%ED%94%84%EB%9D%BC%EC%9D%B4%ED%8A%B8-%EC%A0%9C%EB%A1%9C.html"><span class="tier-chip" data-tier="C">C</span><span class="pick-name">스프라이트 제로<i class="pick-kcal">0 kcal / 100ml</i></span><span class="pick-ing">스테비올배당체, 아세설팜, 수크랄로스, 에리스리톨</span></a><a class="pick" href="https://zero-drinks-tier.vercel.app/p/%EB%B0%80%ED%82%A4%EC%8A%A4%EC%A0%9C%EB%A1%9C.html"><span class="tier-chip" data-tier="B">B</span><span class="pick-name">밀키스제로<i class="pick-kcal">3 kcal / 100ml</i></span><span class="pick-ing">알룰로오스, 수크랄로스, 아세설팜</span></a></div>
 
-<h2 class="lsec">감미료 등급 한눈에<span class="lsec-sub">여러 감미료가 섞이면 가장 나쁜 등급이 최종 등급</span></h2>
+<h2 class="lsec">한눈에 보는 감미료 티어<span class="lsec-sub">여러 감미료가 섞이면 가장 나쁜 등급이 최종 등급입니다</span></h2>
 <div class="tstrip"><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="무감미료"><span class="tier-chip" data-tier="무감미료">무</span><span class="tcell-n">5개</span><span class="tcell-ing">감미료 표기 없음</span><span class="tcell-gist">없거나 확인 불가</span></a><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="S"><span class="tier-chip" data-tier="S">S</span><span class="tcell-n">3개</span><span class="tcell-ing">알룰로스·타가토스</span><span class="tcell-gist">혈당 영향 없음</span></a><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="A"><span class="tier-chip" data-tier="A">A</span><span class="tcell-n">24개</span><span class="tcell-ing">스테비아·나한과</span><span class="tcell-gist">0kcal, 혈당 무영향</span></a><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="B"><span class="tier-chip" data-tier="B">B</span><span class="tcell-n">322개</span><span class="tcell-ing">수크랄로스·아스파탐</span><span class="tcell-gist">인슐린 상승 신호</span></a><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="C"><span class="tier-chip" data-tier="C">C</span><span class="tcell-n">257개</span><span class="tcell-ing">에리스리톨·자일리톨</span><span class="tcell-gist">심혈관 신호(미확정)</span></a><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="D"><span class="tier-chip" data-tier="D">D</span><span class="tcell-n">0개</span><span class="tcell-ing">말티톨 등 당알코올</span><span class="tcell-gist">실제 열량 있음</span></a><a class="tcell" href="https://zero-drinks-tier.vercel.app/report.html" data-tier="F"><span class="tier-chip" data-tier="F">F</span><span class="tcell-n">15개</span><span class="tcell-ing">설탕·액상과당</span><span class="tcell-gist">제로가 아님</span></a></div>
 
 <h2 class="lsec">찾는 조건으로 보기</h2>
@@ -565,11 +591,11 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
 
 <section class="faq">
 <h2 class="lsec">자주 묻는 질문</h2>
-<details><summary>제로 음료 중 가장 나은 감미료는 무엇인가요?</summary><p>알룰로스와 타가토스입니다. 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 메타분석 결과가 있어 이 리포트에서 S 등급입니다. 다만 국내 탄산음료에서 알룰로스만 쓰는 제품은 드물고 대개 다른 감미료와 섞여 최종 등급이 내려갑니다.</p></details><details><summary>코카콜라 제로에는 어떤 감미료가 들어가나요?</summary><p>아스파탐과 아세설팜칼륨입니다. 식약처 신고 원재료에는 '식품첨가물혼합제제'로만 적혀 있어 감미료가 보이지 않아, 판매처의 상품정보제공 고시 표시사항으로 확인해 출처와 함께 표시했습니다.</p></details><details><summary>제로라고 적혀 있으면 칼로리가 정말 0인가요?</summary><p>아닙니다. 제로칼로리 표기 기준은 100mL당 4kcal 미만이라 소량의 열량과 당류가 있어도 적법하게 '제로'를 붙일 수 있습니다. 이 리포트는 제로를 표방하면서 신고 원재료에 당류가 있는 제품을 F 등급으로 따로 표시합니다.</p></details><details><summary>에리스리톨은 피해야 하나요?</summary><p>혈당에는 무해하지만 혈소판 반응성·심혈관 사건과 연관된 관찰연구 신호가 있어 이 리포트에서 C 등급입니다. 인과관계는 확정되지 않았습니다. 스테비아 제품은 대부분 에리스리톨과 혼합되므로 원재료를 직접 확인해야 합니다.</p></details><details><summary>이 데이터는 어디서 온 것인가요?</summary><p>식품의약품안전처 식품(첨가물)품목제조보고 원재료(C002)에서 제품명·업소명·원재료 전문을 수집하고, 품목제조보고번호로 공공데이터포털 전국통합식품영양성분정보(15100066)의 열량·당류를 조인했습니다. 추정으로 채우지 않으며 매월 갱신합니다.</p></details>
+<details><summary>티어는 어떤 기준으로 나눈 건가요?</summary><p>맛·가격·인기는 보지 않습니다. <b>피어리뷰 연구에 보고된 대사 영향</b>만 놓고 나눴습니다. 열량이 얼마나 되는지, 혈당·인슐린을 움직인다는 근거가 있는지, 그 근거가 얼마나 강한지 세 가지입니다. 그래서 맛있는 제품이 낮은 등급을 받고 덜 팔리는 제품이 높은 등급을 받기도 합니다. 정부 기관의 공식 평가가 아니라 인용된 연구를 근거로 한 이 프로젝트의 해석이며, 의학적 조언이 아닙니다.</p></details><details><summary>제로 음료 중 가장 나은 감미료는 무엇인가요?</summary><p>알룰로스와 타가토스입니다. 0.2~0.4 kcal/g 이고 식후 혈당을 오히려 낮춘다는 메타분석 결과가 있어 이 리포트에서 S 등급입니다. 다만 국내 탄산음료에서 알룰로스만 쓰는 제품은 드물고 대개 다른 감미료와 섞여 최종 등급이 내려갑니다.</p></details><details><summary>코카콜라 제로에는 어떤 감미료가 들어가나요?</summary><p>아스파탐과 아세설팜칼륨입니다. 식약처 신고 원재료에는 '식품첨가물혼합제제'로만 적혀 있어 감미료가 보이지 않아, 판매처의 상품정보제공 고시 표시사항으로 확인해 출처와 함께 표시했습니다.</p></details><details><summary>제로라고 적혀 있으면 칼로리가 정말 0인가요?</summary><p>아닙니다. 제로칼로리 표기 기준은 100mL당 4kcal 미만이라 소량의 열량과 당류가 있어도 적법하게 '제로'를 붙일 수 있습니다. 이 리포트는 제로를 표방하면서 신고 원재료에 당류가 있는 제품을 F 등급으로 따로 표시합니다.</p></details><details><summary>제가 마시는 음료가 대부분 B~C 등급인데 걱정해야 하나요?</summary><p>B~C 가 국내 제로 음료의 대다수입니다. 이 등급은 <b>제로 음료끼리 비교한 결과</b>이지 설탕 음료와 비교한 것이 아닙니다. 같은 제품의 일반판은 대부분 F 등급이므로, B~C 를 마시는 것은 이미 당류를 크게 줄인 선택입니다. B·C 의 근거도 '상승 신호가 관찰됐다' 수준이지 인과관계가 확정된 것이 아닙니다. 더 낮추고 싶다면 S·A 등급 후보를 보면 되지만, 국내에 선택지가 많지는 않습니다.</p></details><details><summary>에리스리톨은 피해야 하나요?</summary><p>혈당에는 무해하지만 혈소판 반응성·심혈관 사건과 연관된 관찰연구 신호가 있어 이 리포트에서 C 등급입니다. 인과관계는 확정되지 않았습니다. 스테비아 제품은 대부분 에리스리톨과 혼합되므로 원재료를 직접 확인해야 합니다.</p></details><details><summary>이 데이터는 어디서 온 것인가요?</summary><p>식품의약품안전처 식품(첨가물)품목제조보고 원재료(C002)에서 제품명·업소명·원재료 전문을 수집하고, 품목제조보고번호로 공공데이터포털 전국통합식품영양성분정보(15100066)의 열량·당류를 조인했습니다. 추정으로 채우지 않으며 매월 갱신합니다.</p></details>
 </section>
 
 <footer>
-<div>출처: 식품의약품안전처 식품(첨가물)품목제조보고(원재료) · 공공데이터포털 전국통합식품영양성분정보. 기준일 2026-09-19.</div>
+<div>출처: 식품의약품안전처 식품(첨가물)품목제조보고(원재료) · 공공데이터포털 전국통합식품영양성분정보. 기준일 2026-09-20.</div>
 <div>열량·당류는 <b>100mL(또는 100g)당</b> 값입니다. 제품 라벨은 한 병 전체 기준이라 숫자가 달라 보일 수 있습니다.</div>
 <div>티어는 인용된 연구를 근거로 한 이 프로젝트의 해석이며 정부 기관의 공식 평가가 아닙니다. 의학적 조언이 아닙니다.</div>
 <div>데이터 &copy; 식품의약품안전처 &middot; 공공데이터포털 &middot; <a href="https://github.com/gulf1324/zero-drinks-tier">소스·산출 방법</a></div>
@@ -586,7 +612,12 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
   var cur = -1, items = [];
   // 표기 흔들림 흡수: 공백·하이픈·가운뎃점류를 지우고 비교한다 (norm_name 과 같은 취지)
   function norm(s) { return s.replace(/[\s-·•●]+/g, '').toLowerCase(); }
-  function hide() { box.hidden = true; cur = -1; items = []; q.setAttribute('aria-expanded', 'false'); }
+  function hide() {
+    box.hidden = true; cur = -1; items = [];
+    q.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('sg-open');
+  }
+  function show() { box.hidden = false; document.body.classList.add('sg-open'); }
   function run() {
     var s = norm(q.value);
     if (s.length < 1) return hide();
@@ -600,15 +631,17 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
     items = hit.slice(0, 8);
     if (!items.length) {
       box.innerHTML = '<div class="sg-none">일치하는 제품이 없습니다. 엔터를 누르면 전체 목록에서 찾습니다.</div>';
-      box.hidden = false; return;
+      show(); return;
     }
-    box.innerHTML = items.map(function (r, i) {
+    var head = '<div class="sg-head">검색 결과 ' + hit.length + '개' +
+               (hit.length > items.length ? ' 중 ' + items.length + '개 표시' : '') + '</div>';
+    box.innerHTML = head + items.map(function (r, i) {
       return '<a role="option" id="sg' + i + '" href="' + BASE + encodeURIComponent(r.g) + '.html">' +
              '<span class="tier-chip" data-tier="' + r.t + '">' +
              (r.t === '무감미료' ? '무' : r.t) + '</span>' +
              '<b>' + r.n + '</b><span>' + (r.s || '') + '</span></a>';
     }).join('');
-    box.hidden = false; q.setAttribute('aria-expanded', 'true');
+    show(); q.setAttribute('aria-expanded', 'true');
   }
   function move(d) {
     if (box.hidden || !items.length) return;
@@ -631,6 +664,8 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
   document.addEventListener('click', function (e) {
     if (!form.contains(e.target)) hide();
   });
+  var scrim = document.querySelector('.scrim');
+  if (scrim) scrim.addEventListener('click', hide);
 })();
 </script>
 <script>
