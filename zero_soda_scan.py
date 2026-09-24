@@ -380,6 +380,21 @@ def load_raw(path):
     return load_raw_full(path)[0]
 
 
+def raw_fetched_date(path):
+    """C002 를 수집한 날짜(YYYY-MM-DD). 페이지에 보이는 '기준일'은 이것이다.
+
+    빌드한 날짜를 기준일로 찍으면 데이터가 그대로여도 빌드할 때마다 페이지가
+    바뀐다. 그러면 사이트맵 lastmod(데이터 기준)와 페이지 내용이 어긋나고,
+    Bing 이 '사이트맵이 낡았다'고 경고한다 (2026-09-21 report.html 에서 실제로).
+    """
+    try:
+        with open(path, encoding="utf-8") as f:
+            v = json.load(f).get("fetched_at")
+        return v[:10] if v else None
+    except (OSError, ValueError, AttributeError):
+        return None
+
+
 # ── Step 2: nutrition ────────────────────────────────────────
 NUTRI_URL = "https://www.data.go.kr/download/standard.json"
 NUTRI_PK = "15100066"
@@ -1479,7 +1494,7 @@ __THEME_CSS__
       <span class="hint">행을 누르면 원재료 전문이 열립니다</span>
       <a class="alllink" href="__PAGE_URL__products.html">전체 목록 한 페이지로 보기</a>
     </div>
-    <div class="genmeta">생성 __GENERATED_AT__ · 대상 __TYPES__ · 설탕이 든 일반 음료는 제외했으나, 제로를 표방하면서 당류가 있는 제품은 F 티어로 남겼습니다.</div>
+    <div class="genmeta">기준일 __DATA_DATE__ (식약처 수집일) · 대상 __TYPES__ · 설탕이 든 일반 음료는 제외했으나, 제로를 표방하면서 당류가 있는 제품은 F 티어로 남겼습니다.</div>
   </section>
   <div class="badges" id="badges">__BADGES__<button class="clear-tiers" id="clearTiers" disabled>전체 해제</button></div>
   <div class="warn" id="fakeZeroBanner">제로 표기 제품 __ZERO_TOTAL__개 중 __FAKE_ZERO__개는 신고 원재료에 당류가 있습니다</div>
@@ -1906,7 +1921,7 @@ def write_html(records, meta, meta_info, path):
     fake_zero = sum(1 for r in records if r["제로사칭"] == "Y")
 
     html = _HTML_TEMPLATE
-    html = html.replace("__GENERATED_AT__", meta_info["generated_at"])
+    html = html.replace("__DATA_DATE__", meta_info["data_date"])
     html = html.replace("__TYPES__", ", ".join(meta_info["types"]) or "-")
     html = html.replace("__TOTAL__", str(len(records)))
     html = html.replace("__PAGE_URL__", PAGE_URL)
@@ -1927,10 +1942,10 @@ def write_html(records, meta, meta_info, path):
     html = html.replace(
         "__SITE_LD__",
         '<script type="application/ld+json">'
-        + json.dumps(site_ld(len(records), meta_info["generated_at"][:10], "report.html"),
+        + json.dumps(site_ld(len(records), meta_info["data_date"], "report.html"),
                      ensure_ascii=False, indent=1) + "</script>")
     html = html.replace("__GA__", _GA_SNIPPET.replace("__GA_ID__", GA_ID) if GA_ID else "")
-    html = html.replace("__GENERATED_DATE__", meta_info["generated_at"][:10])
+    html = html.replace("__GENERATED_DATE__", meta_info["data_date"])
     html = html.replace("__BADGES__", badges_html)
     html = html.replace("__ZERO_TOTAL__", str(zero_total))
     html = html.replace("__FAKE_ZERO__", str(fake_zero))
@@ -2009,8 +2024,11 @@ def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False
         w.writeheader()
         w.writerows(records)
 
+    generated_at = time.strftime("%Y-%m-%d %H:%M:%S")
     meta_info = {
-        "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "generated_at": generated_at,
+        # 화면에 보이는 기준일. 빌드 시각이 아니라 데이터 수집일이다.
+        "data_date": raw_fetched_date(raw_path) or generated_at[:10],
         "types": types or sorted({r["식품유형"] for r in records if r["식품유형"]}),
     }
     # 리포트가 제품별 페이지로 링크하므로 슬러그를 여기서 확정한다.
@@ -2064,6 +2082,7 @@ def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False
         "recipe_changed": sum(1 for r in records if r["배합변경"] == "Y"),
         "paired": sum(1 for r in records if r["일반판"]),
         "generated_at": meta_info["generated_at"],
+        "data_date": meta_info["data_date"],
     }
 
 
@@ -3927,7 +3946,10 @@ def publish_docs(docs_html, out_html, stats):
     """
     docs_dir = os.path.dirname(docs_html) or "."
     os.makedirs(docs_dir, exist_ok=True)
-    lastmod = stats["generated_at"][:10]
+    # 페이지에 보이는 기준일은 데이터 수집일, 사이트맵에서 '바뀐 날'로 찍는
+    # 날짜는 실제로 빌드해서 내용이 바뀐 날이다. 둘을 섞으면 어긋난다.
+    lastmod = stats.get("data_date") or stats["generated_at"][:10]
+    stamp = stats["generated_at"][:10]
 
     # 표·필터가 있는 전체 리포트는 /report.html 이다. 메인에 626행 표를 두면
     # 스크롤이 13화면이 되고 그 아래 섹션은 아무도 보지 못한다 (실측 12,633px).
@@ -3940,7 +3962,7 @@ def publish_docs(docs_html, out_html, stats):
         f.write(landing_page(stats["records"], lastmod, stats))
     print(f"[docs] 메인 랜딩 -> {docs_html}")
 
-    slugs = write_seo_files(docs_dir, lastmod, stats["records"])
+    slugs = write_seo_files(docs_dir, lastmod, stats["records"], stamp=stamp)
     return docs_dir, slugs
 
 
@@ -3955,14 +3977,18 @@ def publish_docs(docs_html, out_html, stats):
 # HTML 에는 기준일 문구가 들어 있어 매번 달라지기 때문이다.
 
 
-def load_lastmod_store(path=DEFAULT_LASTMOD_STORE):
+def load_lastmod_store(path=None):
+    # 기본값을 인자에 박지 않는다. 정의 시점에 고정돼, 테스트가 경로를 바꿔도
+    # 실제 저장소를 덮어쓴다 (테스트 한 번에 635개가 10개로 줄었다).
+    path = path or DEFAULT_LASTMOD_STORE
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
             return json.load(f)
     return {}
 
 
-def save_lastmod_store(store, path=DEFAULT_LASTMOD_STORE):
+def save_lastmod_store(store, path=None):
+    path = path or DEFAULT_LASTMOD_STORE
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(store, f, ensure_ascii=False, indent=1, sort_keys=True)
 
@@ -3992,7 +4018,7 @@ def _product_fingerprint(rec):
              "카페인", "아스파탐", "이력")}
 
 
-def write_seo_files(docs_dir, lastmod, records):
+def write_seo_files(docs_dir, lastmod, records, stamp=None, store_path=None):
     """sitemap.xml / robots.txt / 정적 페이지 / llms.txt 를 한 번에 생성한다.
 
     Vercel 은 도메인 루트로 서빙하므로 robots.txt 가 실제로 읽힌다
@@ -4017,29 +4043,31 @@ def write_seo_files(docs_dir, lastmod, records):
 
     # URL 마다 '무엇이 바뀌면 이 페이지가 바뀌는가'를 지문으로 잡는다.
     # 전체 URL 에 빌드 날짜를 찍으면 Google 이 lastmod 를 통째로 무시한다.
-    store = load_lastmod_store()
+    store = load_lastmod_store(store_path)
     dist = {t: sum(1 for r in records if r["티어"] == t) for t in TIER_RANK}
     site_fp = {"총": len(records), "분포": dist, "인기": POPULAR_PICKS,
-               "faq": [q for q, *_ in _FAQ]}
+               "faq": [q for q, *_ in _FAQ], "기준일": lastmod}
     by_slug = {slug_url(r["슬러그"]): r for r in records}
 
     urls = [(PAGE_URL, "1.0", "monthly", site_fp),
             (f"{PAGE_URL}report.html", "0.9", "monthly",
-             {"rows": [_product_fingerprint(r) for r in records]})]
+             {"rows": [_product_fingerprint(r) for r in records], "기준일": lastmod})]
     for s in slugs:
         # 목록·랜딩은 실려 있는 제품 집합이 바뀔 때만 바뀐다
         urls.append((f"{PAGE_URL}{s}", "0.8", "monthly",
-                     {"page": s, "rows": [_product_fingerprint(r) for r in records]}))
+                     {"page": s, "rows": [_product_fingerprint(r) for r in records],
+                      "기준일": lastmod}))
     # 제품별 페이지가 이 사이트의 롱테일이다. 사이트맵에 전부 넣는다.
     for s in prod:
         urls.append((f"{PAGE_URL}{s}", "0.6", "monthly",
-                     _product_fingerprint(by_slug[s])))
+                     {**_product_fingerprint(by_slug[s]), "기준일": lastmod}))
 
     before = {k: v.get("hash") for k, v in store.items()}
     body = ""
     fresh = 0
+    today = stamp or lastmod
     for loc, pri, freq, fp in urls:
-        lm = resolve_lastmod(store, loc, fp, lastmod)
+        lm = resolve_lastmod(store, loc, fp, today)
         if before.get(loc) != store[loc]["hash"]:
             fresh += 1
         body += (f"  <url>\n    <loc>{loc}</loc>\n    <lastmod>{lm}</lastmod>\n"
@@ -4049,7 +4077,7 @@ def write_seo_files(docs_dir, lastmod, records):
     live = {loc for loc, *_ in urls}
     for gone in [k for k in store if k not in live]:
         del store[gone]
-    save_lastmod_store(store)
+    save_lastmod_store(store, store_path)
     print(f"[seo] lastmod 내용이 바뀐 {fresh}개만 갱신 / {len(urls) - fresh}개 유지")
     sitemap = ('<?xml version="1.0" encoding="UTF-8"?>\n'
                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'

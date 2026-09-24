@@ -1435,12 +1435,9 @@ class RobotsPolicyTests(unittest.TestCase):
                      "일반판": "", "일반판티어": "", "표시원재료": "",
                      "유통명출처": "", "배합변경": "", "티어불일치": "",
                      "이력행수": 1}]
-            store = z.DEFAULT_LASTMOD_STORE
-            z.DEFAULT_LASTMOD_STORE = os.path.join(d, "lm.json")
-            try:
-                z.write_seo_files(d, "2026-01-01", recs)
-            finally:
-                z.DEFAULT_LASTMOD_STORE = store
+            # 실제 저장소를 건드리지 않도록 임시 경로를 명시적으로 넘긴다
+            z.write_seo_files(d, "2026-01-01", recs,
+                              store_path=os.path.join(d, "lm.json"))
             return open(os.path.join(d, "robots.txt"), encoding="utf-8").read()
         finally:
             shutil.rmtree(d, ignore_errors=True)
@@ -1469,4 +1466,91 @@ class RobotsPolicyTests(unittest.TestCase):
         for m in re.finditer(r"User-agent: (\S+)\n((?:(?!User-agent).*\n)*)", robots):
             self.assertIn("Allow: /", m.group(2), f"{m.group(1)} 블록")
         self.assertIn("Sitemap: ", robots)
+
+class StableOutputTests(unittest.TestCase):
+    """데이터가 그대로면 산출물도 한 글자도 바뀌지 않아야 한다.
+
+    리포트가 빌드할 때마다 '생성 2026-09-20 12:14:23' 처럼 초 단위 시각을 찍었다.
+    데이터가 그대로여도 HTML 이 바뀌니, 데이터 기준으로 정직하게 고정한 사이트맵
+    lastmod 와 어긋났고 Bing 이 '사이트맵이 낡았다'(High)로 경고했다 (2026-09-24).
+    """
+
+    def test_report_template_carries_no_build_clock(self):
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        tpl = re.search(r'_HTML_TEMPLATE = r"""(.*?)\n"""', src, re.S).group(1)
+        self.assertNotIn("__GENERATED_AT__", tpl, "빌드 시각이 페이지에 박힌다")
+        self.assertIn("__DATA_DATE__", tpl)
+
+    def test_visible_date_is_the_collection_date_not_the_build_date(self):
+        d = tempfile.mkdtemp()
+        try:
+            p = os.path.join(d, "raw.json")
+            with open(p, "w", encoding="utf-8") as f:
+                json.dump({"fetched_at": "2026-01-02T03:04:05", "rows": []}, f)
+            self.assertEqual(z.raw_fetched_date(p), "2026-01-02")
+            with open(p, "w", encoding="utf-8") as f:
+                json.dump({"rows": []}, f)
+            self.assertIsNone(z.raw_fetched_date(p))
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
+    def test_same_inputs_render_identical_product_pages(self):
+        rec = {"제품명": "테스트 제로", "티어": "B", "조합": "B",
+               "감미료": "수크랄로스(B,1)", "열량": "0", "당류": "0.00",
+               "용량": "500ml", "기준량": "100ml", "업소명": "공장",
+               "식품유형": "탄산음료", "보고일자": "20260101",
+               "원재료전문": "정제수", "등록명": "", "이력": [],
+               "감미료미표기": "", "아스파탐": "", "카페인": ""}
+        recs = [rec]
+        z.assign_slugs(recs)
+        a = z.product_page(rec, recs, "2026-01-02")
+        import time as _t
+        _t.sleep(1.1)
+        b = z.product_page(rec, recs, "2026-01-02")
+        self.assertEqual(a, b, "같은 입력인데 렌더가 달라졌다 - 시각 의존이 남았다")
+
+    def test_fingerprints_include_the_visible_date(self):
+        # 수집일이 바뀌면 모든 페이지의 '기준일' 문구가 바뀐다.
+        # 지문에 기준일이 없으면 내용은 바뀌는데 lastmod 는 그대로가 된다.
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        body = src[src.index("def write_seo_files"):src.index("ai_agents = [")]
+        self.assertGreaterEqual(body.count('"기준일": lastmod'), 4)
+        self.assertIn("today = stamp or lastmod", body)
+
+class LastmodStoreIsolationTests(unittest.TestCase):
+    """테스트가 실제 seo_lastmod.json 을 덮어쓰면 안 된다.
+
+    load/save 의 기본 경로를 인자 기본값으로 박아 두었더니, 테스트가 경로를
+    바꿔치기해도 함수는 정의 시점의 실제 경로를 썼다. 테스트 한 번에 저장소가
+    635개에서 10개로 줄었고, 다음 빌드가 lastmod 를 전부 오늘로 되돌렸다.
+    """
+
+    def test_write_seo_files_honours_an_explicit_store_path(self):
+        real = z.DEFAULT_LASTMOD_STORE
+        before = open(real, "rb").read() if os.path.exists(real) else None
+        d = tempfile.mkdtemp()
+        try:
+            recs = [{"제품명": "격리 테스트", "티어": "B", "조합": "B",
+                     "감미료": "수크랄로스(B,1)", "열량": "0", "당류": "0.00",
+                     "용량": "500ml", "기준량": "100ml", "업소명": "공장",
+                     "식품유형": "탄산음료", "보고일자": "20260101",
+                     "원재료전문": "정제수", "등록명": "", "이력": [],
+                     "감미료미표기": "", "아스파탐": "", "카페인": "",
+                     "제로표기": "Y", "실측제로": "Y", "제로사칭": "",
+                     "일반판": "", "일반판티어": "", "표시원재료": "",
+                     "유통명출처": "", "배합변경": "", "티어불일치": "",
+                     "이력행수": 1}]
+            tmp = os.path.join(d, "lm.json")
+            z.write_seo_files(d, "2026-01-01", recs, store_path=tmp)
+            self.assertTrue(os.path.exists(tmp))
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+        after = open(real, "rb").read() if os.path.exists(real) else None
+        self.assertEqual(before, after, "테스트가 실제 lastmod 저장소를 덮어썼다")
+
+    def test_store_functions_resolve_the_path_at_call_time(self):
+        import inspect
+        for fn in (z.load_lastmod_store, z.save_lastmod_store):
+            default = inspect.signature(fn).parameters["path"].default
+            self.assertIsNone(default, f"{fn.__name__} 가 경로를 정의 시점에 고정한다")
 
