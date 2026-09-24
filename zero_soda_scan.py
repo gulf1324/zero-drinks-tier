@@ -2289,8 +2289,11 @@ def sync(key, types, raw_path, cache_path, out_csv, out_html, docs_html, force=F
     stats = build(raw_path, cache_path, out_csv, out_html, None)
 
     if docs_html:
-        _, slugs = publish_docs(docs_html, out_html, stats)
-        ping_indexnow([PAGE_URL] + [f"{PAGE_URL}{s}" for s in slugs])
+        _, _, changed = publish_docs(docs_html, out_html, stats)
+        # 내용이 바뀐 URL 만 통보한다. 예전에는 메인+정적 7장(8개)만 보내서
+        # 신규·변경 제품 페이지가 검색엔진에 알려지지 않았다 (2026-09-24 발견).
+        if changed:
+            ping_indexnow(changed)
 
     if update_readme(stats, fetched_at):
         print("[readme] 수집 현황 블록 갱신")
@@ -3962,8 +3965,8 @@ def publish_docs(docs_html, out_html, stats):
         f.write(landing_page(stats["records"], lastmod, stats))
     print(f"[docs] 메인 랜딩 -> {docs_html}")
 
-    slugs = write_seo_files(docs_dir, lastmod, stats["records"], stamp=stamp)
-    return docs_dir, slugs
+    slugs, changed = write_seo_files(docs_dir, lastmod, stats["records"], stamp=stamp)
+    return docs_dir, slugs, changed
 
 
 # ── URL 별 실제 변경일 ────────────────────────────────────────
@@ -4065,11 +4068,13 @@ def write_seo_files(docs_dir, lastmod, records, stamp=None, store_path=None):
     before = {k: v.get("hash") for k, v in store.items()}
     body = ""
     fresh = 0
+    changed_urls = []
     today = stamp or lastmod
     for loc, pri, freq, fp in urls:
         lm = resolve_lastmod(store, loc, fp, today)
         if before.get(loc) != store[loc]["hash"]:
             fresh += 1
+            changed_urls.append(loc)
         body += (f"  <url>\n    <loc>{loc}</loc>\n    <lastmod>{lm}</lastmod>\n"
                  f"    <changefreq>{freq}</changefreq>\n"
                  f"    <priority>{pri}</priority>\n  </url>\n")
@@ -4110,8 +4115,11 @@ def write_seo_files(docs_dir, lastmod, records, stamp=None, store_path=None):
     keyfile = write_indexnow_key(docs_dir)
     if keyfile:
         print(f"[indexnow] 키 파일 {os.path.basename(keyfile)} 생성")
-    print(f"[seo] sitemap.xml({len(urls)} URL) / robots.txt 갱신 (lastmod {lastmod})")
-    return slugs
+    print(f"[seo] sitemap.xml({len(urls)} URL) / robots.txt 갱신 (기준일 {lastmod})")
+    # 이번 빌드에서 내용이 바뀐 URL 도 돌려준다. IndexNow 는 이것만 통보한다 -
+    # 바뀌지 않은 URL 까지 매번 통보하면 lastmod 를 전부 오늘로 찍던 것과 같은
+    # 거짓말이 된다.
+    return slugs, changed_urls
 
 
 def indexnow_key(docs_dir=None):

@@ -1554,3 +1554,45 @@ class LastmodStoreIsolationTests(unittest.TestCase):
             default = inspect.signature(fn).parameters["path"].default
             self.assertIsNone(default, f"{fn.__name__} 가 경로를 정의 시점에 고정한다")
 
+class IndexNowScopeTests(unittest.TestCase):
+    """sync 는 이번 빌드에서 내용이 바뀐 URL 을 전부 통보해야 한다.
+
+    예전에는 메인 + 정적 7장(8개)만 보내서, 2026-09-24 갱신 때 신규 제품 21건의
+    상세 페이지가 검색엔진에 알려지지 않았다.
+    """
+
+    def test_write_seo_files_reports_changed_urls(self):
+        d = tempfile.mkdtemp()
+        try:
+            recs = [{"제품명": n, "티어": "B", "조합": "B", "감미료": "수크랄로스(B,1)",
+                     "열량": "0", "당류": "0.00", "용량": "500ml", "기준량": "100ml",
+                     "업소명": "공장", "식품유형": "탄산음료", "보고일자": "20260101",
+                     "원재료전문": "정제수", "등록명": "", "이력": [],
+                     "감미료미표기": "", "아스파탐": "", "카페인": "",
+                     "제로표기": "Y", "실측제로": "Y", "제로사칭": "",
+                     "일반판": "", "일반판티어": "", "표시원재료": "",
+                     "유통명출처": "", "배합변경": "", "티어불일치": "",
+                     "이력행수": 1} for n in ("가 제로", "나 제로")]
+            store = os.path.join(d, "lm.json")
+            _, first = z.write_seo_files(d, "2026-01-01", recs, store_path=store)
+            prod = [u for u in first if "/p/" in u]
+            self.assertEqual(len(prod), 2, "첫 빌드는 제품 페이지를 전부 바뀐 것으로 본다")
+
+            _, again = z.write_seo_files(d, "2026-01-01", recs, store_path=store)
+            self.assertEqual(again, [], "내용이 같으면 통보할 것이 없어야 한다")
+
+            recs[0]["원재료전문"] = "정제수, 수크랄로스"
+            _, one = z.write_seo_files(d, "2026-01-01", recs, store_path=store)
+            self.assertTrue(any("/p/" in u for u in one), "바뀐 제품 페이지가 빠졌다")
+            self.assertEqual(sum(1 for u in one if "/p/" in u), 1)
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
+    def test_sync_pings_the_changed_set_not_a_fixed_list(self):
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        body = src[src.index("def sync("):src.index("# 커밋 대상.")]
+        self.assertIn("_, _, changed = publish_docs(", body)
+        self.assertIn("ping_indexnow(changed)", body)
+        self.assertNotIn('ping_indexnow([PAGE_URL] + [f"{PAGE_URL}{s}" for s in slugs])', body,
+                         "고정 목록(메인+정적 7장)만 통보하던 방식으로 돌아갔다")
+
