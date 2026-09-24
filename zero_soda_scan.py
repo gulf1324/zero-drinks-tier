@@ -348,12 +348,16 @@ def sort_rows(rows):
     return sorted(rows, key=lambda r: (pick(r, FIELD_REPORT_NO), pick(r, FIELD_NAME)))
 
 
-def write_raw(rows, types, path, fetched_at=None):
+def write_raw(rows, types, path, fetched_at=None, last_sync=None):
     data = {
         "fetched_at": fetched_at or time.strftime("%Y-%m-%dT%H:%M:%S"),
         "types": types,
         "rows": sort_rows(rows),
     }
+    # 직전 갱신에서 무엇이 바뀌었나. 메인 하단에 '최신 데이터로 계속 갱신 중'을
+    # 숫자로 보여주는 근거다 - 로그에만 찍고 버리면 화면에 쓸 수가 없다.
+    if last_sync:
+        data["last_sync"] = last_sync
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=1, sort_keys=True)
 
@@ -378,6 +382,15 @@ def load_raw_full(path):
 
 def load_raw(path):
     return load_raw_full(path)[0]
+
+
+def raw_last_sync(path):
+    """직전 sync 의 {date, added, changed, removed}. 없으면 None."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f).get("last_sync")
+    except (OSError, ValueError):
+        return None
 
 
 def raw_fetched_date(path):
@@ -2029,6 +2042,7 @@ def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False
         "generated_at": generated_at,
         # 화면에 보이는 기준일. 빌드 시각이 아니라 데이터 수집일이다.
         "data_date": raw_fetched_date(raw_path) or generated_at[:10],
+        "last_sync": raw_last_sync(raw_path),
         "types": types or sorted({r["식품유형"] for r in records if r["식품유형"]}),
     }
     # 리포트가 제품별 페이지로 링크하므로 슬러그를 여기서 확정한다.
@@ -2083,6 +2097,7 @@ def build(raw_path, cache_path, out_csv, out_html, find_text, keep_alcohol=False
         "paired": sum(1 for r in records if r["일반판"]),
         "generated_at": meta_info["generated_at"],
         "data_date": meta_info["data_date"],
+        "last_sync": meta_info["last_sync"],
     }
 
 
@@ -2279,7 +2294,10 @@ def sync(key, types, raw_path, cache_path, out_csv, out_html, docs_html, force=F
         r = next(x for x in new_rows if pick(x, FIELD_REPORT_NO) == no)
         print(f"  ~ {pick(r, FIELD_NAME)} / {pick(r, FIELD_MAKER)}")
 
-    write_raw(new_rows, types, raw_path)
+    write_raw(new_rows, types, raw_path,
+              last_sync={"date": time.strftime("%Y-%m-%d"),
+                         "added": len(added), "changed": len(changed),
+                         "removed": len(removed)})
     fetched_at = time.strftime("%Y%m%d")
 
     wanted = {pick(r, FIELD_REPORT_NO).strip() for r in new_rows}
@@ -2620,7 +2638,8 @@ def _rows_table(records, cols=("티어", "제품명", "업소명", "감미료", 
 
 
 def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
-                 depth=0, has_table=True, faqs=None, howto_last=False):
+                 depth=0, has_table=True, faqs=None, howto_last=False,
+                 show_date=True):
     """무JS 정적 페이지 한 장. 가시 텍스트와 JSON-LD 를 어긋나게 만들지 않는다.
 
     순서를 h1 -> 요약 -> 읽는 법 -> 기준일 -> 표 로 고정한다. 읽는 법을 표 아래에
@@ -2631,6 +2650,9 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
     # 질의를 넘기는 GET 폼을 쓴다.
     finder_html = _FINDER_FILTER if has_table else _FINDER_JUMP.replace("{PAGE_URL}", PAGE_URL)
     # FAQ 는 가시 마크업과 LD 를 같은 쌍에서 만든다 (어긋나면 인용 신뢰가 깎인다).
+    # 제품 상세는 사이트 전체 수집일을 싣지 않는다 (show_date=False). 싣으면
+    # 제품이 그대로여도 갱신마다 모든 상세 페이지가 바뀐 것으로 잡힌다.
+    date_part = f"기준일 {lastmod} &middot; " if show_date else ""
     howto_html = f'<h2>읽는 법</h2>\n<div class="howto">{howto}</div>\n'
     body = body + _faq_block(faqs or [])
     # 본문에 __HOWTO__ 자리가 있으면 거기에 넣는다. 제품 상세는 '등급인 이유' 바로
@@ -2676,7 +2698,7 @@ def _static_page(slug, title, desc, h1, summary, howto, body, lastmod, ld=None,
 {finder_html}
 <h2 class="first">요약</h2>
 <p class="lead">{summary}</p>
-{howto_top}<div class="meta">기준일 {lastmod} &middot; 출처 식품의약품안전처 품목제조보고(C002) &middot; 열량·당류는 공공데이터포털 전국통합식품영양성분정보(15100066)</div>
+{howto_top}<div class="meta">{date_part}출처 식품의약품안전처 품목제조보고(C002) &middot; 열량·당류는 공공데이터포털 전국통합식품영양성분정보(15100066)</div>
 {body}{howto_end}
 <footer>
 <div>이 표의 감미료는 제조사가 식약처에 신고한 <b>품목제조보고 원재료 전문</b>에서 탐지한 것입니다. 추정으로 채우지 않으며 데이터에 없으면 표시하지 않습니다.</div>
@@ -3097,7 +3119,8 @@ def product_page(rec, records, lastmod):
             ("기준일", "표의 값은 가장 최근 보고일자 기준입니다. 배합은 자주 바뀝니다."),
         ]),
         "".join(body), lastmod, ld, depth=1, has_table=False,
-        faqs=product_faqs(rec, sw, sugar, total), howto_last=True)
+        faqs=product_faqs(rec, sw, sugar, total), howto_last=True,
+        show_date=False)
 
 
 def write_product_pages(docs_dir, records, lastmod):
@@ -3770,6 +3793,13 @@ body.sg-open .scrim{opacity:1;pointer-events:auto}
          text-decoration:none;color:var(--text)}
 .pills a:hover{border-color:var(--accent);color:var(--accent)}
 
+/* 데이터 업데이트: 푸터 출처 문장 끝에 묻혀 있던 기준일을 따로 꺼냈다 */
+.updated{margin:0 0 26px}
+.updated p{margin:0;background:var(--surface);border:1px solid var(--border);
+           border-left:3px solid var(--accent);padding:12px 15px;font-size:13px;
+           color:var(--text-2);line-height:1.7}
+.updated b{color:var(--text)}
+
 /* FAQ 안의 티어 기준표. 고급 검색의 패널과 같은 내용이지만 FAQ 폭에 맞춰
    글자를 한 단계 줄이고, 좁은 화면에서는 2열로 접는다 */
 .faq-legend{margin:10px 0 2px;font-size:12.5px}
@@ -3876,8 +3906,9 @@ _LANDING_TEMPLATE = """<!DOCTYPE html>
 {faq}
 </section>
 
+{update_html}
 <footer>
-<div>출처: 식품의약품안전처 식품(첨가물)품목제조보고(원재료) · 공공데이터포털 전국통합식품영양성분정보. 기준일 {lastmod}.</div>
+<div>출처: 식품의약품안전처 식품(첨가물)품목제조보고(원재료) · 공공데이터포털 전국통합식품영양성분정보.</div>
 <div>열량·당류는 <b>100mL(또는 100g)당</b> 값입니다. 제품 라벨은 한 병 전체 기준이라 숫자가 달라 보일 수 있습니다.</div>
 <div>티어는 인용된 연구를 근거로 한 이 프로젝트의 해석이며 정부 기관의 공식 평가가 아닙니다. 의학적 조언이 아닙니다.</div>
 <div>데이터 &copy; 식품의약품안전처 &middot; 공공데이터포털 &middot; <a href="https://github.com/gulf1324/zero-drinks-tier">소스·산출 방법</a></div>
@@ -3916,6 +3947,24 @@ def faq_details_html(items, with_extra=True):
     return "\n".join(out)
 
 
+def update_note_html(data_date, last_sync):
+    """메인 하단 '데이터 업데이트' 블록. 계속 갱신되는 사이트라는 신뢰를 숫자로 준다.
+
+    숫자는 sync 가 실제로 비교해 기록한 값만 쓴다 (C002 신고 행 기준). 기록이
+    없으면 날짜만 보여준다 - 없는 숫자를 만들지 않는다.
+    """
+    parts = [f'<b>{_esc(data_date)}</b> 식약처 신고 데이터를 다시 수집해 반영했습니다.']
+    s = last_sync or {}
+    if s.get("date") == data_date and any(s.get(k) for k in ("added", "changed", "removed")):
+        bits = [f"신규 신고 <b>{s['added']}</b>건", f"배합 변경 <b>{s['changed']}</b>건"]
+        if s.get("removed"):
+            bits.append(f"목록에서 제외 <b>{s['removed']}</b>건")
+        parts.append("이번 갱신: " + " · ".join(bits) + ".")
+    return ('<section class="updated" aria-label="데이터 업데이트">'
+            '<h2 class="lsec">데이터 업데이트</h2><p>' + " ".join(parts) +
+            " 신고 원재료가 바뀌면 해당 제품의 티어도 다시 판정합니다.</p></section>")
+
+
 def landing_page(records, lastmod, stats):
     """메인 랜딩. 표를 싣지 않는다 - 검색 하나로 끝내는 페이지다."""
     n = len(records)
@@ -3938,7 +3987,8 @@ def landing_page(records, lastmod, stats):
         picks=_pick_cards(records), tier_strip=tier_strip_html(records),
         pills=guide_pills_html(n),
         names_json=names, suggest_js=_SUGGEST_JS,
-        faq=faq_html)
+        faq=faq_html,
+        update_html=update_note_html(lastmod, stats.get("last_sync")))
 
 
 def publish_docs(docs_html, out_html, stats):
@@ -3965,7 +4015,8 @@ def publish_docs(docs_html, out_html, stats):
         f.write(landing_page(stats["records"], lastmod, stats))
     print(f"[docs] 메인 랜딩 -> {docs_html}")
 
-    slugs, changed = write_seo_files(docs_dir, lastmod, stats["records"], stamp=stamp)
+    slugs, changed = write_seo_files(docs_dir, lastmod, stats["records"], stamp=stamp,
+                                     site_extra={"갱신": stats.get("last_sync")})
     return docs_dir, slugs, changed
 
 
@@ -4021,7 +4072,8 @@ def _product_fingerprint(rec):
              "카페인", "아스파탐", "이력")}
 
 
-def write_seo_files(docs_dir, lastmod, records, stamp=None, store_path=None):
+def write_seo_files(docs_dir, lastmod, records, stamp=None, store_path=None,
+                    site_extra=None):
     """sitemap.xml / robots.txt / 정적 페이지 / llms.txt 를 한 번에 생성한다.
 
     Vercel 은 도메인 루트로 서빙하므로 robots.txt 가 실제로 읽힌다
@@ -4050,6 +4102,10 @@ def write_seo_files(docs_dir, lastmod, records, stamp=None, store_path=None):
     dist = {t: sum(1 for r in records if r["티어"] == t) for t in TIER_RANK}
     site_fp = {"총": len(records), "분포": dist, "인기": POPULAR_PICKS,
                "faq": [q for q, *_ in _FAQ], "기준일": lastmod}
+    # 메인 하단의 '이번 갱신: 신규 N건…' 도 메인 내용이다. 지문에 넣지 않으면
+    # 숫자가 바뀌어도 메인 lastmod 가 그대로가 된다.
+    # (write_seo_files 는 stats 를 받지 않으므로 호출 측에서 site_extra 로 넘긴다)
+    site_fp.update(site_extra or {})
     by_slug = {slug_url(r["슬러그"]): r for r in records}
 
     urls = [(PAGE_URL, "1.0", "monthly", site_fp),
@@ -4063,7 +4119,7 @@ def write_seo_files(docs_dir, lastmod, records, stamp=None, store_path=None):
     # 제품별 페이지가 이 사이트의 롱테일이다. 사이트맵에 전부 넣는다.
     for s in prod:
         urls.append((f"{PAGE_URL}{s}", "0.6", "monthly",
-                     {**_product_fingerprint(by_slug[s]), "기준일": lastmod}))
+                     _product_fingerprint(by_slug[s])))
 
     before = {k: v.get("hash") for k, v in store.items()}
     body = ""

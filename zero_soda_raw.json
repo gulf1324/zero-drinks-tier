@@ -1,5 +1,11 @@
 {
  "fetched_at": "2026-09-24T16:10:29",
+ "last_sync": {
+  "added": 21,
+  "changed": 12,
+  "date": "2026-09-24",
+  "removed": 0
+ },
  "rows": [
   {
    "BSSH_NM": "주식회사 신광식품",

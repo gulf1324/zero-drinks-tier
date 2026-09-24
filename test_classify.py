@@ -1509,12 +1509,18 @@ class StableOutputTests(unittest.TestCase):
         b = z.product_page(rec, recs, "2026-01-02")
         self.assertEqual(a, b, "같은 입력인데 렌더가 달라졌다 - 시각 의존이 남았다")
 
-    def test_fingerprints_include_the_visible_date(self):
-        # 수집일이 바뀌면 모든 페이지의 '기준일' 문구가 바뀐다.
-        # 지문에 기준일이 없으면 내용은 바뀌는데 lastmod 는 그대로가 된다.
+    def test_fingerprint_follows_what_each_page_shows(self):
+        """지문에는 그 페이지에 '보이는' 것만 넣는다.
+
+        수집일(기준일)은 목록·랜딩·리포트·메인에는 보이므로 지문에 넣는다.
+        제품 상세에는 싣지 않으므로 지문에서도 뺀다 - 넣어 두면 제품이 그대로여도
+        갱신마다 626장 전부가 '바뀐 페이지'로 재제출된다 (2026-09-24 실제로 647개).
+        """
         src = open("zero_soda_scan.py", encoding="utf-8").read()
         body = src[src.index("def write_seo_files"):src.index("ai_agents = [")]
-        self.assertGreaterEqual(body.count('"기준일": lastmod'), 4)
+        self.assertEqual(body.count('"기준일": lastmod'), 3, "메인·리포트·목록 3곳")
+        self.assertIn("_product_fingerprint(by_slug[s])))", body)
+        self.assertNotIn('{**_product_fingerprint(by_slug[s]), "기준일"', body)
         self.assertIn("today = stamp or lastmod", body)
 
 class LastmodStoreIsolationTests(unittest.TestCase):
@@ -1595,4 +1601,57 @@ class IndexNowScopeTests(unittest.TestCase):
         self.assertIn("ping_indexnow(changed)", body)
         self.assertNotIn('ping_indexnow([PAGE_URL] + [f"{PAGE_URL}{s}" for s in slugs])', body,
                          "고정 목록(메인+정적 7장)만 통보하던 방식으로 돌아갔다")
+
+class UpdateCadenceTests(unittest.TestCase):
+    """갱신 사실을 보여주되, 바뀌지 않은 제품 페이지는 건드리지 않는다."""
+
+    def _rec(self, n):
+        return {"제품명": n, "티어": "B", "조합": "B", "감미료": "수크랄로스(B,1)",
+                "열량": "0", "당류": "0.00", "용량": "500ml", "기준량": "100ml",
+                "업소명": "공장", "식품유형": "탄산음료", "보고일자": "20260101",
+                "원재료전문": "정제수", "등록명": "", "이력": [],
+                "감미료미표기": "", "아스파탐": "", "카페인": "",
+                "제로표기": "Y", "실측제로": "Y", "제로사칭": "",
+                "일반판": "", "일반판티어": "", "표시원재료": "",
+                "유통명출처": "", "배합변경": "", "티어불일치": "", "이력행수": 1}
+
+    def test_collection_date_alone_does_not_touch_product_pages(self):
+        d = tempfile.mkdtemp()
+        try:
+            recs = [self._rec("가 제로"), self._rec("나 제로")]
+            store = os.path.join(d, "lm.json")
+            z.write_seo_files(d, "2026-09-24", recs, stamp="2026-09-24", store_path=store)
+            _, changed = z.write_seo_files(d, "2026-10-24", recs, stamp="2026-10-24",
+                                           store_path=store)
+            self.assertEqual([u for u in changed if "/p/" in u], [],
+                             "수집일만 바뀌었는데 제품 상세가 재제출된다")
+            self.assertIn(z.PAGE_URL, changed, "메인은 기준일이 보이므로 바뀌어야 한다")
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
+    def test_product_page_carries_no_site_collection_date(self):
+        recs = [self._rec("가 제로")]
+        z.assign_slugs(recs)
+        page = z.product_page(recs[0], recs, "2026-09-24")
+        self.assertNotIn("기준일 2026-09-24", page)
+        self.assertIn("보고일자", page, "제품 자신의 신고일은 남아야 한다")
+
+    def test_update_note_uses_recorded_numbers_only(self):
+        note = z.update_note_html("2026-09-24",
+                                  {"date": "2026-09-24", "added": 21, "changed": 12, "removed": 0})
+        self.assertIn("신규 신고 <b>21</b>건", note)
+        self.assertIn("배합 변경 <b>12</b>건", note)
+        self.assertNotIn("목록에서 제외", note, "0건은 굳이 말하지 않는다")
+        # 기록이 없거나 날짜가 다르면 숫자를 지어내지 않는다
+        bare = z.update_note_html("2026-10-24", {"date": "2026-09-24", "added": 21,
+                                                  "changed": 12, "removed": 0})
+        self.assertNotIn("신규 신고", bare)
+        self.assertIn("2026-10-24", bare)
+        self.assertNotIn("신규 신고", z.update_note_html("2026-10-24", None))
+
+    def test_sync_records_its_diff_into_the_snapshot(self):
+        src = open("zero_soda_scan.py", encoding="utf-8").read()
+        body = src[src.index("def sync("):src.index("# 커밋 대상.")]
+        self.assertIn('last_sync={"date"', body)
+        self.assertIn('"added": len(added)', body)
 

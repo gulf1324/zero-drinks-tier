@@ -529,6 +529,13 @@ body.sg-open .scrim{opacity:1;pointer-events:auto}
          text-decoration:none;color:var(--text)}
 .pills a:hover{border-color:var(--accent);color:var(--accent)}
 
+/* 데이터 업데이트: 푸터 출처 문장 끝에 묻혀 있던 기준일을 따로 꺼냈다 */
+.updated{margin:0 0 26px}
+.updated p{margin:0;background:var(--surface);border:1px solid var(--border);
+           border-left:3px solid var(--accent);padding:12px 15px;font-size:13px;
+           color:var(--text-2);line-height:1.7}
+.updated b{color:var(--text)}
+
 /* FAQ 안의 티어 기준표. 고급 검색의 패널과 같은 내용이지만 FAQ 폭에 맞춰
    글자를 한 단계 줄이고, 좁은 화면에서는 2열로 접는다 */
 .faq-legend{margin:10px 0 2px;font-size:12.5px}
@@ -621,8 +628,9 @@ body.sg-open .scrim{opacity:1;pointer-events:auto}
 <details><summary>이 데이터는 어디서 온 것인가요?</summary><p>식품의약품안전처 식품(첨가물)품목제조보고 원재료(C002)에서 제품명·업소명·원재료 전문을 수집하고, 품목제조보고번호로 공공데이터포털 전국통합식품영양성분정보(15100066)의 열량·당류를 조인했습니다. 추정으로 채우지 않으며 매월 갱신합니다.</p></details>
 </section>
 
+<section class="updated" aria-label="데이터 업데이트"><h2 class="lsec">데이터 업데이트</h2><p><b>2026-09-24</b> 식약처 신고 데이터를 다시 수집해 반영했습니다. 이번 갱신: 신규 신고 <b>21</b>건 · 배합 변경 <b>12</b>건. 신고 원재료가 바뀌면 해당 제품의 티어도 다시 판정합니다.</p></section>
 <footer>
-<div>출처: 식품의약품안전처 식품(첨가물)품목제조보고(원재료) · 공공데이터포털 전국통합식품영양성분정보. 기준일 2026-09-24.</div>
+<div>출처: 식품의약품안전처 식품(첨가물)품목제조보고(원재료) · 공공데이터포털 전국통합식품영양성분정보.</div>
 <div>열량·당류는 <b>100mL(또는 100g)당</b> 값입니다. 제품 라벨은 한 병 전체 기준이라 숫자가 달라 보일 수 있습니다.</div>
 <div>티어는 인용된 연구를 근거로 한 이 프로젝트의 해석이며 정부 기관의 공식 평가가 아닙니다. 의학적 조언이 아닙니다.</div>
 <div>데이터 &copy; 식품의약품안전처 &middot; 공공데이터포털 &middot; <a href="https://github.com/gulf1324/zero-drinks-tier">소스·산출 방법</a></div>
