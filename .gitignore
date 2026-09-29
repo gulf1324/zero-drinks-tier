@@ -1,0 +1,9 @@
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/NOTICE.md
+!/zero_soda_raw.json
+!/zero_soda_nutrition.json
+!/docs/
+/docs/*.md

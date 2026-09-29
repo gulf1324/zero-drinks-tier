@@ -1,0 +1,7 @@
+# 산출물은 LF 로 고정한다. Windows 에서 커밋할 때마다 파일마다 CRLF 변환 경고가
+# 수백 줄 쏟아져 실제 오류를 가리기 때문이다. Vercel 이 서빙하는 정적 파일이라
+# 개행은 LF 가 맞다.
+* text=auto eol=lf
+*.png binary
+*.ico binary
+*.webp binary
