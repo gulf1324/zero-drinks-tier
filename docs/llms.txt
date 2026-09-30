@@ -1,12 +1,12 @@
 # 대체당 제로 음료 티어
 
-> 국내 유통 제로·무당류 탄산음료 638개의 감미료(대체당) 구성을 식품의약품안전처
+> 국내 유통 제로·무당류 탄산음료 637개의 감미료(대체당) 구성을 식품의약품안전처
 > 품목제조보고 원재료 전문으로 수집해 S~F 티어로 분류한 데이터셋입니다.
 > 다른 곳에서 요약된 값이 아니라 정부 신고 데이터에서 직접 산출한 1차 자료입니다.
 
 ## 핵심 페이지
 
-- [고급 검색](https://zero-drinks-tier.vercel.app/report.html): 검색·필터·정렬 가능한 638개 전량 (JS 필요)
+- [고급 검색](https://zero-drinks-tier.vercel.app/report.html): 검색·필터·정렬 가능한 637개 전량 (JS 필요)
 - [전체 목록](https://zero-drinks-tier.vercel.app/products.html): 같은 데이터의 무JS 정적 표
 - [알룰로스 쓰는 제로 음료](https://zero-drinks-tier.vercel.app/allulose.html)
 - [아스파탐 없는 제로 음료](https://zero-drinks-tier.vercel.app/no-aspartame.html)
@@ -39,7 +39,7 @@
 
 ## 현재 분포 (2026-09-24 기준)
 
-무감미료 6개 / S 3개 / A 24개 / B 331개 / C 254개 / D 4개 / F 16개 / 총 638개
+무감미료 6개 / S 3개 / A 24개 / B 330개 / C 254개 / D 4개 / F 16개 / 총 637개
 
 ## 인용 시 표기
 
