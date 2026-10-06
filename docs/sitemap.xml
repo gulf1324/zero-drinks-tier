@@ -2,55 +2,55 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://zero-drinks-tier.vercel.app/</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://zero-drinks-tier.vercel.app/report.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://zero-drinks-tier.vercel.app/products.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://zero-drinks-tier.vercel.app/allulose.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://zero-drinks-tier.vercel.app/no-aspartame.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://zero-drinks-tier.vercel.app/no-erythritol.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://zero-drinks-tier.vercel.app/no-caffeine.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://zero-drinks-tier.vercel.app/fake-zero.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://zero-drinks-tier.vercel.app/hidden-zero.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -63,6 +63,12 @@
   <url>
     <loc>https://zero-drinks-tier.vercel.app/p/%EB%A7%88%EC%8A%A4%ED%84%B0%ED%86%A0%EB%8B%89%EC%9B%8C%ED%84%B0%EC%A0%9C%EB%A1%9C.html</loc>
     <lastmod>2026-09-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://zero-drinks-tier.vercel.app/p/%EC%98%A4%EB%B9%84-%EC%A0%9C%EB%A1%9C.html</loc>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -207,6 +213,12 @@
   <url>
     <loc>https://zero-drinks-tier.vercel.app/p/%EC%95%84%EC%9E%84%EC%96%BC%EB%9D%BC%EC%9D%B4%EB%B8%8C-%EB%AC%B4%EC%BF%A0%ED%95%8F.html</loc>
     <lastmod>2026-09-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://zero-drinks-tier.vercel.app/p/%EC%98%A8%EA%B8%B0-%ED%94%84%EB%A6%AC%EB%B0%94%EC%9D%B4%EC%98%A4%ED%8B%B1-%EC%86%8C%EB%8B%A4-%EC%83%A4%EC%9D%B8%EB%A8%B8%EC%8A%A4%EC%BA%A3.html</loc>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -662,7 +674,7 @@
   </url>
   <url>
     <loc>https://zero-drinks-tier.vercel.app/p/%EB%AA%AC%EC%8A%A4%ED%84%B0-%EC%97%90%EB%84%88%EC%A7%80-%EC%9A%B8%ED%8A%B8%EB%9D%BC-%ED%94%BC%EC%B9%98-%ED%82%A8.html</loc>
-    <lastmod>2026-09-24</lastmod>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -1394,7 +1406,7 @@
   </url>
   <url>
     <loc>https://zero-drinks-tier.vercel.app/p/%EC%A0%9C%EB%A1%9C-%EC%BD%9C%EB%9D%BC.html</loc>
-    <lastmod>2026-09-24</lastmod>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
