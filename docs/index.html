@@ -570,6 +570,12 @@ body.sg-open .scrim{opacity:1;pointer-events:auto}
            border-left:3px solid var(--accent);padding:12px 15px;font-size:13px;
            color:var(--text-2);line-height:1.7}
 .updated b{color:var(--text)}
+.updated .ulog{margin:0;background:var(--surface);border:1px solid var(--border);border-top:0;
+               border-left:3px solid var(--accent);padding:8px 15px 10px 32px;font-size:13px;
+               color:var(--text-2);line-height:1.7}
+.updated .ulog li{margin:3px 0}
+.updated .ulog a{color:var(--text);text-decoration:underline;text-decoration-color:var(--border-strong)}
+.updated .ulog a:hover{color:var(--accent)}
 
 /* FAQ 안의 티어 기준표. 고급 검색의 패널과 같은 내용이지만 FAQ 폭에 맞춰
    글자를 한 단계 줄이고, 좁은 화면에서는 2열로 접는다 */
@@ -666,7 +672,7 @@ body.sg-open .scrim{opacity:1;pointer-events:auto}
 <details><summary>이 데이터는 어디서 온 것인가요?</summary><p><b>식품의약품안전처 식품(첨가물)품목제조보고 원재료(C002)</b>에서 제품명·업소명·원재료 전문을 수집하고, 품목제조보고번호로 공공데이터포털 전국통합식품영양성분정보(15100066)의 열량·당류를 조인했습니다. <b>추정으로 채우지 않으며 매월 갱신</b>합니다.</p></details>
 </section>
 
-<section class="updated" aria-label="데이터 업데이트"><h2 class="lsec">데이터 업데이트</h2><p><b>2026-10-23</b> 식약처 신고 데이터를 다시 수집해 반영했습니다. 이번 갱신: 신규 신고 <b>8</b>건 · 배합 변경 <b>31</b>건 · 목록에서 제외 <b>5</b>건. 신고 원재료가 바뀌면 해당 제품의 티어도 다시 판정합니다.</p></section>
+<section class="updated" aria-label="데이터 업데이트"><h2 class="lsec">데이터 업데이트</h2><p><b>2026-10-23</b> 식약처 신고 데이터를 다시 수집해 반영했습니다. 이번 갱신: 신규 신고 <b>8</b>건 · 배합 변경 <b>31</b>건 · 목록에서 제외 <b>5</b>건. 신고 원재료가 바뀌면 해당 제품의 티어도 다시 판정합니다.</p><ul class="ulog"><li><b>새 제품 5개</b>: <a href="https://zero-drinks-tier.vercel.app/p/HOT6%EB%8D%94%ED%82%B9%ED%8F%AC%EC%8A%A4%EC%A0%9C%EB%A1%9C.html">HOT6더킹포스제로</a>, <a href="https://zero-drinks-tier.vercel.app/p/%EB%AC%B4%EB%93%B1%EC%82%B0-%EC%88%98%EB%B0%95-%EC%86%8C%EB%8B%A4%EC%88%98-%EC%A0%9C%EB%A1%9C-%EC%8A%88%EA%B0%80.html">무등산 수박 소다수 제로 슈가</a>, <a href="https://zero-drinks-tier.vercel.app/p/%EB%B9%84%ED%83%80-500-%EC%97%90%EB%84%88%EC%A7%80.html">비타 500 에너지</a>, <a href="https://zero-drinks-tier.vercel.app/p/%EC%8A%A4%ED%8C%8C%ED%81%B4%EB%A7%81-%EB%A7%9D%EA%B3%A0.html">스파클링 망고</a>, <a href="https://zero-drinks-tier.vercel.app/p/%ED%81%B4%EB%A3%B9-%EC%9B%90%EB%8D%94%ED%8C%9D-%EA%B7%B8%EB%A0%88%EC%9D%B4%ED%94%84%ED%8E%80%EC%B9%98.html">클룹 원더팝 그레이프펀치</a></li><li><b>목록에서 빠진 제품 1개</b>: 오비 제로 - 같은 신고 번호가 '네오 폴라리스'로 이름을 바꿔 등록되었습니다. 바뀐 이름에는 제로 표기가 없어 목록에서 빠집니다.</li><li><b>티어가 바뀐 제품 1개</b>: <a href="https://zero-drinks-tier.vercel.app/p/%EC%97%90%EB%84%88%EC%A7%80%EB%93%9C%EB%A7%81%ED%81%AC%EB%B6%80%EC%8A%A4%ED%83%80-ZERO.html">에너지드링크부스타 ZERO</a> F → C - 배합은 그대로지만 영양성분 데이터가 새로 연결되어 실측 당류 0g 이 확인되었습니다. 원재료의 포도당 표기는 착향용 미량으로 보고 F 에서 올립니다.</li><li><b>열량·당류가 새로 확인된 제품 45개</b>: 영양성분 데이터와 새로 연결되어 '확인 불가' 표시가 실제 수치로 바뀌었습니다 (결합 416 → 463개).</li></ul></section>
 <footer>
 <div>출처: 식품의약품안전처 식품(첨가물)품목제조보고(원재료) · 공공데이터포털 전국통합식품영양성분정보.</div>
 <div>열량·당류는 <b>100mL(또는 100g)당</b> 값입니다. 제품 라벨은 한 병 전체 기준이라 숫자가 달라 보일 수 있습니다.</div>
