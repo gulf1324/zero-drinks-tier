@@ -53,6 +53,7 @@
   "19780368002658",
   "19780368002659",
   "19780368002663",
+  "19780368002670",
   "1978061400113",
   "1978061400114",
   "19780614001141",
@@ -155,6 +156,7 @@
   "19800375002288",
   "19800375002289",
   "19800375002290",
+  "19800375002291",
   "1980037500255",
   "198003750026",
   "198003750027",
@@ -685,6 +687,7 @@
   "19920624042987",
   "19920624042988",
   "19920624042989",
+  "19920624042996",
   "19930242053109",
   "19930242053134",
   "1993024205318",
@@ -834,6 +837,7 @@
   "19950433026791",
   "19950433026792",
   "19950433026793",
+  "19950433026794",
   "199602571271",
   "199602571272",
   "199602571273",
@@ -915,6 +919,7 @@
   "19970614083172",
   "19970614083173",
   "19970614083175",
+  "19970614083176",
   "199706140832",
   "199706140833",
   "1997061408330",
@@ -2107,6 +2112,7 @@
   "20190575042376",
   "20190575042381",
   "20190575042382",
+  "20190575042385",
   "20190575042387",
   "20190575042388",
   "20190575042389",
@@ -2230,6 +2236,7 @@
   "20220683125276",
   "20220683125277",
   "20220683125282",
+  "20220683125307",
   "2022068312590",
   "2022068312591",
   "2022068312593",
@@ -2296,6 +2303,7 @@
   "20220810041461",
   "20220810041481",
   "20220810041501",
+  "20220810041541",
   "202208800074",
   "202208983921",
   "202208983922",
@@ -2377,11 +2385,6 @@
   "2023080519586",
   "2023080519587",
   "2023080519599",
-  "202308653742",
-  "202308653743",
-  "202308653745",
-  "202308653746",
-  "202308653747",
   "202308653748",
   "202405487691",
   "202405487692",
@@ -2429,7 +2432,7 @@
   "202606921313",
   "202607622463"
  ],
- "fetched_at": "2026-10-06T10:29:32",
+ "fetched_at": "2026-10-23T14:15:14",
  "rows": {
   "1973028800633": {
    "CRT_YMD": "2025-12-31",
@@ -3839,6 +3842,83 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
   },
+  "19800415004522": {
+   "CRT_YMD": "2026-06-17",
+   "ENERC": "11",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "스프레",
+   "FOOD_SIZE": "190ml",
+   "ITEM_MNFTR_RPT_NO": "19800415004522",
+   "MFR_NM": "(주)일화초정공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19800415004524": {
+   "CRT_YMD": "2026-06-17",
+   "ENERC": "5",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "팅글 리얼에이드 신비복숭아",
+   "FOOD_SIZE": "250ml",
+   "ITEM_MNFTR_RPT_NO": "19800415004524",
+   "MFR_NM": "(주)일화초정공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.80"
+  },
+  "19800415004526": {
+   "CRT_YMD": "2026-07-02",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "파인애플소다 제로",
+   "FOOD_SIZE": "1500ml",
+   "ITEM_MNFTR_RPT_NO": "19800415004526",
+   "MFR_NM": "(주)일화초정공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19800415004527": {
+   "CRT_YMD": "2026-07-02",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "오렌지소다 제로",
+   "FOOD_SIZE": "1500ml",
+   "ITEM_MNFTR_RPT_NO": "19800415004527",
+   "MFR_NM": "(주)일화초정공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19800415004528": {
+   "CRT_YMD": "2026-06-24",
+   "ENERC": "1",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "오늘좋은 파인애플 스파클링 제로",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "19800415004528",
+   "MFR_NM": "(주)일화초정공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19800415004529": {
+   "CRT_YMD": "2026-07-07",
+   "ENERC": "2",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "브레드이발소밀크소다ZERO",
+   "FOOD_SIZE": "350ml",
+   "ITEM_MNFTR_RPT_NO": "19800415004529",
+   "MFR_NM": "(주)일화초정공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.34"
+  },
+  "19800415004535": {
+   "CRT_YMD": "2026-08-28",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "부르르 제로콜라 매실",
+   "FOOD_SIZE": "350ml",
+   "ITEM_MNFTR_RPT_NO": "19800415004535",
+   "MFR_NM": "(주)일화초정공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
   "1980041500462": {
    "CRT_YMD": "2019-06-30",
    "ENERC": "0",
@@ -4004,6 +4084,17 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
   },
+  "1984059709220": {
+   "CRT_YMD": "2026-06-02",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "테라 제로",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "1984059709220",
+   "MFR_NM": "하이트진로(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
   "198506140553738": {
    "CRT_YMD": "2026-02-26",
    "ENERC": "41",
@@ -4081,6 +4172,28 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
   },
+  "19890528010173": {
+   "CRT_YMD": "2026-07-01",
+   "ENERC": "4",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 스프린트 에너지 레몬부스트 제로",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "19890528010173",
+   "MFR_NM": "보해양조(주) 장성공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19890528010174": {
+   "CRT_YMD": "2026-07-01",
+   "ENERC": "4",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 스프린트 에너지 애플블라스트 제로",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "19890528010174",
+   "MFR_NM": "보해양조(주) 장성공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
   "19890528010175": {
    "CRT_YMD": "2025-09-11",
    "ENERC": "15",
@@ -4091,6 +4204,39 @@
    "MFR_NM": "보해양조(주)장성공장",
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.24"
+  },
+  "19890528010176": {
+   "CRT_YMD": "2026-07-01",
+   "ENERC": "4",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 바이탈자몽 스파클링 프레쉬",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "19890528010176",
+   "MFR_NM": "보해양조(주) 장성공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.40"
+  },
+  "19890528010177": {
+   "CRT_YMD": "2026-07-01",
+   "ENERC": "4",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 스프린트 에너지 오렌지임팩트 제로",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "19890528010177",
+   "MFR_NM": "보해양조(주) 장성공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19890528010178": {
+   "CRT_YMD": "2026-07-01",
+   "ENERC": "4",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 스프린트 에너지 시트러스버스트 제로",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "19890528010178",
+   "MFR_NM": "보해양조(주) 장성공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
   },
   "19890528010179": {
    "CRT_YMD": "2025-09-30",
@@ -4126,8 +4272,8 @@
    "SUGAR": "0.00"
   },
   "19890528010183": {
-   "CRT_YMD": "2025-11-06",
-   "ENERC": "7",
+   "CRT_YMD": "2026-08-28",
+   "ENERC": "1",
    "FOOD_LV3_NM": "음료류",
    "FOOD_NM": "클룹 제로소다 복숭아",
    "FOOD_SIZE": "500ml",
@@ -4148,8 +4294,8 @@
    "SUGAR": "0.00"
   },
   "19890528010185": {
-   "CRT_YMD": "2025-11-06",
-   "ENERC": "7",
+   "CRT_YMD": "2026-07-28",
+   "ENERC": "2",
    "FOOD_LV3_NM": "음료류",
    "FOOD_NM": "클룹 제로소다 청사과",
    "FOOD_SIZE": "500ml",
@@ -4187,6 +4333,50 @@
    "FOOD_NM": "에너지드링크 패션후르츠",
    "FOOD_SIZE": "500ml",
    "ITEM_MNFTR_RPT_NO": "19890528010191",
+   "MFR_NM": "보해양조(주) 장성공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19890528010192": {
+   "CRT_YMD": "2026-07-01",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 오프아워 피치릴렉서",
+   "FOOD_SIZE": "350ml",
+   "ITEM_MNFTR_RPT_NO": "19890528010192",
+   "MFR_NM": "보해양조(주) 장성공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19890528010193": {
+   "CRT_YMD": "2026-07-01",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 오프아워 라임브리즈",
+   "FOOD_SIZE": "350ml",
+   "ITEM_MNFTR_RPT_NO": "19890528010193",
+   "MFR_NM": "보해양조(주) 장성공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19890528010194": {
+   "CRT_YMD": "2026-07-01",
+   "ENERC": "3",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 애사비소다 콜라 제로",
+   "FOOD_SIZE": "350ml",
+   "ITEM_MNFTR_RPT_NO": "19890528010194",
+   "MFR_NM": "보해양조(주) 장성공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19890528010195": {
+   "CRT_YMD": "2026-08-12",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 오프아워 자몽피즈",
+   "FOOD_SIZE": "350ml",
+   "ITEM_MNFTR_RPT_NO": "19890528010195",
    "MFR_NM": "보해양조(주) 장성공장",
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
@@ -4729,6 +4919,17 @@
    "MFR_NM": "대경사과원예농협음료가공공장",
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "6.29"
+  },
+  "19920562023534": {
+   "CRT_YMD": "2026-06-04",
+   "ENERC": "6",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "봉봉 애사비 소다",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "19920562023534",
+   "MFR_NM": "대경사과원예농협음료가공공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
   },
   "19920624042350": {
    "CRT_YMD": "2021-06-30",
@@ -5423,6 +5624,72 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
   },
+  "19920624042982": {
+   "CRT_YMD": "2026-06-12",
+   "ENERC": "2",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "에너지드링크부스타 ZERO",
+   "FOOD_SIZE": "250ml",
+   "ITEM_MNFTR_RPT_NO": "19920624042982",
+   "MFR_NM": "(주)상일",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19920624042984": {
+   "CRT_YMD": "2026-06-23",
+   "ENERC": "3",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "압도뉴트리션 에너지 드링크",
+   "FOOD_SIZE": "355ml",
+   "ITEM_MNFTR_RPT_NO": "19920624042984",
+   "MFR_NM": "(주)상일",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19920624042985": {
+   "CRT_YMD": "2026-06-23",
+   "ENERC": "1",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "제로팝",
+   "FOOD_SIZE": "250ml",
+   "ITEM_MNFTR_RPT_NO": "19920624042985",
+   "MFR_NM": "(주)상일",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19920624042986": {
+   "CRT_YMD": "2026-06-30",
+   "ENERC": "15",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 스프린트 슈퍼포커스 에너지 네온트위스트",
+   "FOOD_SIZE": "355ml",
+   "ITEM_MNFTR_RPT_NO": "19920624042986",
+   "MFR_NM": "(주)상일",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19920624042987": {
+   "CRT_YMD": "2026-06-30",
+   "ENERC": "15",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 스프린트 슈퍼포커스 에너지 울트라핑크",
+   "FOOD_SIZE": "355ml",
+   "ITEM_MNFTR_RPT_NO": "19920624042987",
+   "MFR_NM": "(주)상일",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "19920624042988": {
+   "CRT_YMD": "2026-06-30",
+   "ENERC": "15",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 스프린트 슈퍼포커스 에너지 오리지널",
+   "FOOD_SIZE": "355ml",
+   "ITEM_MNFTR_RPT_NO": "19920624042988",
+   "MFR_NM": "(주)상일",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
   "19930242053225": {
    "CRT_YMD": "2021-06-30",
    "ENERC": "44",
@@ -5962,6 +6229,17 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "7.84"
   },
+  "19930242053505": {
+   "CRT_YMD": "2026-08-27",
+   "ENERC": "2",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "펩시프리바이오틱제로슈거요거트향",
+   "FOOD_SIZE": "355ml",
+   "ITEM_MNFTR_RPT_NO": "19930242053505",
+   "MFR_NM": "롯데칠성음료(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.03"
+  },
   "1993062500645": {
    "CRT_YMD": "2021-06-30",
    "ENERC": "44",
@@ -6314,6 +6592,17 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "9.57"
   },
+  "1996061705361": {
+   "CRT_YMD": "2026-06-25",
+   "ENERC": "26",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "데미소다 자두",
+   "FOOD_SIZE": "350ml",
+   "ITEM_MNFTR_RPT_NO": "1996061705361",
+   "MFR_NM": "동아오츠카(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "6.29"
+  },
   "199706140831": {
    "CRT_YMD": "2024-12-31",
    "ENERC": "44",
@@ -6434,6 +6723,17 @@
    "MFR_NM": "코카콜라음료주식회사",
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.23"
+  },
+  "19970614083175": {
+   "CRT_YMD": "2026-07-16",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "코카-콜라 제로 레몬라임",
+   "FOOD_SIZE": "190ml",
+   "ITEM_MNFTR_RPT_NO": "19970614083175",
+   "MFR_NM": "코카콜라음료주식회사",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
   },
   "199706140833": {
    "CRT_YMD": "2025-04-17",
@@ -7216,6 +7516,61 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "7.84"
   },
+  "20000360372421": {
+   "CRT_YMD": "2026-07-21",
+   "ENERC": "4",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "HOT6더킹믹스",
+   "FOOD_SIZE": "355ml",
+   "ITEM_MNFTR_RPT_NO": "20000360372421",
+   "MFR_NM": "롯데칠성음료(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.12"
+  },
+  "20000360372422": {
+   "CRT_YMD": "2026-08-12",
+   "ENERC": "57",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "칠성사이다 RICH 복숭아",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20000360372422",
+   "MFR_NM": "롯데칠성음료(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "13.98"
+  },
+  "20000360372423": {
+   "CRT_YMD": "2026-08-12",
+   "ENERC": "58",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "칠성사이다 RICH 포도",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20000360372423",
+   "MFR_NM": "롯데칠성음료(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "14.03"
+  },
+  "20000360372424": {
+   "CRT_YMD": "2026-08-12",
+   "ENERC": "58",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "칠성사이다 RICH 사과",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20000360372424",
+   "MFR_NM": "롯데칠성음료(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "14.00"
+  },
+  "20000360372425": {
+   "CRT_YMD": "2026-08-19",
+   "ENERC": "2",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "펩시프리바이오틱제로슈거요거트향",
+   "FOOD_SIZE": "355ml",
+   "ITEM_MNFTR_RPT_NO": "20000360372425",
+   "MFR_NM": "롯데칠성음료(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.03"
+  },
   "2000036037251": {
    "CRT_YMD": "2025-07-10",
    "ENERC": "45",
@@ -7712,15 +8067,15 @@
    "SUGAR": "9.71"
   },
   "20030473071251": {
-   "CRT_YMD": "2021-06-30",
-   "ENERC": "33",
+   "CRT_YMD": "2026-07-21",
+   "ENERC": "31",
    "FOOD_LV3_NM": "음료류",
-   "FOOD_NM": "스파클링요구르트",
+   "FOOD_NM": "스파클링 요구르트",
    "FOOD_SIZE": "400ml",
    "ITEM_MNFTR_RPT_NO": "20030473071251",
-   "MFR_NM": "건강한사람들주식회사",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
    "NUT_CON_SRTR_QUA": "100ml",
-   "SUGAR": "6.75"
+   "SUGAR": "7.50"
   },
   "20030473071252": {
    "CRT_YMD": "2019-06-30",
@@ -8162,6 +8517,17 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
   },
+  "20030473071396": {
+   "CRT_YMD": "2026-07-21",
+   "ENERC": "32",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "요구르트 스파클링",
+   "FOOD_SIZE": "380ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071396",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "7.37"
+  },
   "20030473071399": {
    "CRT_YMD": "2023-12-31",
    "ENERC": "0",
@@ -8279,6 +8645,17 @@
    "FOOD_NM": "웰치 제로 샤인머스캣",
    "FOOD_SIZE": "600ml",
    "ITEM_MNFTR_RPT_NO": "20030473071446",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071447": {
+   "CRT_YMD": "2026-06-09",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "갈배사이다 제로",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071447",
    "MFR_NM": "건강한사람들 주식회사 2사업장",
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
@@ -8723,6 +9100,28 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
   },
+  "20030473071530": {
+   "CRT_YMD": "2026-06-04",
+   "ENERC": "4",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "잔망클링 체리콜라",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071530",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.20"
+  },
+  "20030473071531": {
+   "CRT_YMD": "2026-06-04",
+   "ENERC": "3",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "잔망클링 사워레몬",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071531",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.10"
+  },
   "20030473071532": {
    "CRT_YMD": "2026-04-24",
    "ENERC": "0",
@@ -8800,6 +9199,72 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
   },
+  "20030473071539": {
+   "CRT_YMD": "2026-07-09",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "스프라이트 제로 with TEA",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071539",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071540": {
+   "CRT_YMD": "2026-08-07",
+   "ENERC": "1",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "시그너스 애사비소다 오리지널",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071540",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071541": {
+   "CRT_YMD": "2026-08-07",
+   "ENERC": "5",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "톡 애사비소다",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071541",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071542": {
+   "CRT_YMD": "2026-06-11",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "오렌지향 제로",
+   "FOOD_SIZE": "18000ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071542",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071543": {
+   "CRT_YMD": "2026-06-11",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "파인애플향 제로",
+   "FOOD_SIZE": "18000ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071543",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071544": {
+   "CRT_YMD": "2026-06-11",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "포도향 제로",
+   "FOOD_SIZE": "18000ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071544",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
   "20030473071545": {
    "CRT_YMD": "2026-05-19",
    "ENERC": "0",
@@ -8807,6 +9272,105 @@
    "FOOD_NM": "클룹 애사비소다 자두 제로",
    "FOOD_SIZE": "500ml",
    "ITEM_MNFTR_RPT_NO": "20030473071545",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071546": {
+   "CRT_YMD": "2026-06-04",
+   "ENERC": "2",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "잇더핏 제로팝 레몬",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071546",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071547": {
+   "CRT_YMD": "2026-06-04",
+   "ENERC": "2",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "잇더핏 제로팝 밀키소다",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071547",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071548": {
+   "CRT_YMD": "2026-06-04",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "잇더핏 제로팝 포도",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071548",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071549": {
+   "CRT_YMD": "2026-06-04",
+   "ENERC": "2",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "잔망클링 요거피치",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071549",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071550": {
+   "CRT_YMD": "2026-07-06",
+   "ENERC": "3",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 오’솔레 스파클링 자몽",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071550",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.48"
+  },
+  "20030473071551": {
+   "CRT_YMD": "2026-07-06",
+   "ENERC": "3",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 원더팝 그레이프펀치",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071551",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071552": {
+   "CRT_YMD": "2026-07-29",
+   "ENERC": "2",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 애사비소다 사이다 제로",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071552",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071553": {
+   "CRT_YMD": "2026-07-31",
+   "ENERC": "1",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "elvita 애플 사이다 비니거",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071553",
+   "MFR_NM": "건강한사람들 주식회사 2사업장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20030473071557": {
+   "CRT_YMD": "2026-08-25",
+   "ENERC": "1",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "슈가로로 애사비 스파클링 플러스 파인애플",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20030473071557",
    "MFR_NM": "건강한사람들 주식회사 2사업장",
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
@@ -8884,6 +9448,61 @@
    "FOOD_NM": "홀베리 레몬 하나 스파클링",
    "FOOD_SIZE": "500ml",
    "ITEM_MNFTR_RPT_NO": "200704431101139",
+   "MFR_NM": "(주)삼양패키징광혜원공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "200704431101158": {
+   "CRT_YMD": "2026-06-11",
+   "ENERC": "2",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "야쿠르트 XO 스파클링",
+   "FOOD_SIZE": "340ml",
+   "ITEM_MNFTR_RPT_NO": "200704431101158",
+   "MFR_NM": "(주)삼양패키징광혜원공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "200704431101162": {
+   "CRT_YMD": "2026-06-18",
+   "ENERC": "5",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "애사비 밸런스 스파클링 제로 청사과",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "200704431101162",
+   "MFR_NM": "(주)삼양패키징광혜원공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "200704431101163": {
+   "CRT_YMD": "2026-06-18",
+   "ENERC": "5",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "애사비 밸런스 스파클링 제로 레몬",
+   "FOOD_SIZE": "350ml",
+   "ITEM_MNFTR_RPT_NO": "200704431101163",
+   "MFR_NM": "(주)삼양패키징광혜원공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "200704431101170": {
+   "CRT_YMD": "2026-07-20",
+   "ENERC": "6",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "링티제로 에너지 스파클링 피치",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "200704431101170",
+   "MFR_NM": "(주)삼양패키징광혜원공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "200704431101171": {
+   "CRT_YMD": "2026-07-20",
+   "ENERC": "6",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "링티제로 에너지 스파클링 레몬라임",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "200704431101171",
    "MFR_NM": "(주)삼양패키징광혜원공장",
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
@@ -10803,7 +11422,7 @@
    "SUGAR": "0.00"
   },
   "201005430661620": {
-   "CRT_YMD": "2026-04-10",
+   "CRT_YMD": "2026-07-30",
    "ENERC": "1",
    "FOOD_LV3_NM": "음료류",
    "FOOD_NM": "싱하레몬소다제로",
@@ -10847,7 +11466,7 @@
    "SUGAR": "0.00"
   },
   "201005430661680": {
-   "CRT_YMD": "2026-04-10",
+   "CRT_YMD": "2026-07-30",
    "ENERC": "1",
    "FOOD_LV3_NM": "음료류",
    "FOOD_NM": "싱하유자향소다제로",
@@ -10946,7 +11565,7 @@
    "SUGAR": "0.00"
   },
   "201005430661694": {
-   "CRT_YMD": "2026-04-10",
+   "CRT_YMD": "2026-07-30",
    "ENERC": "1",
    "FOOD_LV3_NM": "음료류",
    "FOOD_NM": "싱하라임레몬소다제로",
@@ -11150,6 +11769,50 @@
    "FOOD_NM": "소다활",
    "FOOD_SIZE": "355ml",
    "ITEM_MNFTR_RPT_NO": "201005430661765",
+   "MFR_NM": "오케이에프음료 주식회사",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "201005430661770": {
+   "CRT_YMD": "2026-06-12",
+   "ENERC": "2",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "하이트제로 0.00 레몬&유자",
+   "FOOD_SIZE": "350ml",
+   "ITEM_MNFTR_RPT_NO": "201005430661770",
+   "MFR_NM": "오케이에프음료 주식회사",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "201005430661774": {
+   "CRT_YMD": "2026-06-11",
+   "ENERC": "6",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "익스트림 에너지 퍼스트 펭귄",
+   "FOOD_SIZE": "250ml",
+   "ITEM_MNFTR_RPT_NO": "201005430661774",
+   "MFR_NM": "오케이에프음료 주식회사",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "201005430661775": {
+   "CRT_YMD": "2026-06-02",
+   "ENERC": "2",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "썬키스트 애사비 제로 스파클링 자몽",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "201005430661775",
+   "MFR_NM": "오케이에프음료 주식회사",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "201005430661779": {
+   "CRT_YMD": "2026-08-26",
+   "ENERC": "1",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "슈가로로 스파클링 피치앤크랜베리",
+   "FOOD_SIZE": "350ml",
+   "ITEM_MNFTR_RPT_NO": "201005430661779",
    "MFR_NM": "오케이에프음료 주식회사",
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
@@ -12287,6 +12950,50 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "3.00"
   },
+  "20180491257128": {
+   "CRT_YMD": "2026-06-08",
+   "ENERC": "1",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "인천 먼바다 첫 사이다",
+   "FOOD_SIZE": "250ml",
+   "ITEM_MNFTR_RPT_NO": "20180491257128",
+   "MFR_NM": "(주)코아바이오",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20180491257131": {
+   "CRT_YMD": "2026-08-03",
+   "ENERC": "53",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "로즈윈 스파클링",
+   "FOOD_SIZE": "250ml",
+   "ITEM_MNFTR_RPT_NO": "20180491257131",
+   "MFR_NM": "(주)코아바이오",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "13.00"
+  },
+  "20180491257132": {
+   "CRT_YMD": "2026-08-13",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "탄산바당 플레인",
+   "FOOD_SIZE": "250ml",
+   "ITEM_MNFTR_RPT_NO": "20180491257132",
+   "MFR_NM": "(주)코아바이오",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20180491257133": {
+   "CRT_YMD": "2026-08-13",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "탄산바당 한라봉",
+   "FOOD_SIZE": "250ml",
+   "ITEM_MNFTR_RPT_NO": "20180491257133",
+   "MFR_NM": "(주)코아바이오",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
   "20180491257403": {
    "CRT_YMD": "2025-09-23",
    "ENERC": "40",
@@ -12650,6 +13357,39 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "7.67"
   },
+  "2019006325050": {
+   "CRT_YMD": "2026-06-22",
+   "ENERC": "28",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "블라썸",
+   "FOOD_SIZE": "750ml",
+   "ITEM_MNFTR_RPT_NO": "2019006325050",
+   "MFR_NM": "(주)온어락소다",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "3.49"
+  },
+  "2019006325051": {
+   "CRT_YMD": "2026-07-27",
+   "ENERC": "17",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "블랑(BLANC)",
+   "FOOD_SIZE": "750ml",
+   "ITEM_MNFTR_RPT_NO": "2019006325051",
+   "MFR_NM": "(주)온어락소다",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "3.05"
+  },
+  "2019006325052": {
+   "CRT_YMD": "2026-07-27",
+   "ENERC": "23",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "로제(ROSÉ)",
+   "FOOD_SIZE": "750ml",
+   "ITEM_MNFTR_RPT_NO": "2019006325052",
+   "MFR_NM": "(주)온어락소다",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "4.84"
+  },
   "201902253051": {
    "CRT_YMD": "2021-06-30",
    "ENERC": "27",
@@ -12803,6 +13543,17 @@
    "MFR_NM": "하이드로오아시스 제1공장",
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
+  },
+  "2019054755674": {
+   "CRT_YMD": "2026-07-03",
+   "ENERC": "37",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "참외하이",
+   "FOOD_SIZE": "355ml",
+   "ITEM_MNFTR_RPT_NO": "2019054755674",
+   "MFR_NM": "하이드로오아시스 제1공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "9.01"
   },
   "20190575042104": {
    "CRT_YMD": "2021-06-30",
@@ -13497,6 +14248,83 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.50"
   },
+  "20190575042372": {
+   "CRT_YMD": "2026-06-08",
+   "ENERC": "3",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "더 빅토리아 오이레몬",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20190575042372",
+   "MFR_NM": "튤립인터내셔널(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20190575042373": {
+   "CRT_YMD": "2026-06-08",
+   "ENERC": "3",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "더 빅토리아 쿨라임",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20190575042373",
+   "MFR_NM": "튤립인터내셔널(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20190575042374": {
+   "CRT_YMD": "2026-08-28",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "나랑드사이다 제로",
+   "FOOD_SIZE": "300ml",
+   "ITEM_MNFTR_RPT_NO": "20190575042374",
+   "MFR_NM": "튤립인터내셔널(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20190575042375": {
+   "CRT_YMD": "2026-07-07",
+   "ENERC": "3",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 오’솔레 스파클링 자몽",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20190575042375",
+   "MFR_NM": "튤립인터내셔널(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.48"
+  },
+  "20190575042376": {
+   "CRT_YMD": "2026-06-17",
+   "ENERC": "46",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "이세비 에어리 페이스 드링크",
+   "FOOD_SIZE": "150ml",
+   "ITEM_MNFTR_RPT_NO": "20190575042376",
+   "MFR_NM": "튤립인터내셔널(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.19"
+  },
+  "20190575042381": {
+   "CRT_YMD": "2026-07-07",
+   "ENERC": "3",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클룹 원더팝 그레이프펀치",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20190575042381",
+   "MFR_NM": "튤립인터내셔널(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "20190575042382": {
+   "CRT_YMD": "2026-06-29",
+   "ENERC": "2",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "Woongjin 애사비 제주청귤하귤",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20190575042382",
+   "MFR_NM": "튤립인터내셔널(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
   "2019057504251": {
    "CRT_YMD": "2021-06-30",
    "ENERC": "0",
@@ -13871,16 +14699,49 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "7.84"
   },
+  "2021044228240": {
+   "CRT_YMD": "2026-07-28",
+   "ENERC": "4",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "HOT6더킹믹스",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "2021044228240",
+   "MFR_NM": "롯데칠성음료(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.12"
+  },
+  "2021044228241": {
+   "CRT_YMD": "2026-08-12",
+   "ENERC": "12",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "클라우드 논알콜릭 레몬라임",
+   "FOOD_SIZE": "350ml",
+   "ITEM_MNFTR_RPT_NO": "2021044228241",
+   "MFR_NM": "롯데칠성음료(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.80"
+  },
+  "2021044228242": {
+   "CRT_YMD": "2026-08-13",
+   "ENERC": "2",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "펩시프리바이오틱제로슈거요거트향",
+   "FOOD_SIZE": "355ml",
+   "ITEM_MNFTR_RPT_NO": "2021044228242",
+   "MFR_NM": "롯데칠성음료(주)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.03"
+  },
   "202104422825": {
-   "CRT_YMD": "2024-12-31",
-   "ENERC": "215",
+   "CRT_YMD": "2026-07-23",
+   "ENERC": "43",
    "FOOD_LV3_NM": "음료류",
    "FOOD_NM": "칠성사이다",
-   "FOOD_SIZE": "500ml",
+   "FOOD_SIZE": "355ml",
    "ITEM_MNFTR_RPT_NO": "202104422825",
    "MFR_NM": "롯데칠성음료(주)",
    "NUT_CON_SRTR_QUA": "100ml",
-   "SUGAR": "54.00"
+   "SUGAR": "10.63"
   },
   "202104422827": {
    "CRT_YMD": "2025-12-31",
@@ -14740,6 +15601,17 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.28"
   },
+  "20230805195132": {
+   "CRT_YMD": "2026-07-31",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "레몬 스파클링",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "20230805195132",
+   "MFR_NM": "동아에코팩 주식회사",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
   "2023080519538": {
    "CRT_YMD": "2024-05-13",
    "ENERC": "0",
@@ -15026,61 +15898,6 @@
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "10.57"
   },
-  "202308653742": {
-   "CRT_YMD": "2025-09-02",
-   "ENERC": "31",
-   "FOOD_LV3_NM": "음료류",
-   "FOOD_NM": "유자낫맥",
-   "FOOD_SIZE": "330ml",
-   "ITEM_MNFTR_RPT_NO": "202308653742",
-   "MFR_NM": "미륵미륵",
-   "NUT_CON_SRTR_QUA": "100ml",
-   "SUGAR": "2.22"
-  },
-  "202308653743": {
-   "CRT_YMD": "2023-12-22",
-   "ENERC": "7",
-   "FOOD_LV3_NM": "음료류",
-   "FOOD_NM": "뻔뻔한낫맥 굴",
-   "FOOD_SIZE": "330ml",
-   "ITEM_MNFTR_RPT_NO": "202308653743",
-   "MFR_NM": "미륵미륵",
-   "NUT_CON_SRTR_QUA": "100ml",
-   "SUGAR": "0.61"
-  },
-  "202308653745": {
-   "CRT_YMD": "2023-12-22",
-   "ENERC": "20",
-   "FOOD_LV3_NM": "음료류",
-   "FOOD_NM": "뻔뻔한낫맥 레몬",
-   "FOOD_SIZE": "330ml",
-   "ITEM_MNFTR_RPT_NO": "202308653745",
-   "MFR_NM": "미륵미륵",
-   "NUT_CON_SRTR_QUA": "100ml",
-   "SUGAR": "1.62"
-  },
-  "202308653746": {
-   "CRT_YMD": "2023-12-22",
-   "ENERC": "19",
-   "FOOD_LV3_NM": "음료류",
-   "FOOD_NM": "뻔뻔한낫맥 솔잎",
-   "FOOD_SIZE": "330ml",
-   "ITEM_MNFTR_RPT_NO": "202308653746",
-   "MFR_NM": "미륵미륵",
-   "NUT_CON_SRTR_QUA": "100ml",
-   "SUGAR": "1.23"
-  },
-  "202308653747": {
-   "CRT_YMD": "2025-09-02",
-   "ENERC": "26",
-   "FOOD_LV3_NM": "음료류",
-   "FOOD_NM": "생강낫맥",
-   "FOOD_SIZE": "330ml",
-   "ITEM_MNFTR_RPT_NO": "202308653747",
-   "MFR_NM": "미륵미륵",
-   "NUT_CON_SRTR_QUA": "100ml",
-   "SUGAR": "1.50"
-  },
   "202308653748": {
    "CRT_YMD": "2026-04-15",
    "ENERC": "22",
@@ -15192,15 +16009,15 @@
    "SUGAR": "10.00"
   },
   "202405842001": {
-   "CRT_YMD": "2024-10-16",
-   "ENERC": "39",
+   "CRT_YMD": "2026-07-08",
+   "ENERC": "51",
    "FOOD_LV3_NM": "음료류",
-   "FOOD_NM": "가평잣막걸리맛논알콜릭",
-   "FOOD_SIZE": "350ml",
+   "FOOD_NM": "가평잣막걸리맛 제로0.00",
+   "FOOD_SIZE": "750ml",
    "ITEM_MNFTR_RPT_NO": "202405842001",
    "MFR_NM": "(주)우리술",
    "NUT_CON_SRTR_QUA": "100ml",
-   "SUGAR": "6.40"
+   "SUGAR": "7.60"
   },
   "202405842003": {
    "CRT_YMD": "2025-09-15",
@@ -15212,6 +16029,28 @@
    "MFR_NM": "(주)우리술",
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "7.61"
+  },
+  "202405842004": {
+   "CRT_YMD": "2026-06-02",
+   "ENERC": "50",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "알밤동동 제로 0.00",
+   "FOOD_SIZE": "750ml",
+   "ITEM_MNFTR_RPT_NO": "202405842004",
+   "MFR_NM": "(주)우리술",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "7.00"
+  },
+  "202405842005": {
+   "CRT_YMD": "2026-07-08",
+   "ENERC": "51",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "톡쏘는쌀막걸리맛 제로0.00",
+   "FOOD_SIZE": "750ml",
+   "ITEM_MNFTR_RPT_NO": "202405842005",
+   "MFR_NM": "(주)우리술",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "7.60"
   },
   "202405986121": {
    "CRT_YMD": "2024-07-30",
@@ -15289,6 +16128,17 @@
    "MFR_NM": "프레시(FRESH)",
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "6.00"
+  },
+  "2024091927818": {
+   "CRT_YMD": "2026-06-26",
+   "ENERC": "35",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "체리맛 탄산음료",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "2024091927818",
+   "MFR_NM": "프레시(FRESH)",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "7.00"
   },
   "202409192783": {
    "CRT_YMD": "2024-06-18",
@@ -15462,6 +16312,28 @@
    "FOOD_NM": "미네마인 스파클링",
    "FOOD_SIZE": "500ml",
    "ITEM_MNFTR_RPT_NO": "202606921311",
+   "MFR_NM": "(주)동원에프앤비 설성공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "202606921312": {
+   "CRT_YMD": "2026-06-03",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "미네마인 스파클링 고밀도 강탄산",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "202606921312",
+   "MFR_NM": "(주)동원에프앤비 설성공장",
+   "NUT_CON_SRTR_QUA": "100ml",
+   "SUGAR": "0.00"
+  },
+  "202606921313": {
+   "CRT_YMD": "2026-06-02",
+   "ENERC": "0",
+   "FOOD_LV3_NM": "음료류",
+   "FOOD_NM": "동원샘물 스파클링 맥스",
+   "FOOD_SIZE": "500ml",
+   "ITEM_MNFTR_RPT_NO": "202606921313",
    "MFR_NM": "(주)동원에프앤비 설성공장",
    "NUT_CON_SRTR_QUA": "100ml",
    "SUGAR": "0.00"
