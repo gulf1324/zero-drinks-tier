@@ -2,6 +2,7 @@ User-agent: Yeti
 Allow: /
 Disallow: /llms.txt
 Disallow: /llms-full.txt
+Disallow: /google1e3e2d33e12e4e8a.html
 
 User-agent: GPTBot
 Allow: /
