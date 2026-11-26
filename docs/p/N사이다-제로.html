@@ -140,6 +140,8 @@ color-scheme: light dark;
 --text-2:#3d4450; --hair:#eef0f2; --th-bg:#f7f8fa;
 /* 액센트 위에 얹는 글자색. 다크의 액센트는 밝은 파랑이라 흰 글자가 안 읽힌다. */
 --on-accent:#ffffff; --on-danger:#ffffff;
+/* 등급색 하이라이트 위 글자. 등급색은 두 모드에서 같으므로 글자도 모드와 무관하게 짙다 */
+--on-tier:#16191d;
 --chip-bg:#eef0f2; --ghost:#e8ebee; --ghost-hover:#dde1e5;
 --accent:#2563eb; --accent-soft:#eef4ff; --accent-border:#bcd3fb; --accent-ink:#12356e;
 --danger:#c0262c; --danger-soft:#fdf4f4; --danger-border:#f0cdcd;
@@ -165,7 +167,7 @@ color-scheme: light dark;
 --text:#e7eaec; --muted:#9aa4ab; --muted-2:#78838a; --faint:#4e585e;
 --row-hover:#1c2124; --sel:#16263a; --sel-hover:#1b2f47; --th-hover:#242a2e;
 --text-2:#c3cad0; --hair:#242a2e; --th-bg:#1f2427;
---on-accent:#0d1520; --on-danger:#2a1010;
+--on-accent:#0d1520; --on-danger:#2a1010; --on-tier:#16191d;
 --chip-bg:#252c30; --ghost:#2b3236; --ghost-hover:#3a4247;
 --accent:#6ea3ff; --accent-soft:#16263a; --accent-border:#2f4f7d; --accent-ink:#b9d3ff;
 --danger:#f3736c; --danger-soft:#2a1918; --danger-border:#5c2a28;
@@ -184,7 +186,7 @@ color-scheme: light dark;
 --text:#e7eaec; --muted:#9aa4ab; --muted-2:#78838a; --faint:#4e585e;
 --row-hover:#1c2124; --sel:#16263a; --sel-hover:#1b2f47; --th-hover:#242a2e;
 --text-2:#c3cad0; --hair:#242a2e; --th-bg:#1f2427;
---on-accent:#0d1520; --on-danger:#2a1010;
+--on-accent:#0d1520; --on-danger:#2a1010; --on-tier:#16191d;
 --chip-bg:#252c30; --ghost:#2b3236; --ghost-hover:#3a4247;
 --accent:#6ea3ff; --accent-soft:#16263a; --accent-border:#2f4f7d; --accent-ink:#b9d3ff;
 --danger:#f3736c; --danger-soft:#2a1918; --danger-border:#5c2a28;
@@ -335,6 +337,8 @@ footer div{margin-bottom:5px}
 .hr+.hr{border-top:1px solid var(--hair)}
 .hd{font-weight:700} .hn{color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace}
 .hraw{color:var(--text-2);line-height:1.6;overflow-wrap:anywhere}
+/* 등급을 정한 감미료. 등급색 바탕에 짙은 글자 - 등급색은 두 모드에서 같다 */
+mark.dec,mark.dec b,b mark.dec{background:var(--tc);color:var(--on-tier);padding:0 3px}
 .rel{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px;
      margin:0 0 22px}
 .rel a{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);
@@ -398,9 +402,9 @@ a.pl:hover{color:var(--accent);border-bottom-color:var(--accent)}
   <div class="finder-n">전체 목록 페이지에서 결과를 보여줍니다</div>
 </form>
 <h2 class="first">요약</h2>
-<p class="lead">N사이다 제로에는 <b>수크랄로스</b>, <b>아세설팜</b>이 들어 있습니다. 감미료 등급은 <span class="t" data-tier="B">B</span> 입니다.</p>
+<p class="lead">N사이다 제로에는 <b><mark class="dec" data-tier="B">수크랄로스</mark></b>, <b><mark class="dec" data-tier="B">아세설팜</mark></b>이 들어 있습니다. 감미료 등급은 <span class="t" data-tier="B">B</span> 입니다.</p>
 <div class="meta">출처 식품의약품안전처 품목제조보고(C002) &middot; 열량·당류는 공공데이터포털 전국통합식품영양성분정보(15100066)</div>
-<h2>신고 원재료 전문</h2><p class="raw">수크랄로스, 합성향료, 향료, 구연산, 천연향료, 당류가공품, 이산화탄소, 정제수, 아세설팜칼륨</p><h2>제품 정보</h2><dl class="kvs"><div class="kv"><dt>탐지된 감미료</dt><dd><ul class="swl"><li><span class="t" data-tier="B">B</span> <span>수크랄로스</span></li><li><span class="t" data-tier="B">B</span> <span>아세설팜</span></li></ul></dd></div><div class="kv"><dt>열량·당류</dt><dd>확인 불가<span class="kv-note">영양성분 데이터에 이 제품의 품목제조보고번호가 없습니다. 0이라는 뜻이 아닙니다.</span></dd></div><div class="kv"><dt>카페인</dt><dd>의심<span class="kv-note">원재료가 식품첨가물혼합제제 등으로 뭉뚱그려져 있어 카페인이 들어 있는지 확인할 수 없습니다.</span></dd></div><div class="kv"><dt>제조사</dt><dd>(주)일화초정공장</dd></div><div class="kv"><dt>식품유형</dt><dd>탄산음료</dd></div><div class="kv"><dt>보고일자</dt><dd>20251025</dd></div></dl><h2>B 등급인 이유</h2><p>수크랄로스·아세설팜칼륨·아스파탐·사카린은 RCT 21건 메타분석에서 <b>공복 인슐린과 HbA1c가 소폭 오르는 신호</b>가 보고됐습니다. 개인에게 임상적 의미를 두기는 어려운 크기입니다. 안전성은 별개 문제로, 유럽식품안전청(EFSA)은 2026년 재평가에서 아스파탐·아세설팜칼륨이 <b>현재 섭취 수준에서 안전</b>하다고 결론 냈습니다. 나한과·감초추출물처럼 성분별 메타분석이 없는 비열량 감미료도 이 등급으로 봅니다.</p><p class="cav">한 제품에 여러 감미료가 있으면 <b>가장 나쁜 등급</b>이 최종 등급입니다.</p><h2>읽는 법</h2>
+<h2>신고 원재료 전문</h2><p class="raw">수크랄로스, 합성향료, 향료, 구연산, 천연향료, 당류가공품, 이산화탄소, 정제수, 아세설팜칼륨</p><h2>제품 정보</h2><dl class="kvs"><div class="kv"><dt>탐지된 감미료</dt><dd><ul class="swl"><li><span class="t" data-tier="B">B</span> <span>수크랄로스</span></li><li><span class="t" data-tier="B">B</span> <span>아세설팜</span></li></ul></dd></div><div class="kv"><dt>열량·당류</dt><dd>확인 불가<span class="kv-note">영양성분 데이터에 이 제품의 품목제조보고번호가 없습니다. 0이라는 뜻이 아닙니다.</span></dd></div><div class="kv"><dt>카페인</dt><dd>의심<span class="kv-note">원재료가 식품첨가물혼합제제 등으로 뭉뚱그려져 있어 카페인이 들어 있는지 확인할 수 없습니다.</span></dd></div><div class="kv"><dt>제조사</dt><dd>(주)일화초정공장</dd></div><div class="kv"><dt>식품유형</dt><dd>탄산음료</dd></div><div class="kv"><dt>보고일자</dt><dd>20251025</dd></div></dl><h2>B 등급인 이유</h2><p><mark class="dec" data-tier="B">수크랄로스</mark>·<mark class="dec" data-tier="B">아세설팜칼륨</mark>·아스파탐·사카린은 RCT 21건 메타분석에서 <b>공복 인슐린과 HbA1c가 소폭 오르는 신호</b>가 보고됐습니다. 개인에게 임상적 의미를 두기는 어려운 크기입니다. 안전성은 별개 문제로, 유럽식품안전청(EFSA)은 2026년 재평가에서 아스파탐·<mark class="dec" data-tier="B">아세설팜칼륨</mark>이 <b>현재 섭취 수준에서 안전</b>하다고 결론 냈습니다. 나한과·감초추출물처럼 성분별 메타분석이 없는 비열량 감미료도 이 등급으로 봅니다.</p><p class="cav">한 제품에 여러 감미료가 있으면 <b>가장 나쁜 등급</b>이 최종 등급입니다.</p><h2>읽는 법</h2>
 <div class="howto"><div class="hrow"><dt>판정 방법</dt><dd>제조사가 식약처에 신고한 <b>품목제조보고 원재료 전문</b>에서 감미료 표기를 탐지합니다. 추정으로 채우지 않습니다.</dd></div><div class="hrow"><dt>등급 기준</dt><dd>여러 감미료가 섞이면 <b>가장 나쁜 등급</b>이 최종 등급입니다.</dd></div><div class="hrow"><dt>기준량</dt><dd>열량·당류는 <b>100ml당</b> 값입니다. 제품 라벨은 한 병 전체 기준이라 숫자가 달라 보입니다.</dd></div><div class="hrow"><dt>확인 불가</dt><dd>원재료가 '식품첨가물혼합제제'로 뭉뚱그려지면 감미료를 판정할 수 없습니다. 들어 있지 않다는 뜻이 아닙니다.</dd></div><div class="hrow"><dt>기준일</dt><dd>표의 값은 가장 최근 보고일자 기준입니다. 배합은 자주 바뀝니다.</dd></div></div>
 <h2>일반판과 비교</h2><p>같은 제품군의 일반판 <b>N사이다</b>는 <span class="t" data-tier="F">F</span> 등급입니다.</p><h2>같은 제조사의 다른 제품</h2><div class="rel"><a href="https://zero-drinks-tier.vercel.app/p/1945-%EB%9D%BC%EC%9E%84%EC%82%AC%EC%9D%B4%EB%8B%A4.html"><span class="t" data-tier="B">B</span><span>1945 라임사이다</span></a><a href="https://zero-drinks-tier.vercel.app/p/1945-%EB%A0%88%EB%AA%AC%EC%BD%9C%EB%9D%BC.html"><span class="t" data-tier="B">B</span><span>1945 레몬콜라</span></a><a href="https://zero-drinks-tier.vercel.app/p/815%EC%BD%9C%EB%9D%BC-%EC%A0%9C%EB%A1%9C.html"><span class="t" data-tier="B">B</span><span>815콜라 제로</span></a><a href="https://zero-drinks-tier.vercel.app/p/N%EC%BD%9C%EB%9D%BC-%EC%A0%9C%EB%A1%9C.html"><span class="t" data-tier="B">B</span><span>N콜라 제로</span></a><a href="https://zero-drinks-tier.vercel.app/p/%EA%B0%91-%ED%86%A0%EB%8B%89%EC%9B%8C%ED%84%B0-%EC%A0%9C%EB%A1%9C.html"><span class="t" data-tier="B">B</span><span>갑 토닉워터 제로</span></a><a href="https://zero-drinks-tier.vercel.app/p/%EB%A7%A5%EC%BD%9C-%EC%A0%9C%EB%A1%9C.html"><span class="t" data-tier="B">B</span><span>맥콜 제로</span></a></div><h2>B 등급의 다른 제품</h2><div class="rel"><a href="https://zero-drinks-tier.vercel.app/p/815-%EC%82%AC%EC%9D%B4%EB%8B%A4-%EC%A0%9C%EB%A1%9C.html"><span class="t" data-tier="B">B</span><span>815 사이다 제로</span></a><a href="https://zero-drinks-tier.vercel.app/p/HOT6%EA%B8%80%EB%A1%9C%EC%9A%B0%EC%95%A0%ED%94%8C%ED%8F%AC%EB%A9%9C%EB%A1%9C.html"><span class="t" data-tier="B">B</span><span>HOT6글로우애플&amp;포멜로</span></a><a href="https://zero-drinks-tier.vercel.app/p/HOT6%EA%B8%80%EB%A1%9C%EC%9A%B0%ED%94%BC%EC%B9%98%EC%82%B4%EA%B5%AC.html"><span class="t" data-tier="B">B</span><span>HOT6글로우피치&amp;살구</span></a><a href="https://zero-drinks-tier.vercel.app/p/HOT6%EB%8D%94%ED%82%B9%EC%95%84%EC%9D%B4%EC%8A%A4%ED%94%BC%EC%B9%98%EC%A0%9C%EB%A1%9C.html"><span class="t" data-tier="B">B</span><span>HOT6더킹아이스피치제로</span></a><a href="https://zero-drinks-tier.vercel.app/p/HOT6%EB%8D%94%ED%82%B9%ED%94%84%EB%A1%9C%EC%A6%8C%EB%B8%94%EB%A3%A8%EC%A0%9C%EB%A1%9C.html"><span class="t" data-tier="B">B</span><span>HOT6더킹프로즌블루제로</span></a><a href="https://zero-drinks-tier.vercel.app/p/PDRN-%EB%A6%AC%EC%96%BC-%EB%B0%94%EB%AA%AC%EB%93%9C-%EC%8A%A4%ED%8C%8C%ED%81%B4%EB%A7%81.html"><span class="t" data-tier="B">B</span><span>PDRN 리얼 바몬드 스파클링</span></a></div><h2>자주 묻는 질문</h2><div class="faq"><p class="q">N사이다 제로에 어떤 감미료가 들어 있나요?</p><p class="a">신고 원재료에서 <b>수크랄로스, 아세설팜</b>이 탐지됐습니다. 이 가운데 가장 나쁜 등급을 따라 전체 등급은 <b>B</b>입니다.</p><p class="q">N사이다 제로는 칼로리가 얼마인가요?</p><p class="a">이 제품은 품목제조보고번호로 영양성분 표준데이터에 조인되지 않아 <b>열량·당류를 확인할 수 없습니다</b>. 0이라는 뜻이 아닙니다.</p><p class="q">N사이다 제로에 아스파탐이 들어 있나요?</p><p class="a">신고 원재료에서 <b>아스파탐은 탐지되지 않았습니다</b>.</p><p class="q">N사이다 제로에 카페인이 들어 있나요?</p><p class="a"><b>들어 있을 수 있습니다</b>. 원재료가 식품첨가물혼합제제 등으로 뭉뚱그려져 있어 카페인이 들어 있는지 확인할 수 없습니다. 들어 있지 않다는 뜻이 아닙니다.</p><p class="q">N사이다 제로의 감미료 등급은 왜 B인가요?</p><p class="a">수크랄로스·아세설팜칼륨·아스파탐·사카린은 RCT 21건 메타분석에서 <b>공복 인슐린과 HbA1c가 소폭 오르는 신호</b>가 보고됐습니다. 개인에게 임상적 의미를 두기는 어려운 크기입니다. 안전성은 별개 문제로, 유럽식품안전청(EFSA)은 2026년 재평가에서 아스파탐·아세설팜칼륨이 <b>현재 섭취 수준에서 안전</b>하다고 결론 냈습니다. 나한과·감초추출물처럼 성분별 메타분석이 없는 비열량 감미료도 이 등급으로 봅니다.</p></div>
 <footer>

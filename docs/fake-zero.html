@@ -154,6 +154,8 @@ color-scheme: light dark;
 --text-2:#3d4450; --hair:#eef0f2; --th-bg:#f7f8fa;
 /* 액센트 위에 얹는 글자색. 다크의 액센트는 밝은 파랑이라 흰 글자가 안 읽힌다. */
 --on-accent:#ffffff; --on-danger:#ffffff;
+/* 등급색 하이라이트 위 글자. 등급색은 두 모드에서 같으므로 글자도 모드와 무관하게 짙다 */
+--on-tier:#16191d;
 --chip-bg:#eef0f2; --ghost:#e8ebee; --ghost-hover:#dde1e5;
 --accent:#2563eb; --accent-soft:#eef4ff; --accent-border:#bcd3fb; --accent-ink:#12356e;
 --danger:#c0262c; --danger-soft:#fdf4f4; --danger-border:#f0cdcd;
@@ -179,7 +181,7 @@ color-scheme: light dark;
 --text:#e7eaec; --muted:#9aa4ab; --muted-2:#78838a; --faint:#4e585e;
 --row-hover:#1c2124; --sel:#16263a; --sel-hover:#1b2f47; --th-hover:#242a2e;
 --text-2:#c3cad0; --hair:#242a2e; --th-bg:#1f2427;
---on-accent:#0d1520; --on-danger:#2a1010;
+--on-accent:#0d1520; --on-danger:#2a1010; --on-tier:#16191d;
 --chip-bg:#252c30; --ghost:#2b3236; --ghost-hover:#3a4247;
 --accent:#6ea3ff; --accent-soft:#16263a; --accent-border:#2f4f7d; --accent-ink:#b9d3ff;
 --danger:#f3736c; --danger-soft:#2a1918; --danger-border:#5c2a28;
@@ -198,7 +200,7 @@ color-scheme: light dark;
 --text:#e7eaec; --muted:#9aa4ab; --muted-2:#78838a; --faint:#4e585e;
 --row-hover:#1c2124; --sel:#16263a; --sel-hover:#1b2f47; --th-hover:#242a2e;
 --text-2:#c3cad0; --hair:#242a2e; --th-bg:#1f2427;
---on-accent:#0d1520; --on-danger:#2a1010;
+--on-accent:#0d1520; --on-danger:#2a1010; --on-tier:#16191d;
 --chip-bg:#252c30; --ghost:#2b3236; --ghost-hover:#3a4247;
 --accent:#6ea3ff; --accent-soft:#16263a; --accent-border:#2f4f7d; --accent-ink:#b9d3ff;
 --danger:#f3736c; --danger-soft:#2a1918; --danger-border:#5c2a28;
@@ -349,6 +351,8 @@ footer div{margin-bottom:5px}
 .hr+.hr{border-top:1px solid var(--hair)}
 .hd{font-weight:700} .hn{color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace}
 .hraw{color:var(--text-2);line-height:1.6;overflow-wrap:anywhere}
+/* 등급을 정한 감미료. 등급색 바탕에 짙은 글자 - 등급색은 두 모드에서 같다 */
+mark.dec,mark.dec b,b mark.dec{background:var(--tc);color:var(--on-tier);padding:0 3px}
 .rel{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px;
      margin:0 0 22px}
 .rel a{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);
