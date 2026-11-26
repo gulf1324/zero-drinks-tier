@@ -879,8 +879,12 @@ footer div{margin-bottom:5px}
 .hr+.hr{border-top:1px solid var(--hair)}
 .hd{font-weight:700} .hn{color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace}
 .hraw{color:var(--text-2);line-height:1.6;overflow-wrap:anywhere}
-/* 등급을 정한 감미료. 등급색 바탕에 짙은 글자 - 등급색은 두 모드에서 같다 */
-mark.dec,mark.dec b,b mark.dec{background:var(--tc);color:var(--on-tier);padding:0 3px}
+/* 등급을 정한 감미료. 등급색 바탕에 짙은 글자 - 등급색은 두 모드에서 같다.
+   브라우저 찾기(Ctrl+F) 하이라이트와 구별되도록 분류 태그처럼 둥글게 한다.
+   F 는 빨강 바탕이라 짙은 글자가 안 읽혀 등급 배지와 같은 흰 글자(--tf)를 쓴다 */
+mark.dec{background:var(--tc);color:var(--on-tier);padding:0 6px;
+  border-radius:var(--pill);-webkit-box-decoration-break:clone;box-decoration-break:clone}
+mark.dec[data-tier="F"]{color:var(--tf)}
 .rel{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px;
      margin:0 0 22px}
 .rel a{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);
